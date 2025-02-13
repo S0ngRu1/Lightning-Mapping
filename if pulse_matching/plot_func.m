@@ -1,6 +1,6 @@
 %结果1
-logicalIndex = abs(result1.t123) < 1 & abs(result1.Rcorr) > 0.3;
-% logicalIndex = abs(result1.t123) <1 & abs(result1.Rcorr) > 0.3 &  result1.Start_loc < 480138689 & result1.Start_loc > 420045955;
+% logicalIndex = abs(result1.t123) < 1 & abs(result1.Rcorr) > 0.3;
+logicalIndex = abs(result1.t123) <1 & abs(result1.Rcorr) > 0.3 &  result1.Start_loc < 480138689 & result1.Start_loc > 420045955;
 filteredTable1 = result1(logicalIndex, :);
 Start_loc = filteredTable1.Start_loc;
 colorValues = (Start_loc - 3e8) / 2e8;
@@ -135,9 +135,9 @@ grid on;
 
 
 % 绘制两个波形
-plot(filtered_yld_signal-50, 'b');
+plot(processed_yld_signal-50, 'b');
 hold on;
-plot(filtered_chj_signal(103:end), 'r');
+plot(processed_chj_signal, 'r');
 legend('yld', 'chj');
 xlabel('采样点数');
 ylabel('幅值');
