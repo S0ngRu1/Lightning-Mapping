@@ -71,22 +71,22 @@ close(h);
 %% Step 5: 差分到达时间 (DTOA) 技术
 
 
-%% 绘制 S 的结果
-% % 设置过滤条件
-% x_range = [-5000, 5000]; % X 的合理范围
-% y_range = [-5000, 5000]; % Y 的合理范围
-% z_range = [0, 5000];    % Z 的合理范围（Z > 0）
-% 
-% % 过滤数据
-% filtered_S = S_results(...
-%     S_results(:,1) >= x_range(1) & S_results(:,1) <= x_range(2) & ... % X 在合理范围内
-%     S_results(:,2) >= y_range(1) & S_results(:,2) <= y_range(2) & ... % Y 在合理范围内
-%     S_results(:,3) >= z_range(1) & S_results(:,3) <= z_range(2), :); % Z 在合理范围内
-% 
+% 绘制 S 的结果
+% 设置过滤条件
+x_range = [-5000, 5000]; % X 的合理范围
+y_range = [-5000, 5000]; % Y 的合理范围
+z_range = [-5000, 5000];    % Z 的合理范围（Z > 0）
+
+% 过滤数据
+filtered_S = S_results(...
+    S_results(:,1) >= x_range(1) & S_results(:,1) <= x_range(2) & ... % X 在合理范围内
+    S_results(:,2) >= y_range(1) & S_results(:,2) <= y_range(2) & ... % Y 在合理范围内
+    S_results(:,3) >= z_range(1) & S_results(:,3) <= z_range(2), :); % Z 在合理范围内
+
 
 % 绘制过滤后的数据
 figure;
-scatter3(S_results(:,1), S_results(:,2), S_results(:,3), 1, 'filled');
+scatter3(filtered_S(:,1), filtered_S(:,2), filtered_S(:,3), 1, 'filled');
 xlabel('X');
 ylabel('Y');
 zlabel('Z');
@@ -94,7 +94,7 @@ title('过滤后的所有 S 点的分布');
 grid on;
 
 % 转换为极坐标
-[x, y, z] = deal(S_results(:,1), S_results(:,2), S_results(:,3));
+[x, y, z] = deal(filtered_S(:,1), filtered_S(:,2), filtered_S(:,3));
 theta = atan2(y, x); % 计算角度 (弧度)
 r = sqrt(x.^2 + y.^2); % 计算半径
 
