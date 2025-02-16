@@ -5,7 +5,7 @@ yld_result_path = 'result_yld3.5-5.5.txt';
 start_read_loc_yld = 450148968;
 end_read_loc_yld = 549929198;    % 引入两个站的位置关系
 yld_sit = [0, 0, 0];
-chj_sit = [4.516e3, 6.7124e3, 0];
+chj_sit = [7.8115e3, 2.1045e3, 0];
 % yld相对于chj的位置
 p = chj_sit-yld_sit;
 dist = 8.09e3; %单位：米
