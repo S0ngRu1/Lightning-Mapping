@@ -20,7 +20,7 @@ h = waitbar(0, 'Processing...');
 
 for i =1 :numel(yld_start_loc)
     waitbar(i/numel(yld_start_loc), h, sprintf('Processing %.2f%%', i/numel(yld_start_loc)*100));
-    if yld_Rcorr(i) < 0.3 && yld_t123(i) > 1
+    if yld_Rcorr(i) < 0.6 && yld_t123(i) > 1
         continue
     end
     [start_read_loc_chj_top10, top10_r_gccs] =  get_match_single_yld_chj(yld_start_loc(i));
@@ -75,7 +75,7 @@ close(h);
 % 设置过滤条件
 x_range = [-5000, 5000]; % X 的合理范围
 y_range = [-5000, 5000]; % Y 的合理范围
-z_range = [-5000, 5000];    % Z 的合理范围（Z > 0）
+z_range = [0, 5000];    % Z 的合理范围（Z > 0）
 
 % 过滤数据
 filtered_S = S_results(...

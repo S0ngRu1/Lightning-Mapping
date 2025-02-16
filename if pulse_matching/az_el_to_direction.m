@@ -4,7 +4,7 @@ function [x, y, z] = az_el_to_direction(azimuth, elevation)
     elevation_rad = deg2rad(elevation); % 仰角转换为弧度
     
     % 计算方向向量
-    x = sin(elevation_rad) * cos(azimuth_rad);
-    y = sin(elevation_rad) * sin(azimuth_rad);
-    z = cos(elevation_rad);
+    x = cos(elevation_rad) * cos(azimuth_rad);
+    y = cos(elevation_rad) * sin(azimuth_rad);
+    z = sin(elevation_rad);
 end
