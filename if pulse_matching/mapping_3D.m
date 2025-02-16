@@ -14,7 +14,7 @@ c = 0.299552816;
 S_results = [];
 [yld_start_loc, yld_azimuth, yld_elevation, yld_Rcorr, yld_t123] = read_result(yld_result_path,start_read_loc_yld, end_read_loc_yld);
 %转为正北方向
-% yld_azimuth = mod(yld_azimuth - 90, 360);
+yld_azimuth = mod(yld_azimuth - 90, 360);
 h = waitbar(0, 'Processing...'); 
 %% Step2 根据引雷点的信号窗口得到匹配到的从化局的信号
 
@@ -32,7 +32,7 @@ for i =1 :numel(yld_start_loc)
         if chj_start_loc == 0
             continue
         end
-    %     chj_azimuth = mod(chj_azimuth - 90, 360);
+        chj_azimuth = mod(chj_azimuth - 90, 360);
         [R1_x, R1_y, R1_z] = az_el_to_direction(yld_azimuth(i), yld_elevation(i));
         [R2_x, R2_y, R2_z] = az_el_to_direction(chj_azimuth, chj_elevation);
         R1 = [R1_x, R1_y, R1_z];
@@ -75,7 +75,7 @@ close(h);
 % 设置过滤条件
 x_range = [-5000, 5000]; % X 的合理范围
 y_range = [-5000, 5000]; % Y 的合理范围
-z_range = [0, 5000];    % Z 的合理范围（Z > 0）
+z_range = [-5000, 5000];    % Z 的合理范围（Z > 0）
 
 % 过滤数据
 filtered_S = S_results(...
