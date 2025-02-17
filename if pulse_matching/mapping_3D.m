@@ -13,8 +13,6 @@ c = 0.299552816;
 % W = 40; % 时间误差，单位：采样点
 S_results = [];
 [yld_start_loc, yld_azimuth, yld_elevation, yld_Rcorr, yld_t123] = read_result(yld_result_path,start_read_loc_yld, end_read_loc_yld);
-%转为正北方向
-% yld_azimuth = mod(yld_azimuth - 90, 360);
 h = waitbar(0, 'Processing...'); 
 %% Step2 根据引雷点的信号窗口得到匹配到的从化局的信号
 
@@ -32,18 +30,19 @@ for i =1 :numel(yld_start_loc)
         if chj_start_loc == 0
             continue
         end
-%         chj_azimuth = mod(chj_azimuth - 90, 360);
         [R1_x, R1_y, R1_z] = az_el_to_direction(yld_azimuth(i), yld_elevation(i));
         [R2_x, R2_y, R2_z] = az_el_to_direction(chj_azimuth, chj_elevation);
-        R1 = [R1_x, R1_y, R1_z];
-        R2 = [R2_x, R2_y, R2_z];
-        C = cross(R1, R2);
+        A1 = [R1_x, R1_y, R1_z];
+        A2 = [R2_x, R2_y, R2_z];
+        C = cross(A1, A2);
         if C == [0, 0, 0]
             continue
         end
-        M = [R1; R2; C];
+        M = [A1; A2; C];
         % 使用克莱姆法则求R1,R2,R3的标量
         [R1_value, R2_value, R3_value] = cramer_rule(M, p);
+        R1 = R1_value * A1;
+        R2 = R2_value * A2;
         R3 = R3_value/norm(C)* C;
         if R1_value <= R2_value
             % 使用第一个公式
