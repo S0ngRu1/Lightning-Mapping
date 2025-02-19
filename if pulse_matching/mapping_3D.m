@@ -23,38 +23,39 @@ for i =1 :numel(yld_start_loc)
     end
     [start_read_loc_chj_top10, top10_r_gccs] =  get_match_single_yld_chj(yld_start_loc(i));
     for j = 1:numel(start_read_loc_chj_top10)
-        chj_signal1 = read_signal('../2024 822 85933.651462CH1.dat',chj_signal_length,start_read_loc_chj_top10(j));
-        chj_signal2 = read_signal('../2024 822 85933.651462CH2.dat',chj_signal_length,start_read_loc_chj_top10(j));
-        chj_signal3 = read_signal('../2024 822 85933.651462CH3.dat',chj_signal_length,start_read_loc_chj_top10(j)+165/5);
-        [chj_start_loc, chj_azimuth, chj_elevation, chj_Rcorr, chj_t123] = get_2d_result_single_window(start_read_loc_chj_top10(j),chj_signal1,chj_signal2,chj_signal3);
-        if chj_start_loc == 0
-            continue
+        if top10_r_gccs(j) > 0.3
+            chj_signal1 = read_signal('../2024 822 85933.651462CH1.dat',chj_signal_length,start_read_loc_chj_top10(j));
+            chj_signal2 = read_signal('../2024 822 85933.651462CH2.dat',chj_signal_length,start_read_loc_chj_top10(j));
+            chj_signal3 = read_signal('../2024 822 85933.651462CH3.dat',chj_signal_length,start_read_loc_chj_top10(j)+165/5);
+            [chj_start_loc, chj_azimuth, chj_elevation, chj_Rcorr, chj_t123] = get_2d_result_single_window(start_read_loc_chj_top10(j),chj_signal1,chj_signal2,chj_signal3);
+            if chj_start_loc == 0
+                continue
+            end
+            [R1_x, R1_y, R1_z] = az_el_to_direction(yld_azimuth(i), yld_elevation(i));
+            [R2_x, R2_y, R2_z] = az_el_to_direction(chj_azimuth, chj_elevation);
+            A1 = [R1_x, R1_y, R1_z];
+            A2 = [R2_x, R2_y, R2_z];
+            C = cross(A1, A2);
+            if C == [0, 0, 0]
+                continue
+            end
+            M = [A1; A2; C];
+            % 使用克莱姆法则求R1,R2,R3的标量
+            [R1_value, R2_value, R3_value] = cramer_rule(M, p);
+            R1 = R1_value * A1;
+            R2 = R2_value * A2;
+            R3 = R3_value/norm(C)* C;
+            if R1_value <= R2_value
+                % 使用第一个公式
+                S = R1 + (R1_value / R2_value)*(R1_value / (R1_value + R2_value)) * (R1_value / R2_value) * R3;
+            else
+                % 使用第二个公式
+                S = R2 - (R2_value / R1_value)* (R2_value / (R1_value + R2_value)) * (R2_value / R1_value) * R3 + p;
+            end
+            if ~isempty(S)
+                S_results = [S_results; S];
+            end
         end
-        [R1_x, R1_y, R1_z] = az_el_to_direction(yld_azimuth(i), yld_elevation(i));
-        [R2_x, R2_y, R2_z] = az_el_to_direction(chj_azimuth, chj_elevation);
-        A1 = [R1_x, R1_y, R1_z];
-        A2 = [R2_x, R2_y, R2_z];
-        C = cross(A1, A2);
-        if C == [0, 0, 0]
-            continue
-        end
-        M = [A1; A2; C];
-        % 使用克莱姆法则求R1,R2,R3的标量
-        [R1_value, R2_value, R3_value] = cramer_rule(M, p);
-        R1 = R1_value * A1;
-        R2 = R2_value * A2;
-        R3 = R3_value/norm(C)* C;
-        if R1_value <= R2_value
-            % 使用第一个公式
-            S = R1 + (R1_value / (R1_value + R2_value)) * (R1_value / R2_value) * R3;
-        else
-            % 使用第二个公式
-            S = R2 - (R2_value / (R1_value + R2_value)) * (R2_value / R1_value) * R3 + p;
-        end
-        if ~isempty(S)
-            S_results = [S_results; S];
-        end
-
 
 %         t_chj = sqrt(sum((S - chj_sit).^2))/c;
 %         t_yld = sqrt(sum((S - yld_sit).^2))/c;

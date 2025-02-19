@@ -1,8 +1,8 @@
-yld_signal_start_loc = 469823486-1e7;
-yld_signal_length = 2e7;
+yld_signal_start_loc = 469823486-1e4;
+yld_signal_length = 2e4;
 yld_signal = read_signal('../20240822165932.6610CH1.dat',yld_signal_length,yld_signal_start_loc);
-chj_signal_length = 2e8;
-chj_signal_start_loc = yld_signal_start_loc-1e8;
+chj_signal_length = 1e8;
+chj_signal_start_loc = yld_signal_start_loc;
 chj_signal = read_signal('../2024 822 85933.651462CH1.dat',chj_signal_length,chj_signal_start_loc);
 
 all_locs = [];
@@ -12,7 +12,7 @@ filtered_yld_signal = filter_bp(yld_signal, 20e6 ,80e6 ,5);
 processed_yld_signal = real(windowsignal(detrend(filtered_yld_signal)));
 filtered_chj_signal = filter_bp(chj_signal, 20e6 ,80e6 ,5);
 processed_chj_signal = real(windowsignal(detrend(filtered_chj_signal)));
-subsignal_length = 4e7;
+subsignal_length = 4e4;
 subsignal_start = 1:subsignal_length:length(processed_chj_signal);
 for subi = 1:numel(subsignal_start)
     subsignal1 = processed_chj_signal(subsignal_start(subi):subsignal_start(subi)+subsignal_length-1);
