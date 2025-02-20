@@ -148,13 +148,16 @@ title('bp filter');
 
 
 
-
-x = downsample(filtered_signal1,50);
-plot(x)
-subplot(3,1,1);plot(ch1);title('ch1');xlabel('采样点数');ylabel('幅值');
-subplot(3,1,2);plot(filtered_signal1);title('ch1kalman');xlabel('采样点数');ylabel('幅值');
-subplot(3,1,3);plot(filtered_signal3);title('ch3');xlabel('采样点数');ylabel('幅值');
-
+yld_signal_start_loc = 4.5e8;
+yld_signal_length = 1e8;
+yld_signal = read_signal('../20240822165932.6610CH1.dat',yld_signal_length,yld_signal_start_loc);
+chj_signal_length = 1e8;
+chj_signal_start_loc = yld_signal_start_loc;
+chj_signal = read_signal('../2024 822 85933.651462CH1.dat',chj_signal_length,chj_signal_start_loc);
+x = downsample(yld_signal,1);
+y = downsample(chj_signal,1);
+subplot(2,1,1);plot(x);title('yld');xlabel('采样点数');ylabel('幅值');
+subplot(2,1,2);plot(y);title('chj');xlabel('采样点数');ylabel('幅值');
 
 
 

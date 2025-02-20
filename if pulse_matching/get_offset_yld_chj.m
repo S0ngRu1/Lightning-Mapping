@@ -1,8 +1,8 @@
-yld_signal_start_loc = 469823486-1e4;
-yld_signal_length = 2e4;
+yld_signal_start_loc = 469823486;
+yld_signal_length = 1024;
 yld_signal = read_signal('../20240822165932.6610CH1.dat',yld_signal_length,yld_signal_start_loc);
 chj_signal_length = 1e8;
-chj_signal_start_loc = yld_signal_start_loc;
+chj_signal_start_loc = 4.5e8;
 chj_signal = read_signal('../2024 822 85933.651462CH1.dat',chj_signal_length,chj_signal_start_loc);
 
 all_locs = [];
