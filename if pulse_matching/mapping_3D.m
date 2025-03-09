@@ -2,8 +2,8 @@
 % 引入变量：位置，方位角，仰角
 chj_signal_length = 1024;
 yld_result_path = 'result_yld3.5-5.5.txt';
-start_read_loc_yld = 450148968;
-end_read_loc_yld = 549929198;    % 引入两个站的位置关系
+start_read_loc_yld = 365620096;
+end_read_loc_yld = 458861666;    % 引入两个站的位置关系
 yld_sit = [0, 0, 0];
 chj_sit = [7.8115e3, 2.1045e3, 0];
 % yld相对于chj的位置
@@ -12,15 +12,35 @@ dist = 8.09e3; %单位：米
 c = 0.299552816;
 % W = 40; % 时间误差，单位：采样点
 S_results = [];
+match_results = struct('yld_start_loc', {}, 'chj_loc', {}, 'r_gccs', {});
 [yld_start_loc, yld_azimuth, yld_elevation, yld_Rcorr, yld_t123] = read_result(yld_result_path,start_read_loc_yld, end_read_loc_yld);
 h = waitbar(0, 'Processing...');
+
+% 用于记录上一次进行大窗口匹配的 yld_start_loc
+last_large_match_yld_loc = -inf;
+last_large_match_result = 0;
 %% Step2 根据引雷点的信号窗口得到匹配到的从化局的信号
 for i =1 :numel(yld_start_loc)
     waitbar(i/numel(yld_start_loc), h, sprintf('Processing %.2f%%', i/numel(yld_start_loc)*100));
     if yld_Rcorr(i) < 0.3 && yld_t123(i) > 1
         continue
     end
-    [start_read_loc_chj, r_gccs] =  get_match_single_yld_chj_siddle(yld_start_loc(i));
+    % 判断是否需要进行大窗口匹配：
+    % 第一个一定进行大窗口匹配
+    % 后续的如果当前的 yld_start_loc 小于上次大窗口匹配的位置加 2e7，则跳过大窗口匹配
+    if i == 1 || (yld_start_loc(i) >= last_large_match_yld_loc + 2e7)
+        skip_large = 0;  % 进行大窗口匹配
+        last_large_match_yld_loc = yld_start_loc(i);  % 更新记录
+    else
+        skip_large = last_large_match_result;  % 跳过大窗口匹配
+    end
+    
+    % 调用匹配函数，传入是否跳过大窗口匹配的参数
+    [start_read_loc_chj, r_gccs, result_2e7] = get_match_single_yld_chj_siddle(yld_start_loc(i), skip_large);
+    if result_2e7 ~= 0
+        last_large_match_result = result_2e7;
+    end
+    match_results = [match_results; struct('yld_start_loc', yld_start_loc(i), 'chj_loc', start_read_loc_chj, 'r_gccs', r_gccs)];
     chj_signal1 = read_signal('../2024 822 85933.651462CH1.dat',chj_signal_length,start_read_loc_chj);
     chj_signal2 = read_signal('../2024 822 85933.651462CH2.dat',chj_signal_length,start_read_loc_chj);
     chj_signal3 = read_signal('../2024 822 85933.651462CH3.dat',chj_signal_length,start_read_loc_chj+165/5);

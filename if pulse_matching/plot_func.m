@@ -148,12 +148,8 @@ title('bp filter');
 
 
 
-yld_signal_start_loc = 4.5e8;
-yld_signal_length = 1e8;
-yld_signal = read_signal('../20240822165932.6610CH1.dat',yld_signal_length,yld_signal_start_loc);
-chj_signal_length = 1e8;
-chj_signal_start_loc = yld_signal_start_loc;
-chj_signal = read_signal('../2024 822 85933.651462CH1.dat',chj_signal_length,chj_signal_start_loc);
+yld_signal = read_signal('../20240822165932.6610CH1.dat',6000,start_read_loc_yld);
+chj_signal = read_signal('../2024 822 85933.651462CH1.dat',6000,start_read_loc_chj);
 x = downsample(yld_signal,1);
 y = downsample(chj_signal,1);
 subplot(2,1,1);plot(x);title('yld');xlabel('采样点数');ylabel('幅值');
