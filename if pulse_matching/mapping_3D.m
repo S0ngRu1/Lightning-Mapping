@@ -48,8 +48,11 @@ for i =1 :numel(yld_start_loc)
     if chj_start_loc == 0
         continue
     end
-    [R1_x, R1_y, R1_z] = az_el_to_direction(yld_azimuth(i), yld_elevation(i));
-    [R2_x, R2_y, R2_z] = az_el_to_direction(chj_azimuth, chj_elevation);
+%     [R1_x, R1_y, R1_z] = az_el_to_direction(yld_azimuth(i), yld_elevation(i));
+%     [R2_x, R2_y, R2_z] = az_el_to_direction(chj_azimuth, chj_elevation);
+    
+    [R1_x, R1_y, R1_z] = sph2cart(deg2rad(90-yld_azimuth(i)), deg2rad(yld_elevation(i)),1);
+    [R2_x, R2_y, R2_z] = sph2cart(deg2rad(90-chj_azimuth), deg2rad(chj_elevation),1);
     A1 = [R1_x, R1_y, R1_z];
     A2 = [R2_x, R2_y, R2_z];
     C = cross(A1, A2);
