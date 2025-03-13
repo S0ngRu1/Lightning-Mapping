@@ -99,7 +99,7 @@ for i =1 :numel(yld_start_loc)
             % 使用第二个公式
             sub_S = R2 - (R2_value / R1_value)* (R2_value / (R1_value + R2_value)) * (R2_value / R1_value) * R3 + p;
         end
-        if ~isempty(S)
+        if ~isempty(sub_S)
             t_chj = sqrt(sum((sub_S - chj_sit).^2))/c;
             t_yld = sqrt(sum((sub_S - yld_sit).^2))/c;
             dlta_t = abs(t_yld-t_chj);
