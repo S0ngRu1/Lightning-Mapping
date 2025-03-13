@@ -22,7 +22,7 @@ function [start_read_loc_chj, r_gccs, result_2e7] = get_match_single_yld_chj_sid
         current_chj_start_loc = yld_signal_start_loc - current_window_length / 2 + offset;
         chj_signal = read_signal('../2024 822 85933.651462CH1.dat', chj_length, current_chj_start_loc);
         % 设置滑动窗口参数（步长设为yld信号长度的1/4）
-        subsignal_step = yld_signal_length / 16;
+        subsignal_step = yld_signal_length / 4;
         subsignal_starts = 1:subsignal_step:chj_length;
         all_R_gccs = [];
         all_t_gccs = [];
