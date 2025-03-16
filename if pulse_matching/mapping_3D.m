@@ -3,15 +3,16 @@
 chj_signal_length = 1024;
 match_signal_length = 6000;
 yld_result_path = 'result_yld3.5-5.5.txt';
-start_read_loc_yld = 365620096;
-end_read_loc_yld = 458861666;    % 引入两个站的位置关系
+start_read_loc_yld = 451501808;
+end_read_loc_yld = 523418116;    % 引入两个站的位置关系
 yld_sit = [0, 0, 0];
 chj_sit = [7.8115e3, 2.1045e3, 0];
+dltas = [];
 % yld相对于chj的位置
 p = chj_sit-yld_sit;
 dist = 8.09e3; %单位：米
 c = 0.299552816;
-W = 200; % 时间误差
+W = 2000; % 时间误差
 S_results = [];
 match_results = struct('yld_start_loc', {}, 'chj_loc', {}, 'r_gccs', {});
 [yld_start_loc, yld_azimuth, yld_elevation, yld_Rcorr, yld_t123] = read_result(yld_result_path,start_read_loc_yld, end_read_loc_yld);
@@ -43,15 +44,14 @@ for i =1 :numel(yld_start_loc)
     if result_2e7 ~= 0
         last_large_match_result = result_2e7;
     end
-    match_results = [match_results; struct('yld_start_loc', yld_start_loc(i), 'chj_loc', start_read_loc_chj, 'r_gccs', r_gccs)];
+    
     % 读取 match_signal_length*2 长度的信号
     chj_match_signal1 = read_signal('../2024 822 85933.651462CH1.dat',match_signal_length*2,start_read_loc_chj-match_signal_length);
     chj_match_signal2 = read_signal('../2024 822 85933.651462CH2.dat',match_signal_length*2,start_read_loc_chj-match_signal_length);
     chj_match_signal3 = read_signal('../2024 822 85933.651462CH3.dat',match_signal_length*2,start_read_loc_chj-match_signal_length+165/5);
     % 设置滑动窗口参数
-    subsignal_step = 100;
+    subsignal_step = match_signal_length/4;
     subsignal_starts = 1:subsignal_step:match_signal_length*2;
-    subsignal_starts = [subsignal_starts'; match_signal_length+1];
 
     yld_signal = read_signal('../20240822165932.6610CH1.dat', chj_signal_length, yld_start_loc(i));
     filtered_yld_signal = filter_bp(yld_signal, 20e6, 80e6, 5);
@@ -69,7 +69,8 @@ for i =1 :numel(yld_start_loc)
         processed_chj_signal = real(windowsignal(detrend(filtered_chj_signal)));
         [r_gcc, lags_gcc] = xcorr(processed_chj_signal, processed_yld_signal, 'normalized');
         R_gcc = max(r_gcc);
-        if R_gcc < 0.2 
+        t_gcc = cal_tau(r_gcc, lags_gcc');
+        if R_gcc < 0.15 
             continue
         end
         
@@ -103,14 +104,18 @@ for i =1 :numel(yld_start_loc)
             t_chj = sqrt(sum((sub_S - chj_sit).^2))/c;
             t_yld = sqrt(sum((sub_S - yld_sit).^2))/c;
             dlta_t = abs(t_yld-t_chj);
-            dlta_T = abs(start_read_loc_chj-match_signal_length+subsignal_starts(subi) - yld_start_loc(i))*5;
-            if abs(dlta_t-dlta_T) <= W
+            dlta_T = abs(t_gcc)*5;
+            dlta = abs(dlta_t-dlta_T);
+            dltas = [dltas;dlta];
+            if dlta <= W
                 sub_S_results = [sub_S_results; sub_S];
                 sub_R_gccs = [sub_R_gccs;R_gcc];
+                match_results = [match_results; struct('yld_start_loc', yld_start_loc(i), 'chj_loc', start_read_loc_chj-match_signal_length+subsignal_starts(subi), 'r_gccs', R_gcc)];
             end
         end
     end
     [max_R_gcc, max_R_gcc_index] = max(sub_R_gccs);
+    
     S_results = [S_results;sub_S_results(max_R_gcc_index)];
 
 end

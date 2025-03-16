@@ -1,7 +1,7 @@
 function [start_read_loc_chj, r_gccs, result_2e7] = get_match_single_yld_chj_siddle(yld_signal_start_loc, skip_large_window)
     result_2e7 = 0;
     % 定义逐步缩小的窗口长度，依次进行粗匹配到细匹配
-    window_lengths = [2e7, 2e4, 6000, 1024];
+    window_lengths = [2e7, 2e4, 6000];
     % 如果skip_large_window参数不为0，则跳过第一个窗口长度（2e7）
     if skip_large_window ~= 0
         window_lengths = window_lengths(2:end);
