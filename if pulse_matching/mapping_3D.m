@@ -44,7 +44,7 @@ for i =1 :numel(yld_start_loc)
     if result_2e7 ~= 0
         last_large_match_result = result_2e7;
     end
-    
+
     % 读取 match_signal_length*2 长度的信号
     chj_match_signal1 = read_signal('../2024 822 85933.651462CH1.dat',match_signal_length*2,start_read_loc_chj-match_signal_length);
     chj_match_signal2 = read_signal('../2024 822 85933.651462CH2.dat',match_signal_length*2,start_read_loc_chj-match_signal_length);
@@ -64,16 +64,16 @@ for i =1 :numel(yld_start_loc)
         chj_signal1 = chj_match_signal1(subsignal_starts(subi) : subsignal_starts(subi) + chj_signal_length - 1);
         chj_signal2 = chj_match_signal2(subsignal_starts(subi) : subsignal_starts(subi) + chj_signal_length - 1);
         chj_signal3 = chj_match_signal3(subsignal_starts(subi) : subsignal_starts(subi) + chj_signal_length - 1);
-        
+
         filtered_chj_signal = filter_bp(chj_signal1, 20e6, 80e6, 5);
         processed_chj_signal = real(windowsignal(detrend(filtered_chj_signal)));
         [r_gcc, lags_gcc] = xcorr(processed_chj_signal, processed_yld_signal, 'normalized');
         R_gcc = max(r_gcc);
         t_gcc = cal_tau(r_gcc, lags_gcc');
-        if R_gcc < 0.15 
+        if R_gcc < 0.15
             continue
         end
-        
+
         [chj_start_loc, chj_azimuth, chj_elevation, chj_Rcorr, chj_t123] = get_2d_result_single_window(start_read_loc_chj,chj_signal1,chj_signal2,chj_signal3);
         if chj_start_loc == 0
             continue
@@ -84,21 +84,30 @@ for i =1 :numel(yld_start_loc)
         A1 = [R1_x, R1_y, R1_z];
         A2 = [R2_x, R2_y, R2_z];
         C = cross(A1, A2);
-        if C == [0, 0, 0]
-            continue
+        if norm(c) < eps
+            continue;  % 避免除以零
         end
-        M = [A1; A2; C];
+        c_unit = C  / norm(C);  % 单位向量
+        M = [A1(1), -A2(1), c_unit(1);
+            A1(2), -A2(2), c_unit(2);
+            A1(3), -A2(3), c_unit(3)];
         % 使用克莱姆法则求R1,R2,R3的标量
-        [R1_value, R2_value, R3_value] = cramer_rule(M, p);
+        detM = det(M);
+        detR1 = det([p, M(:,2), M(:,3)]);
+        detR2 = det([M(:,1), p, M(:,3)]);
+        detR3 = det([M(:,1), M(:,2), p]);
+        R1_value = detR1 / detM;
+        R2_value = detR2 / detM;
+        R3_value = detR3 / detM;
         R1 = R1_value * A1;
         R2 = R2_value * A2;
         R3 = R3_value/norm(C)* C;
         if R1_value <= R2_value
             % 使用第一个公式
-            sub_S = R1 + (R1_value / R2_value)*(R1_value / (R1_value + R2_value)) * (R1_value / R2_value) * R3;
+            sub_S = R1 + (R1_value / R2_value)*(R1_value / (R1_value + R2_value)) * R3;
         else
             % 使用第二个公式
-            sub_S = R2 - (R2_value / R1_value)* (R2_value / (R1_value + R2_value)) * (R2_value / R1_value) * R3 + p;
+            sub_S = R2 - (R2_value / R1_value)* (R2_value / (R1_value + R2_value))  * R3 + p;
         end
         if ~isempty(sub_S)
             t_chj = sqrt(sum((sub_S - chj_sit).^2))/c;
@@ -115,8 +124,8 @@ for i =1 :numel(yld_start_loc)
         end
     end
     [max_R_gcc, max_R_gcc_index] = max(sub_R_gccs);
-    
-    S_results = [S_results;sub_S_results(max_R_gcc_index)];
+
+    S_results = [S_results;sub_S_results(max_R_gcc_index,:)];
 
 end
 
@@ -148,12 +157,41 @@ title('过滤后的所有 S 点的分布');
 grid on;
 
 % 转换为极坐标
-[x, y, z] = deal(filtered_S(:,1), filtered_S(:,2), filtered_S(:,3));
-theta = atan2(y, x); % 计算角度 (弧度)
-r = sqrt(x.^2 + y.^2); % 计算半径
+% [x, y, z] = deal(filtered_S(:,1), filtered_S(:,2), filtered_S(:,3));
+% theta = atan2(y, x); % 计算角度 (弧度)
+% r = sqrt(x.^2 + y.^2); % 计算半径
 
 % 绘制极坐标图
+% figure;
+% polarscatter(theta, r, 1, z, 'filled'); % 使用颜色表示 Z 坐标
+% title('过滤后的所有 S 点的极坐标分布');
+% colorbar; % 添加颜色条表示 Z 值
+
+x = filtered_S(:, 1);
+y = filtered_S(:, 2);
+z = filtered_S(:, 3);
+
+% 将直角坐标转换为球坐标
+[azimuth, elevation, ~] = cart2sph(x, y, z);
+
+% 将弧度转换为角度
+azimuth = azimuth * 180 / pi;
+elevation = elevation * 180 / pi;
+
+% 调整方位角范围为 0-360 度
+azimuth = mod(azimuth, 360);
+azimuth(azimuth < 0) = azimuth(azimuth < 0) + 360;
+
+% 调整仰角范围为 0-90 度
+elevation = abs(elevation); % 确保仰角为非负值
+elevation(elevation > 90) = 90; % 限制最大值为 90 度
+
+% 绘制方位角和仰角的散点图
 figure;
-polarscatter(theta, r, 1, z, 'filled'); % 使用颜色表示 Z 坐标
-title('过滤后的所有 S 点的极坐标分布');
-colorbar; % 添加颜色条表示 Z 值
+scatter(azimuth, elevation, 1, 'filled');
+xlabel('方位角 (度)');
+ylabel('仰角 (度)');
+title('方位角和仰角分布');
+grid on;
+axis([0 360 0 90]); % 设置坐标轴范围
+colorbar; % 添加颜色条（可选）
