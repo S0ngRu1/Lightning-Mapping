@@ -93,9 +93,9 @@ for i =1 :numel(yld_start_loc)
             A1(3), -A2(3), c_unit(3)];
         % 使用克莱姆法则求R1,R2,R3的标量
         detM = det(M);
-        detR1 = det([p, M(:,2), M(:,3)]);
-        detR2 = det([M(:,1), p, M(:,3)]);
-        detR3 = det([M(:,1), M(:,2), p]);
+        detR1 = det([p', M(:,2), M(:,3)]);
+        detR2 = det([M(:,1), p', M(:,3)]);
+        detR3 = det([M(:,1), M(:,2), p']);
         R1_value = detR1 / detM;
         R2_value = detR2 / detM;
         R3_value = detR3 / detM;
