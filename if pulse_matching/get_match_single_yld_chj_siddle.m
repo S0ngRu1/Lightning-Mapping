@@ -7,7 +7,7 @@ function [start_read_loc_chj, r_gccs, result_2e7] = get_match_single_yld_chj_sid
         window_lengths = window_lengths(2:end);
     end
 
-    offset = 0;
+    offset = skip_large_window;
     % 对每个窗口长度进行匹配，逐步精细化
     for i = 1:length(window_lengths)
         current_window_length = window_lengths(i);
@@ -19,7 +19,7 @@ function [start_read_loc_chj, r_gccs, result_2e7] = get_match_single_yld_chj_sid
         % 从chj信号文件中读取当前窗口内的数据
         % 初始chj信号的起始位置，根据已有偏移（可根据实际情况调整）
         chj_length = current_window_length * 4;
-        current_chj_start_loc = yld_signal_start_loc - current_window_length / 2 + offset;
+        current_chj_start_loc = yld_signal_start_loc + 3.3e7 - current_window_length * 2 + offset;
         chj_signal = read_signal('../2024 822 85933.651462CH1.dat', chj_length, current_chj_start_loc);
         % 设置滑动窗口参数（步长设为yld信号长度的1/4）
         subsignal_step = yld_signal_length / 4;
@@ -45,12 +45,8 @@ function [start_read_loc_chj, r_gccs, result_2e7] = get_match_single_yld_chj_sid
         % 找到当前窗口中最大相关系数的位置
         [r_gccs, max_idx] = max(all_R_gccs);
         % 更新chj信号的起始位置：在当前读信号的位置上加上匹配得到的子窗口起始位置和时间偏移
-        if i == 1
-            current_chj_start_loc = current_chj_start_loc + subsignal_starts(max_idx) + floor(all_t_gccs(max_idx))+skip_large_window;
-        else
-            current_chj_start_loc = current_chj_start_loc + subsignal_starts(max_idx) + floor(all_t_gccs(max_idx));
-        end
-        offset = current_chj_start_loc - yld_signal_start_loc;
+        current_chj_start_loc = current_chj_start_loc + subsignal_starts(max_idx) + floor(all_t_gccs(max_idx));
+        offset = current_chj_start_loc - yld_signal_start_loc - 3.3e7;
 
         if current_window_length == 2e7
             result_2e7 = offset;
