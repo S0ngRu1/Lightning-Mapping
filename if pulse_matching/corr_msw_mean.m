@@ -1,5 +1,5 @@
 N = 3;
-c = 0.299792458;
+c = 0.299552816;
 fs = 200e6;
 upsampling_factor = 50;
 window_length = 1024;
@@ -7,8 +7,8 @@ bigwindows_length = window_length+100;
 window = window_length * upsampling_factor;
 msw_length = 50;
 % 从化局
-signal_length = 1e8;
-r_loction1 = 4e8;
+signal_length = 4e8;
+r_loction1 = 2e8;
 r_loction2 = r_loction1 + 165/5;
 d12 = 41.6496;
 d13 = 48.5209;
@@ -17,9 +17,9 @@ angle12 = -2.8381;
 angle13 = 28.2006;
 angle23 = 87.3358;
 
-ch1 = read_signal('..\\2024 822 85933.651462CH1.dat',signal_length,r_loction1);
-ch2 = read_signal('..\\2024 822 85933.651462CH2.dat',signal_length,r_loction1);
-ch3 = read_signal('..\\2024 822 85933.651462CH3.dat',signal_length,r_loction2);
+ch1 = read_signal('../2024 822 85933.651462CH1.dat',signal_length,r_loction1);
+ch2 = read_signal('../2024 822 85933.651462CH2.dat',signal_length,r_loction1);
+ch3 = read_signal('../2024 822 85933.651462CH3.dat',signal_length,r_loction2);
 
 % %引雷点
 % signal_length = 1024;
@@ -41,7 +41,7 @@ filtered_signal2 = filter_bp(ch2, 20e6 ,80e6 ,5);
 filtered_signal3 = filter_bp(ch3, 20e6 ,80e6 ,5);
 
 % 打开一个文本文件用于写入运行结果
-fileID = fopen('result_chj4-5.txt', 'w');
+fileID = fopen('result_chj2-6.txt', 'w');
 fprintf(fileID, '%-13s%-15s%-15s%-15s%-15s%-15s%-15s%-15s%-15s%-15s%-15s\n', ...
     'Start_loc','peak','t12', 't13', 't23', 'cos_alpha_opt', 'cos_beta_opt','Azimuth', 'Elevation', 'Rcorr', 't123');
 
@@ -67,7 +67,10 @@ threshold = 0.5 * mean(abs(subsignal1));
 end
 % 遍历所有峰值
 num_peaks = numel(all_peaks);
+% 创建进度条
+h = waitbar(0, '正在处理峰值...');
 for pi = 1:num_peaks
+    waitbar(pi / num_peaks, h, sprintf('正在处理峰值 %d/%d', pi, num_peaks));
     idx = all_locs(pi);
 
     % 确保峰值不超出信号范围
@@ -252,4 +255,7 @@ for pi = 1:num_peaks
 end
 % 关闭文件
 fclose(fileID);
+
+% 关闭进度条
+close(h);
 
