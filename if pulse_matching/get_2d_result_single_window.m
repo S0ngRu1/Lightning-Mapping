@@ -7,7 +7,7 @@ d23 = 25.0182;
 angle12 = -2.8381;
 angle13 = 28.2006;
 angle23 = 87.3358;
-c = 0.299552816;
+c = 0.299792458;
 fs = 200e6;
 
 filtered_signal1 = filter_bp(ch1, 20e6 ,80e6 ,5);

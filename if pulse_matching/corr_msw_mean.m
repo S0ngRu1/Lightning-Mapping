@@ -1,5 +1,5 @@
 N = 3;
-c = 0.299552816;
+c = 0.299792458;
 fs = 200e6;
 upsampling_factor = 50;
 window_length = 1024;

@@ -11,8 +11,8 @@ dltas = [];
 % yld相对于chj的位置
 p = chj_sit-yld_sit;
 dist = 8.09e3; %单位：米
-c = 0.299552816;
-W = 2000; % 时间误差
+c = 0.299792458;
+W = 20000; % 时间误差
 S_results = [];
 match_results = struct('yld_start_loc', {}, 'chj_loc', {}, 'r_gccs', {});
 [yld_start_loc, yld_azimuth, yld_elevation, yld_Rcorr, yld_t123] = read_result(yld_result_path,start_read_loc_yld, end_read_loc_yld);
@@ -136,9 +136,9 @@ close(h);
 
 % 绘制 S 的结果
 % 设置过滤条件
-x_range = [-50000, 50000]; % X 的合理范围
-y_range = [-50000, 50000]; % Y 的合理范围
-z_range = [0, 50000];    % Z 的合理范围（Z > 0）
+x_range = [-3000, 3000]; % X 的合理范围
+y_range = [-3000, 3000]; % Y 的合理范围
+z_range = [1200, 2500];    % Z 的合理范围（Z > 0）
 
 % 过滤数据
 filtered_S = S_results(...
@@ -149,7 +149,7 @@ filtered_S = S_results(...
 
 % 绘制过滤后的数据
 figure;
-scatter3(filtered_S(:,1), filtered_S(:,2), filtered_S(:,3), 1, 'filled');
+scatter3(filtered_S(:,1), filtered_S(:,2), filtered_S(:,3),3, 'filled');
 xlabel('X');
 ylabel('Y');
 zlabel('Z');
