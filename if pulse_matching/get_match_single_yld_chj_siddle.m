@@ -7,9 +7,8 @@ function [start_read_loc_chj, r_gccs, result_2e7] = get_match_single_yld_chj_sid
         window_lengths = window_lengths(2:end);
         current_chj_start_loc = yld_signal_start_loc + 3.3e7 + skip_large_window;
     else
-        current_chj_start_loc = yld_signal_start_loc;
+        current_chj_start_loc = yld_signal_start_loc + 3.3e7;
     end
-    offset = 0;
     % 对每个窗口长度进行匹配，逐步精细化
     for i = 1:length(window_lengths)
         current_window_length = window_lengths(i);
@@ -52,7 +51,7 @@ function [start_read_loc_chj, r_gccs, result_2e7] = get_match_single_yld_chj_sid
         
 
         if current_window_length == 2e7
-            result_2e7 = offset;
+            result_2e7 = offset- current_window_length * 2;
         end
     end
     % 最终匹配位置和最后一次的相关系数作为输出
