@@ -1,15 +1,19 @@
-%½á¹û1
+%ï¿½ï¿½ï¿½1
 % logicalIndex = abs(result1.t123) < 1 & abs(result1.Rcorr) > 0.3;
-logicalIndex = abs(result1.t123) <1 & abs(result1.Rcorr) > 0.3 &  result1.Start_loc < 523418116 & result1.Start_loc > 451501808;
+logicalIndex = abs(result1.t123) < 1 & abs(result1.Rcorr) > 0.3 & result1.Start_loc < 6e8 & result1.Start_loc > 2e8;
 filteredTable1 = result1(logicalIndex, :);
 Start_loc = filteredTable1.Start_loc;
 colorValues = (Start_loc - 3e8) / 2e8;
+
+% å°†æ–¹ä½è§’ä»0-360è½¬æ¢ä¸º-180åˆ°180
+filteredTable1.Azimuth = mod(filteredTable1.Azimuth + 180, 360) - 180;
+
 figure;
-scatter(filteredTable1.Azimuth,filteredTable1.Elevation, 1, colorValues, 'filled');
+scatter(filteredTable1.Azimuth, filteredTable1.Elevation, 1, colorValues, 'filled');
 title('Azimuth vs Elevation');
 xlabel('Azimuth');
-xlim([0, 360]);
-xticks(0:40:360);
+xlim([-180, 180]); % ä¿®æ”¹xè½´èŒƒå›´
+xticks(-180:40:180); % ä¿®æ”¹xè½´åˆ»åº¦
 ylabel('Elevation');
 ylim([-40, 100]);
 yticks(-40:20:100);
@@ -18,7 +22,7 @@ colorbar;
 caxis([0, 1.5]);
 grid on;
 
-%½á¹û2
+%ï¿½ï¿½ï¿½2
 figure;
 % logicalIndex = abs(result2.t123) < 1 & abs(result2.Rcorr) > 0.3 &  result2.Start_loc > 500000000 ;
 logicalIndex = abs(result2.t123) < 1 & abs(result2.Rcorr) > 0.5;
@@ -40,7 +44,7 @@ colorbar;
 caxis([0, 1.5]);
 grid on;
 
-%½á¹û3
+%ï¿½ï¿½ï¿½3
 logicalIndex = abs(result3.t123) > 0.001 & abs(result3.Rcorr) < 0.2 &  result3.Start_loc < 600000000 & result3.Start_loc > 400000000;
 filteredTable3 = result3(logicalIndex, :);
 Start_loc = filteredTable3.Start_loc;
@@ -134,13 +138,13 @@ grid on;
 
 
 
-% »æÖÆÁ½¸ö²¨ĞÎ
+% ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 plot(processed_yld_signal-50, 'b');
 hold on;
 plot(processed_chj_signal, 'r');
 legend('yld', 'chj');
-xlabel('²ÉÑùµãÊı');
-ylabel('·ùÖµ');
+xlabel('ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½');
+ylabel('ï¿½ï¿½Öµ');
 title('bp filter');
 
 
@@ -152,86 +156,86 @@ yld_signal = read_signal('../20240822165932.6610CH1.dat',6000,start_read_loc_yld
 chj_signal = read_signal('../2024 822 85933.651462CH1.dat',6000,start_read_loc_chj);
 x = downsample(yld_signal,1);
 y = downsample(chj_signal,1);
-subplot(2,1,1);plot(x);title('yld');xlabel('²ÉÑùµãÊı');ylabel('·ùÖµ');
-subplot(2,1,2);plot(y);title('chj');xlabel('²ÉÑùµãÊı');ylabel('·ùÖµ');
+subplot(2,1,1);plot(x);title('yld');xlabel('ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½');ylabel('ï¿½ï¿½Öµ');
+subplot(2,1,2);plot(y);title('chj');xlabel('ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½');ylabel('ï¿½ï¿½Öµ');
 
 
 
 
 scatter(filteredTable1.cos_alpha_opt,filteredTable1.cos_beta_opt,2);
 xlim([-1, 1]);
-% Ö¸¶¨yÖá·¶Î§ºÍ¿Ì¶È±ê¼Ç
+% Ö¸ï¿½ï¿½yï¿½á·¶Î§ï¿½Í¿Ì¶È±ï¿½ï¿½
 ylim([-1, 1]);
 
 scatter(Untitled.VarName5,Untitled.VarName6,1);
 xlim([0, 360]);
 xticks(0:40:360);
-% Ö¸¶¨yÖá·¶Î§ºÍ¿Ì¶È±ê¼Ç
+% Ö¸ï¿½ï¿½yï¿½á·¶Î§ï¿½Í¿Ì¶È±ï¿½ï¿½
 ylim([0, 90]);
 yticks(0:20:90);
 scatter(result1.VarName10,result1.VarName11);
 scatter(result1.cos,result1.cos1);
 histogram(result.VarName11);
 histogram(Untitled.VarName6);
-subplot(3,1,1);plot(signal3);title('ch1');xlabel('²ÉÑùµãÊı');ylabel('·ùÖµ');
-%ÉèÖÃºá×ø±ê¼ä¸ôÎª32
+subplot(3,1,1);plot(signal3);title('ch1');xlabel('ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½');ylabel('ï¿½ï¿½Öµ');
+%ï¿½ï¿½ï¿½Ãºï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Îª32
 
-subplot(3,1,2);plot(filtered_signal3);title('ch2');xlabel('²ÉÑùµãÊı');ylabel('·ùÖµ');
+subplot(3,1,2);plot(filtered_signal3);title('ch2');xlabel('ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½');ylabel('ï¿½ï¿½Öµ');
 
-subplot(3,1,3);plot(filtered_signal3);title('ch3');xlabel('²ÉÑùµãÊı');ylabel('·ùÖµ');
+subplot(3,1,3);plot(filtered_signal3);title('ch3');xlabel('ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½');ylabel('ï¿½ï¿½Öµ');
 
 
 plot(lag12_msw,R12_msw);
 plot(ch1);
- %»æÖÆÉÏ²ÉÑù¶Ô±ÈÍ¼
+ %ï¿½ï¿½ï¿½ï¿½ï¿½Ï²ï¿½ï¿½ï¿½ï¿½Ô±ï¿½Í¼
 plot(ch3_gcc_new, 'b');
 hold on;
 plot(ch3_upsp(:,1), ch3_upsp(:,2), 'r--');
-legend('ch3²¨ĞÎ', 'ÉÏ²ÉÑùch3²¨ĞÎ');
-xlabel('²ÉÑùµãÊı');
-ylabel('·ùÖµ');
+legend('ch3ï¿½ï¿½ï¿½ï¿½', 'ï¿½Ï²ï¿½ï¿½ï¿½ch3ï¿½ï¿½ï¿½ï¿½');
+xlabel('ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½');
+ylabel('ï¿½ï¿½Öµ');
 plot(lag12_gcc,R12_gcc);
 
- %»æÖÆÉÏ²ÉÑù¶Ô±ÈÍ¼
+ %ï¿½ï¿½ï¿½ï¿½ï¿½Ï²ï¿½ï¿½ï¿½ï¿½Ô±ï¿½Í¼
 plot(filtered_signal1, 'b');
 hold on;
 plot(ch1, 'r--');
-legend('ch2²¨ĞÎ', 'ÉÏ²ÉÑùch2²¨ĞÎ');
-xlabel('²ÉÑùµãÊı');
-ylabel('·ùÖµ');
+legend('ch2ï¿½ï¿½ï¿½ï¿½', 'ï¿½Ï²ï¿½ï¿½ï¿½ch2ï¿½ï¿½ï¿½ï¿½');
+xlabel('ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½');
+ylabel('ï¿½ï¿½Öµ');
 axis auto
 
 
-% »æÖÆÁ½¸ö²¨ĞÎ
+% ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 plot(ch1, 'b');
 hold on;
 plot(IMF(:,3), 'r--');
-legend('ch1²¨ĞÎ', '¹ıÂËºóµÄch1²¨ĞÎ');
-xlabel('²ÉÑùµãÊı');
-ylabel('·ùÖµ');
-title('¸ù¾İ»¥Ïà¹ØÇúÏßµÄ×î´óÖµ½øĞĞÊı¾İÆ½ÒÆµÄ½á¹û');
+legend('ch1ï¿½ï¿½ï¿½ï¿½', 'ï¿½ï¿½ï¿½Ëºï¿½ï¿½ch1ï¿½ï¿½ï¿½ï¿½');
+xlabel('ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½');
+ylabel('ï¿½ï¿½Öµ');
+title('ï¿½ï¿½ï¿½İ»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ßµï¿½ï¿½ï¿½ï¿½Öµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ½ï¿½ÆµÄ½ï¿½ï¿½');
 
-% »æÖÆÁ½¸ö²¨ĞÎ
+% ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 plot(ch1_gcc_new, 'b');
 hold on;
 plot(ch3_gcc_new, 'r--');
-legend('Ô­ĞÅºÅ', 'Æ½ÒÆºó');
-xlabel('²ÉÑùµãÊı');
-ylabel('·ùÖµ');
-title('½á¹û');
+legend('Ô­ï¿½Åºï¿½', 'Æ½ï¿½Æºï¿½');
+xlabel('ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½');
+ylabel('ï¿½ï¿½Öµ');
+title('ï¿½ï¿½ï¿½');
 
 
 
-num_bins = 100; % ¶¨ÒåÖ±·½Í¼µÄÖùÊı
+num_bins = 100; % ï¿½ï¿½ï¿½ï¿½Ö±ï¿½ï¿½Í¼ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 [counts, edges] = histcounts(matched_max_r_gccs, num_bins);
 
-% ¼ÆËãÃ¿¸öÇø¼äµÄÖĞĞÄµã£¬ÓÃÓÚ»æÖÆÆµÂÊ·Ö²¼Í¼
+% ï¿½ï¿½ï¿½ï¿½Ã¿ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Äµã£¬ï¿½ï¿½ï¿½Ú»ï¿½ï¿½ï¿½Æµï¿½Ê·Ö²ï¿½Í¼
 centers = edges(1:end-1) + diff(edges) / 2;
 
-% »æÖÆÆµÂÊ·Ö²¼Í¼
+% ï¿½ï¿½ï¿½ï¿½Æµï¿½Ê·Ö²ï¿½Í¼
 figure;
 bar(centers, counts);
-xlabel('Ïà¹ØÏµÊı´óĞ¡');
-ylabel('ÊıÁ¿');
-title('Æ¥Åäµ½µÄÏà¹ØÏµÊı·Ö²¼Í¼');
-grid on; % Ìí¼ÓÍø¸ñ
+xlabel('ï¿½ï¿½ï¿½Ïµï¿½ï¿½ï¿½ï¿½Ğ¡');
+ylabel('ï¿½ï¿½ï¿½ï¿½');
+title('Æ¥ï¿½äµ½ï¿½ï¿½ï¿½ï¿½ï¿½Ïµï¿½ï¿½ï¿½Ö²ï¿½Í¼');
+grid on; % ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
