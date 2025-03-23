@@ -4,7 +4,7 @@ function [start_read_loc_chj, r_gccs] = get_match_single_yld_chj_siddle(yld_sign
     % 如果skip_large_window参数不为0，则跳过第一个窗口长度（2e7）
     if skip_large_window ~= 0
         window_lengths = window_lengths(2:end);
-        current_chj_read_loc = skip_large_window
+        current_chj_read_loc = skip_large_window;
     end
 
     % 对每个窗口长度进行匹配，逐步精细化
