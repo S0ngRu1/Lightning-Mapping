@@ -17,7 +17,7 @@ S_results = [];
 match_results = struct('yld_start_loc', {}, 'chj_loc', {}, 'r_gccs', {});
 [yld_start_loc, yld_azimuth, yld_elevation, yld_Rcorr, yld_t123] = read_result(yld_result_path,start_read_loc_yld, end_read_loc_yld);
 h = waitbar(0, 'Processing...');
-first_start_read_loc_chj = 0
+first_start_read_loc_chj = 0;
 %% Step2 根据引雷点的信号窗口得到匹配到的从化局的信号
 for i =1 :numel(yld_start_loc)
     sub_S_results = [];
