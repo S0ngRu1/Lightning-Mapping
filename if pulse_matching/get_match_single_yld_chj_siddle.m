@@ -1,6 +1,9 @@
 function [start_read_loc_chj, r_gccs] = get_match_single_yld_chj_siddle(yld_signal_start_loc, skip_large_window)
     % 定义逐步缩小的窗口长度，依次进行粗匹配到细匹配
-    window_lengths = [2e7, 2e4, 6000];
+    % 小波去噪参数
+    level = 4;          % 分解层数
+    wavelet = 'db4';    % 小波基 
+    window_lengths = [2e5, 8e4, 2e4, 6000, 1024];
     % 如果skip_large_window参数不为0，则跳过第一个窗口长度（2e7）
     if skip_large_window ~= 0
         window_lengths = window_lengths(2:end);
@@ -18,7 +21,8 @@ function [start_read_loc_chj, r_gccs] = get_match_single_yld_chj_siddle(yld_sign
         chj_length = current_window_length * 4;
         % 读取chj信号
         if i == 1 && skip_large_window == 0
-            current_chj_read_loc = yld_signal_start_loc + 3e7;
+            current_chj_read_loc = yld_signal_start_loc + 34371950 - current_window_length * 2;
+%             chj_length = current_window_length * 2;
         else
             current_chj_read_loc = current_chj_read_loc - current_window_length * 2;
         end
@@ -34,7 +38,8 @@ function [start_read_loc_chj, r_gccs] = get_match_single_yld_chj_siddle(yld_sign
                 continue
             end
             subsignal_chj = chj_signal(subsignal_starts(subi) : subsignal_starts(subi) + yld_signal_length - 1);
-            filtered_chj_signal = filter_bp(subsignal_chj, 20e6, 80e6, 5);
+%             filtered_chj_signal = filter_bp(subsignal_chj, 20e6, 80e6, 5);
+            filtered_chj_signal = waveletDenoiseAdaptive(subsignal_chj, level, wavelet);
             processed_chj_signal = real(windowsignal(detrend(filtered_chj_signal)));
             
             [r_gcc, lags_gcc] = xcorr(processed_chj_signal, processed_yld_signal, 'normalized');

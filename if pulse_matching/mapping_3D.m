@@ -13,6 +13,11 @@ p = chj_sit-yld_sit;
 dist = 8.09e3; %单位：米
 c = 0.299792458;
 W = 20000; % 时间误差
+
+% 小波去噪参数
+level = 4;          % 分解层数
+wavelet = 'db4';    % 小波基 
+
 S_results = [];
 match_results = struct('yld_start_loc', {}, 'chj_loc', {}, 'r_gccs', {});
 [yld_start_loc, yld_azimuth, yld_elevation, yld_Rcorr, yld_t123] = read_result(yld_result_path,start_read_loc_yld, end_read_loc_yld);
@@ -27,7 +32,7 @@ for i =1 :numel(yld_start_loc)
         continue
     end
     % 判断是否需要进行大窗口匹配：
-    if i == 1 
+    if first_start_read_loc_chj == 0 
         skip_large = 0;  % 进行大窗口匹配
         [first_start_read_loc_chj, r_gccs] = get_match_single_yld_chj_siddle(yld_start_loc(i), skip_large);
         start_read_loc_chj = first_start_read_loc_chj;
