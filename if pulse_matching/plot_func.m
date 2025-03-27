@@ -239,3 +239,9 @@ xlabel('���ϵ����С');
 ylabel('����');
 title('ƥ�䵽�����ϵ���ֲ�ͼ');
 grid on; % ��������
+
+current_chj_start_loc = current_chj_read_loc + subsignal_starts(6) + floor(all_t_gccs(6));
+chj_signal = read_signal('../2024 822 85933.651462CH1.dat', yld_signal_length, current_chj_start_loc);
+plot(chj_signal)
+figure;
+plot(yld_signal)

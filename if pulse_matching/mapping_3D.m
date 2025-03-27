@@ -1,3 +1,4 @@
+clear
 %% Step1 读取引雷点的二维定位结果（需要条件筛选出合格的）
 % 引入变量：位置，方位角，仰角
 chj_signal_length = 1024;
@@ -12,7 +13,12 @@ dltas = [];
 p = chj_sit-yld_sit;
 dist = 8.09e3; %单位：米
 c = 0.299792458;
-W = 20000; % 时间误差
+W = 30000; % 时间误差
+
+% 小波去噪参数
+level = 7;          % 分解层数
+wavelet = 'db4';    % 小波基 
+
 S_results = [];
 match_results = struct('yld_start_loc', {}, 'chj_loc', {}, 'r_gccs', {});
 [yld_start_loc, yld_azimuth, yld_elevation, yld_Rcorr, yld_t123] = read_result(yld_result_path,start_read_loc_yld, end_read_loc_yld);
@@ -27,7 +33,7 @@ for i =1 :numel(yld_start_loc)
         continue
     end
     % 判断是否需要进行大窗口匹配：
-    if i == 1 
+    if first_start_read_loc_chj == 0 
         skip_large = 0;  % 进行大窗口匹配
         [first_start_read_loc_chj, r_gccs] = get_match_single_yld_chj_siddle(yld_start_loc(i), skip_large);
         start_read_loc_chj = first_start_read_loc_chj;
@@ -57,7 +63,7 @@ for i =1 :numel(yld_start_loc)
         chj_signal2 = chj_match_signal2(subsignal_starts(subi) : subsignal_starts(subi) + chj_signal_length - 1);
         chj_signal3 = chj_match_signal3(subsignal_starts(subi) : subsignal_starts(subi) + chj_signal_length - 1);
 
-        filtered_chj_signal = filter_bp(chj_signal1, 20e6, 80e6, 5);
+        filtered_chj_signal = waveletDenoiseAdaptive(chj_signal1, level, wavelet);
         processed_chj_signal = real(windowsignal(detrend(filtered_chj_signal)));
         [r_gcc, lags_gcc] = xcorr(processed_chj_signal, processed_yld_signal, 'normalized');
         R_gcc = max(r_gcc);
@@ -72,7 +78,7 @@ for i =1 :numel(yld_start_loc)
         end
 
         [R1_x, R1_y, R1_z] = sph2cart(deg2rad(90-yld_azimuth(i)), deg2rad(yld_elevation(i)),1);
-        [R2_x, R2_y, R2_z] = sph2cart(deg2rad(90-chj_azimuth), deg2rad(chj_elevation),1);
+        [R2_x, R2_y, R2_z] = sph2cart(deg2rad(chj_azimuth), deg2rad(chj_elevation),1);
         A1 = [R1_x, R1_y, R1_z];
         A2 = [R2_x, R2_y, R2_z];
         C = cross(A1, A2);
@@ -128,9 +134,9 @@ close(h);
 
 % 绘制 S 的结果
 % 设置过滤条件
-x_range = [-3000, 5000]; % X 的合理范围
-y_range = [-3000, 5000]; % Y 的合理范围
-z_range = [0, 5000];    % Z 的合理范围（Z > 0）
+x_range = [-50000, 50000]; % X 的合理范围
+y_range = [-50000, 50000]; % Y 的合理范围
+z_range = [0, 50000];    % Z 的合理范围（Z > 0）
 
 % 过滤数据
 filtered_S = S_results(...
