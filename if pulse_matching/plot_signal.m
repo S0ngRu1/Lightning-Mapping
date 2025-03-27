@@ -1,6 +1,7 @@
-signal_length = 2e8; 
+signal_length = 1024; 
 start_read_loc_yld = 3e8;
-start_read_loc_chj = start_read_loc_yld;
+start_read_loc_chj = 469910081;
+start_read_loc_yld = 528930241;
 yld_signal = read_signal('../20240822165932.6610CH1.dat',signal_length,start_read_loc_yld);
 chj_signal = read_signal('../2024 822 85933.651462CH1.dat',signal_length,start_read_loc_chj);
 x = downsample(yld_signal,1);
