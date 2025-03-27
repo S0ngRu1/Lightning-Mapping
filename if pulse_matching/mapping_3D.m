@@ -3,9 +3,9 @@ clear
 % 引入变量：位置，方位角，仰角
 chj_signal_length = 1024;
 match_signal_length = 6000;
-yld_result_path = 'result_yld3.5-5.5.txt';
-start_read_loc_yld = 451501808;
-end_read_loc_yld = 523418116;    % 引入两个站的位置关系
+yld_result_path = 'result_yld_th1_4_5e8-5_5e8.txt';
+start_read_loc_yld = 451518508;
+end_read_loc_yld = 523330211;    % 引入两个站的位置关系
 yld_sit = [0, 0, 0];
 chj_sit = [7.8115e3, 2.1045e3, 0];
 dltas = [];
@@ -15,9 +15,6 @@ dist = 8.09e3; %单位：米
 c = 0.299792458;
 W = 30000; % 时间误差
 
-% 小波去噪参数
-level = 7;          % 分解层数
-wavelet = 'db4';    % 小波基 
 
 S_results = [];
 match_results = struct('yld_start_loc', {}, 'chj_loc', {}, 'r_gccs', {});
@@ -35,14 +32,15 @@ for i =1 :numel(yld_start_loc)
     % 判断是否需要进行大窗口匹配：
     if first_start_read_loc_chj == 0 
         skip_large = 0;  % 进行大窗口匹配
-        [first_start_read_loc_chj, r_gccs] = get_match_single_yld_chj_siddle(yld_start_loc(i), skip_large);
+        [first_start_read_loc_chj, r_gccs] = get_match_single_yld_chj_find_peak(yld_start_loc(i), skip_large);
         start_read_loc_chj = first_start_read_loc_chj;
     else
         skip_large = first_start_read_loc_chj + yld_start_loc(i) - yld_start_loc(1);  % 跳过大窗口匹配
-        [start_read_loc_chj, r_gccs] = get_match_single_yld_chj_siddle(yld_start_loc(i), skip_large);
+        [start_read_loc_chj, r_gccs] = get_match_single_yld_chj_find_peak(yld_start_loc(i), skip_large);
     end
-    
-
+    if isempty(start_read_loc_chj)
+        continue
+    end
     % 读取 match_signal_length*2 长度的信号
     chj_match_signal1 = read_signal('../2024 822 85933.651462CH1.dat',match_signal_length*2,start_read_loc_chj-match_signal_length);
     chj_match_signal2 = read_signal('../2024 822 85933.651462CH2.dat',match_signal_length*2,start_read_loc_chj-match_signal_length);
@@ -52,7 +50,7 @@ for i =1 :numel(yld_start_loc)
     subsignal_starts = 1:subsignal_step:match_signal_length*2;
 
     yld_signal = read_signal('../20240822165932.6610CH1.dat', chj_signal_length, yld_start_loc(i));
-    filtered_yld_signal = filter_bp(yld_signal, 20e6, 80e6, 5);
+    filtered_yld_signal = filter_bp(yld_signal, 30e6, 80e6, 5);
     processed_yld_signal = real(windowsignal(detrend(filtered_yld_signal)));
 
     for subi = 1:numel(subsignal_starts)
@@ -63,7 +61,7 @@ for i =1 :numel(yld_start_loc)
         chj_signal2 = chj_match_signal2(subsignal_starts(subi) : subsignal_starts(subi) + chj_signal_length - 1);
         chj_signal3 = chj_match_signal3(subsignal_starts(subi) : subsignal_starts(subi) + chj_signal_length - 1);
 
-        filtered_chj_signal = waveletDenoiseAdaptive(chj_signal1, level, wavelet);
+        filtered_chj_signal = filter_bp(chj_signal1, 30e6, 80e6, 5);
         processed_chj_signal = real(windowsignal(detrend(filtered_chj_signal)));
         [r_gcc, lags_gcc] = xcorr(processed_chj_signal, processed_yld_signal, 'normalized');
         R_gcc = max(r_gcc);

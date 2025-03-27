@@ -10,9 +10,9 @@ angle23 = 87.3358;
 c = 0.299792458;
 fs = 200e6;
 
-filtered_signal1 = filter_bp(ch1, 20e6 ,80e6 ,5);
-filtered_signal2 = filter_bp(ch2, 20e6 ,80e6 ,5);
-filtered_signal3 = filter_bp(ch3, 20e6 ,80e6 ,5);
+filtered_signal1 = filter_bp(ch1, 30e6 ,80e6 ,5);
+filtered_signal2 = filter_bp(ch2, 30e6 ,80e6 ,5);
+filtered_signal3 = filter_bp(ch3, 30e6 ,80e6 ,5);
 
 smoothed_signal1 = movmean(filtered_signal1, 10);
 smoothed_signal2 = movmean(filtered_signal2, 10);
