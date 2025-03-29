@@ -15,6 +15,22 @@ dist = 8.09e3; %单位：米
 c = 0.299792458;
 W = 30000; % 时间误差
 
+sub_filter_signal_length = 60000;
+
+
+yld_signal = read_signal('../20240822165932.6610CH1.dat', end_read_loc_yld - start_read_loc_yld + sub_filter_signal_length * 2, start_read_loc_yld-sub_filter_signal_length);
+chj_signal1 = read_signal('../2024 822 85933.651462CH1.dat', end_read_loc_chj - start_read_loc_chj + sub_filter_signal_length * 2+5e7, start_read_loc_chj-sub_filter_signal_length);
+chj_signal2 = read_signal('../2024 822 85933.651462CH2.dat', end_read_loc_chj - start_read_loc_chj + sub_filter_signal_length * 2+5e7, start_read_loc_chj-sub_filter_signal_length);
+chj_signal3 = read_signal('../2024 822 85933.651462CH3.dat', end_read_loc_chj - start_read_loc_chj + sub_filter_signal_length * 2+5e7, start_read_loc_chj-sub_filter_signal_length);
+
+filtered_yld_signal = rfi_filter(yld_signal,sub_filter_signal_length);
+filtered_chj_signal1 = rfi_filter(chj_signal1,sub_filter_signal_length);
+filtered_chj_signal2 = rfi_filter(chj_signal2,sub_filter_signal_length);
+filtered_chj_signal3 = rfi_filter(chj_signal3,sub_filter_signal_length);
+
+
+
+
 
 S_results = [];
 match_results = struct('yld_start_loc', {}, 'chj_loc', {}, 'r_gccs', {});
