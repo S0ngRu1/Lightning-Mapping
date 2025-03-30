@@ -14,10 +14,7 @@ function plot_azimuth_elevation(x, y, z, station)
     % 将弧度转换为角度
     azimuth = azimuth * 180 / pi;
     elevation = elevation * 180 / pi;
-
-    % 调整方位角范围为 -180 到 180 度
-    azimuth = mod(azimuth + 180, 360) - 180;
-
+    azimuth = mod(azimuth, 360);
     % 调整仰角范围为 0-90 度
     elevation = abs(elevation); % 确保仰角为非负值
     elevation(elevation > 90) = 90; % 限制最大值为 90 度
@@ -29,6 +26,6 @@ function plot_azimuth_elevation(x, y, z, station)
     ylabel('仰角 (度)');
     title('方位角和仰角分布');
     grid on;
-    axis([-180 180 0 90]); % 设置坐标轴范围
+    axis([0 360 0 90]); % 设置坐标轴范围
     colorbar; % 添加颜色条（可选）
 end
