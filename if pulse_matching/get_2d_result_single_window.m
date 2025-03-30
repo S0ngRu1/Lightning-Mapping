@@ -10,25 +10,10 @@ angle23 = 87.3358;
 c = 0.299792458;
 fs = 200e6;
 
-filtered_signal1 = filter_bp(ch1, 30e6 ,80e6 ,5);
-filtered_signal2 = filter_bp(ch2, 30e6 ,80e6 ,5);
-filtered_signal3 = filter_bp(ch3, 30e6 ,80e6 ,5);
-
-smoothed_signal1 = movmean(filtered_signal1, 10);
-smoothed_signal2 = movmean(filtered_signal2, 10);
-smoothed_signal3 = movmean(filtered_signal3, 10);
-
-
-% 去直流分量并应用窗函数
-[ch1_new, ch2_new, ch3_new] = deal(...
-    real(windowsignal(detrend(smoothed_signal1))), ...
-    real(windowsignal(detrend(smoothed_signal2))), ...
-    real(windowsignal(detrend(smoothed_signal3))));
-
 [ch1_up, ch2_up, ch3_up] = deal(...
-    upsampling(ch1_new, 50)', ...
-    upsampling(ch2_new, 50)', ...
-    upsampling(ch3_new, 50)');
+    upsampling(ch1, 50)', ...
+    upsampling(ch2, 50)', ...
+    upsampling(ch3, 50)');
 ch1_upsp = ch1_up(:,2);
 ch2_upsp = ch2_up(:,2);
 ch3_upsp = ch3_up(:,2);

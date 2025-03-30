@@ -44,14 +44,18 @@ for i =1 :numel(yld_start_loc)
         continue
     end
     % 读取 match_signal_length*2 长度的信号
-    chj_match_signal1 = read_signal('../2024 822 85933.651462CH1.dat',match_signal_length*2,start_read_loc_chj-match_signal_length);
-    chj_match_signal2 = read_signal('../2024 822 85933.651462CH2.dat',match_signal_length*2,start_read_loc_chj-match_signal_length);
-    chj_match_signal3 = read_signal('../2024 822 85933.651462CH3.dat',match_signal_length*2,start_read_loc_chj-match_signal_length);
+    load('../chj_filtered_ch1_3-6.mat');
+    load('../chj_filtered_ch2_3-6.mat');
+    load('../chj_filtered_ch3_3-6.mat');
+    load('../yld_filtered_ch1_3-6.mat');
+    chj_match_signal1 = filtered_chj_signal1(start_read_loc_chj-match_signal_length:start_read_loc_chj+match_signal_length);
+    chj_match_signal2 = filtered_chj_signal2(start_read_loc_chj-match_signal_length:start_read_loc_chj+match_signal_length);
+    chj_match_signal3 = filtered_chj_signal3(start_read_loc_chj-match_signal_length:start_read_loc_chj+match_signal_length);
     % 设置滑动窗口参数
     subsignal_step = match_signal_length/4;
     subsignal_starts = 1:subsignal_step:match_signal_length*2;
 
-    processed_yld_signal = read_signal('../20240822165932.6610CH1.dat', chj_signal_length, yld_start_loc(i)-3e8+1-sub_filter_signal_length/4);
+    processed_yld_signal = filtered_yld_signal1(yld_start_loc(i)-3e8+1-sub_filter_signal_length/4 : yld_start_loc(i)-3e8+1-sub_filter_signal_length/4+chj_signal_length);
     for subi = 1:numel(subsignal_starts)
         if subsignal_starts(subi) + chj_signal_length - 1 > match_signal_length*2
             continue
