@@ -13,13 +13,12 @@ function [start_read_loc_chj, r_gccs] = get_match_single_yld_chj_find_peak(yld_s
         current_window_length = window_lengths(i);
         % 读取yld信号
         yld_signal_length = current_window_length;
-        yld_signal = read_signal('../20240822165932.6610CH1.dat', yld_signal_length, yld_signal_start_loc);
-        filtered_yld_signal = filter_bp(yld_signal, 30e6, 80e6, 5);
-        processed_yld_signal = real(windowsignal(detrend(filtered_yld_signal)));
+        yld_signal_start_loc = yld_signal_start_loc-3e8+1-1.5e4;
+        processed_yld_signal = read_signal('../20240822165932.6610CH1.dat', yld_signal_length, yld_signal_start_loc);
         chj_length = current_window_length * 4;
         % 读取chj信号
         if i == 1 && skip_large_window == 0
-            current_chj_read_loc = yld_signal_start_loc + 34371950 - current_window_length * 2;
+            current_chj_read_loc = yld_signal_start_loc - current_window_length * 2;
             %             chj_length = current_window_length * 2;
         else
             current_chj_read_loc = current_chj_read_loc - current_window_length * 2;
@@ -31,8 +30,6 @@ function [start_read_loc_chj, r_gccs] = get_match_single_yld_chj_find_peak(yld_s
         all_locs = [];
         all_R_gccs = [];
         all_t_gccs = [];
-        filtered_chj_signal = filter_bp(chj_signal, 30e6, 80e6, 5);
-        processed_chj_signal = real(windowsignal(detrend(filtered_chj_signal)));
         threshold = 30;
         % 寻找峰值
         [peaks, locs] = findpeaks(chj_signal, 'MinPeakHeight', threshold, 'MinPeakDistance', 256);
@@ -45,13 +42,11 @@ function [start_read_loc_chj, r_gccs] = get_match_single_yld_chj_find_peak(yld_s
         for pi = 1:num_peaks
             idx = all_locs(pi);
             % 确保峰值不超出信号范围
-            if idx - (current_window_length / 2 - 1) <= 0 || idx + (current_window_length / 2) > length(processed_chj_signal)
+            if idx - (current_window_length / 2 - 1) <= 0 || idx + (current_window_length / 2) > length(chj_signal)
                 continue;
             end
             % 截取窗口信号
-            signal1 = processed_chj_signal(idx - (current_window_length / 2 - 1):idx + (current_window_length / 2));
-            % 去直流分量并应用窗函数
-            ch1_new = real(windowsignal(detrend(signal1)));
+            ch1_new = chj_signal(idx - (current_window_length / 2 - 1):idx + (current_window_length / 2));
             %互相关
             [r_gcc, lags_gcc] = xcorr(ch1_new, filtered_yld_signal, 'normalized');
             R_gcc = max(r_gcc);

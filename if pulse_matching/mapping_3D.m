@@ -18,20 +18,6 @@ W = 30000; % 时间误差
 sub_filter_signal_length = 60000;
 
 
-yld_signal = read_signal('../20240822165932.6610CH1.dat', end_read_loc_yld - start_read_loc_yld + sub_filter_signal_length * 2, start_read_loc_yld-sub_filter_signal_length);
-chj_signal1 = read_signal('../2024 822 85933.651462CH1.dat', end_read_loc_yld - start_read_loc_yld + sub_filter_signal_length * 2+5e7, start_read_loc_yld-sub_filter_signal_length);
-chj_signal2 = read_signal('../2024 822 85933.651462CH2.dat', end_read_loc_yld - start_read_loc_yld + sub_filter_signal_length * 2+5e7, start_read_loc_yld-sub_filter_signal_length);
-chj_signal3 = read_signal('../2024 822 85933.651462CH3.dat', end_read_loc_yld - start_read_loc_yld + sub_filter_signal_length * 2+5e7, start_read_loc_yld-sub_filter_signal_length);
-
-filtered_yld_signal = rfi_filter(yld_signal,sub_filter_signal_length);
-filtered_chj_signal1 = rfi_filter(chj_signal1,sub_filter_signal_length);
-filtered_chj_signal2 = rfi_filter(chj_signal2,sub_filter_signal_length);
-filtered_chj_signal3 = rfi_filter(chj_signal3,sub_filter_signal_length);
-
-
-
-
-
 S_results = [];
 match_results = struct('yld_start_loc', {}, 'chj_loc', {}, 'r_gccs', {});
 [yld_start_loc, yld_azimuth, yld_elevation, yld_Rcorr, yld_t123] = read_result(yld_result_path,start_read_loc_yld, end_read_loc_yld);
@@ -60,25 +46,19 @@ for i =1 :numel(yld_start_loc)
     % 读取 match_signal_length*2 长度的信号
     chj_match_signal1 = read_signal('../2024 822 85933.651462CH1.dat',match_signal_length*2,start_read_loc_chj-match_signal_length);
     chj_match_signal2 = read_signal('../2024 822 85933.651462CH2.dat',match_signal_length*2,start_read_loc_chj-match_signal_length);
-    chj_match_signal3 = read_signal('../2024 822 85933.651462CH3.dat',match_signal_length*2,start_read_loc_chj-match_signal_length+165/5);
+    chj_match_signal3 = read_signal('../2024 822 85933.651462CH3.dat',match_signal_length*2,start_read_loc_chj-match_signal_length);
     % 设置滑动窗口参数
     subsignal_step = match_signal_length/4;
     subsignal_starts = 1:subsignal_step:match_signal_length*2;
 
-    yld_signal = read_signal('../20240822165932.6610CH1.dat', chj_signal_length, yld_start_loc(i));
-    filtered_yld_signal = filter_bp(yld_signal, 30e6, 80e6, 5);
-    processed_yld_signal = real(windowsignal(detrend(filtered_yld_signal)));
-
+    processed_yld_signal = read_signal('../20240822165932.6610CH1.dat', chj_signal_length, yld_start_loc(i)-3e8+1-sub_filter_signal_length/4);
     for subi = 1:numel(subsignal_starts)
         if subsignal_starts(subi) + chj_signal_length - 1 > match_signal_length*2
             continue
         end
-        chj_signal1 = chj_match_signal1(subsignal_starts(subi) : subsignal_starts(subi) + chj_signal_length - 1);
-        chj_signal2 = chj_match_signal2(subsignal_starts(subi) : subsignal_starts(subi) + chj_signal_length - 1);
-        chj_signal3 = chj_match_signal3(subsignal_starts(subi) : subsignal_starts(subi) + chj_signal_length - 1);
-
-        filtered_chj_signal = filter_bp(chj_signal1, 30e6, 80e6, 5);
-        processed_chj_signal = real(windowsignal(detrend(filtered_chj_signal)));
+        processed_chj_signal1 = chj_match_signal1(subsignal_starts(subi) : subsignal_starts(subi) + chj_signal_length - 1);
+        processed_chj_signal2 = chj_match_signal2(subsignal_starts(subi) : subsignal_starts(subi) + chj_signal_length - 1);
+        processed_chj_signal3 = chj_match_signal3(subsignal_starts(subi) : subsignal_starts(subi) + chj_signal_length - 1);
         [r_gcc, lags_gcc] = xcorr(processed_chj_signal, processed_yld_signal, 'normalized');
         R_gcc = max(r_gcc);
         t_gcc = cal_tau(r_gcc, lags_gcc');
@@ -86,7 +66,7 @@ for i =1 :numel(yld_start_loc)
             continue
         end
 
-        [chj_start_loc, chj_azimuth, chj_elevation, chj_Rcorr, chj_t123] = get_2d_result_single_window(start_read_loc_chj,chj_signal1,chj_signal2,chj_signal3);
+        [chj_start_loc, chj_azimuth, chj_elevation, chj_Rcorr, chj_t123] = get_2d_result_single_window(start_read_loc_chj,processed_chj_signal1,processed_chj_signal2,processed_chj_signal3);
         if chj_start_loc == 0
             continue
         end
