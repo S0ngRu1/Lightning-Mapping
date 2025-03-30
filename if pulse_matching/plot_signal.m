@@ -1,5 +1,5 @@
 signal_length = 2e8; 
-start_read_loc_yld = 3e8;
+start_read_loc_yld = 451518508;
 start_read_loc_chj = start_read_loc_yld;
 yld_signal = read_signal('../20240822165932.6610CH1.dat',signal_length,start_read_loc_yld);
 chj_signal = read_signal('../2024 822 85933.651462CH1.dat',signal_length,start_read_loc_chj);

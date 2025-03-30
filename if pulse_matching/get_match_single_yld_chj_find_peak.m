@@ -1,4 +1,4 @@
-function [start_read_loc_chj, r_gccs] = get_match_single_yld_chj_find_peak(yld_signal_start_loc, skip_large_window)
+function [start_read_loc_chj, r_gccs] = get_match_single_yld_chj_find_peak(filtered_chj_signal1,filtered_yld_signal1,yld_signal_start_loc, skip_large_window)
     start_read_loc_chj = [];
     r_gccs = 0;
     window_lengths = [2e5, 2e4, 6000];
@@ -7,15 +7,14 @@ function [start_read_loc_chj, r_gccs] = get_match_single_yld_chj_find_peak(yld_s
         window_lengths = window_lengths(2:end);
         current_chj_read_loc = skip_large_window;
     end
-    load('../chj_filtered_ch1_3-6.mat');
-    load('../yld_filtered_ch1_3-6.mat');
+    yld_signal_start_loc = yld_signal_start_loc-3e8+1-1.5e4;
     % 对每个窗口长度进行匹配，逐步精细化
     for i = 1:length(window_lengths)
         current_window_length = window_lengths(i);
         % 读取yld信号
         yld_signal_length = current_window_length;
-        yld_signal_start_loc = yld_signal_start_loc-3e8+1-1.5e4;
-        processed_yld_signal = filtered_yld_signal1(yld_signal_start_loc: yld_signal_start_loc+yld_signal_length);
+        
+        processed_yld_signal = filtered_yld_signal1(yld_signal_start_loc+1: yld_signal_start_loc+yld_signal_length);
         chj_length = current_window_length * 4;
         % 读取chj信号
         if i == 1 && skip_large_window == 0
@@ -27,7 +26,7 @@ function [start_read_loc_chj, r_gccs] = get_match_single_yld_chj_find_peak(yld_s
         if isempty(current_chj_read_loc)
             continue;
         end
-        chj_signal = filtered_chj_signal1(current_chj_read_loc:chj_length+current_chj_read_loc);
+        chj_signal = filtered_chj_signal1(current_chj_read_loc+1:chj_length+current_chj_read_loc);
         all_locs = [];
         all_R_gccs = [];
         all_t_gccs = [];

@@ -1,19 +1,21 @@
 %���1
 % logicalIndex = abs(result1.t123) < 1 & abs(result1.Rcorr) > 0.3;
-logicalIndex = abs(result1.t123) < 1 & abs(result1.Rcorr) > 0.3 & result1.Start_loc < 6e8 & result1.Start_loc > 2e8;
+logicalIndex = abs(result1.t123) < 1 & abs(result1.Rcorr) > 0.3 & result1.Start_loc < 523330212 & result1.Start_loc > 451518507;
 filteredTable1 = result1(logicalIndex, :);
 Start_loc = filteredTable1.Start_loc;
 colorValues = (Start_loc - 3e8) / 2e8;
 
 % 将方位角从0-360转换为-180到180
-filteredTable1.Azimuth = mod(filteredTable1.Azimuth + 180, 360) - 180;
+% filteredTable1.Azimuth = mod(filteredTable1.Azimuth + 180, 360) - 180;
 
 figure;
 scatter(filteredTable1.Azimuth, filteredTable1.Elevation, 1, colorValues, 'filled');
 title('Azimuth vs Elevation');
 xlabel('Azimuth');
-xlim([-180, 180]); % 修改x轴范围
-xticks(-180:40:180); % 修改x轴刻度
+% xlim([-180, 180]); % 修改x轴范围
+% xticks(-180:40:180); % 修改x轴刻度
+xlim([0, 360]);
+xticks(0:40:360);
 ylabel('Elevation');
 ylim([-40, 100]);
 yticks(-40:20:100);

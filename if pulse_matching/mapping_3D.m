@@ -17,7 +17,10 @@ W = 30000; % 时间误差
 
 sub_filter_signal_length = 60000;
 
-
+load('chj_filtered_ch1_3-6.mat');
+load('chj_filtered_ch2_3-6.mat');
+load('chj_filtered_ch3_3-6.mat');
+load('yld_filtered_ch1_3-6.mat');
 S_results = [];
 match_results = struct('yld_start_loc', {}, 'chj_loc', {}, 'r_gccs', {});
 [yld_start_loc, yld_azimuth, yld_elevation, yld_Rcorr, yld_t123] = read_result(yld_result_path,start_read_loc_yld, end_read_loc_yld);
@@ -34,20 +37,16 @@ for i =1 :numel(yld_start_loc)
     % 判断是否需要进行大窗口匹配：
     if first_start_read_loc_chj == 0 
         skip_large = 0;  % 进行大窗口匹配
-        [first_start_read_loc_chj, r_gccs] = get_match_single_yld_chj_find_peak(yld_start_loc(i), skip_large);
+        [first_start_read_loc_chj, r_gccs] = get_match_single_yld_chj_find_peak(filtered_chj_signal1,filtered_yld_signal1,yld_start_loc(i), skip_large);
         start_read_loc_chj = first_start_read_loc_chj;
     else
         skip_large = first_start_read_loc_chj + yld_start_loc(i) - yld_start_loc(1);  % 跳过大窗口匹配
-        [start_read_loc_chj, r_gccs] = get_match_single_yld_chj_find_peak(yld_start_loc(i), skip_large);
+        [start_read_loc_chj, r_gccs] = get_match_single_yld_chj_find_peak(filtered_chj_signal1,filtered_yld_signal1,yld_start_loc(i), skip_large);
     end
     if isempty(start_read_loc_chj)
         continue
     end
     % 读取 match_signal_length*2 长度的信号
-    load('../chj_filtered_ch1_3-6.mat');
-    load('../chj_filtered_ch2_3-6.mat');
-    load('../chj_filtered_ch3_3-6.mat');
-    load('../yld_filtered_ch1_3-6.mat');
     chj_match_signal1 = filtered_chj_signal1(start_read_loc_chj-match_signal_length:start_read_loc_chj+match_signal_length);
     chj_match_signal2 = filtered_chj_signal2(start_read_loc_chj-match_signal_length:start_read_loc_chj+match_signal_length);
     chj_match_signal3 = filtered_chj_signal3(start_read_loc_chj-match_signal_length:start_read_loc_chj+match_signal_length);
@@ -55,15 +54,15 @@ for i =1 :numel(yld_start_loc)
     subsignal_step = match_signal_length/4;
     subsignal_starts = 1:subsignal_step:match_signal_length*2;
 
-    processed_yld_signal = filtered_yld_signal1(yld_start_loc(i)-3e8+1-sub_filter_signal_length/4 : yld_start_loc(i)-3e8+1-sub_filter_signal_length/4+chj_signal_length);
+    processed_yld_signal = filtered_yld_signal1(yld_start_loc(i)-3e8+1-sub_filter_signal_length/4 : yld_start_loc(i)-3e8-sub_filter_signal_length/4+chj_signal_length);
     for subi = 1:numel(subsignal_starts)
         if subsignal_starts(subi) + chj_signal_length - 1 > match_signal_length*2
             continue
         end
-        processed_chj_signal1 = chj_match_signal1(subsignal_starts(subi) : subsignal_starts(subi) + chj_signal_length - 1);
-        processed_chj_signal2 = chj_match_signal2(subsignal_starts(subi) : subsignal_starts(subi) + chj_signal_length - 1);
-        processed_chj_signal3 = chj_match_signal3(subsignal_starts(subi) : subsignal_starts(subi) + chj_signal_length - 1);
-        [r_gcc, lags_gcc] = xcorr(processed_chj_signal, processed_yld_signal, 'normalized');
+        processed_chj_signal1 = chj_match_signal1(subsignal_starts(subi)+1 : subsignal_starts(subi) + chj_signal_length);
+        processed_chj_signal2 = chj_match_signal2(subsignal_starts(subi)+1 : subsignal_starts(subi) + chj_signal_length);
+        processed_chj_signal3 = chj_match_signal3(subsignal_starts(subi)+1 : subsignal_starts(subi) + chj_signal_length);
+        [r_gcc, lags_gcc] = xcorr(processed_chj_signal1, processed_yld_signal, 'normalized');
         R_gcc = max(r_gcc);
         t_gcc = cal_tau(r_gcc, lags_gcc');
         if R_gcc < 0.15
@@ -75,8 +74,8 @@ for i =1 :numel(yld_start_loc)
             continue
         end
 
-        [R1_x, R1_y, R1_z] = sph2cart(deg2rad(90-yld_azimuth(i)), deg2rad(yld_elevation(i)),1);
-        [R2_x, R2_y, R2_z] = sph2cart(deg2rad(chj_azimuth), deg2rad(chj_elevation),1);
+        [R1_x, R1_y, R1_z] = sph2cart(90-deg2rad(yld_azimuth(i)), deg2rad(yld_elevation(i)),1);
+        [R2_x, R2_y, R2_z] = sph2cart(90-deg2rad(chj_azimuth), deg2rad(chj_elevation),1);
         A1 = [R1_x, R1_y, R1_z];
         A2 = [R2_x, R2_y, R2_z];
         C = cross(A1, A2);
@@ -115,7 +114,7 @@ for i =1 :numel(yld_start_loc)
             if dlta <= W
                 sub_S_results = [sub_S_results; sub_S];
                 sub_R_gccs = [sub_R_gccs;R_gcc];
-                match_results = [match_results; struct('yld_start_loc', yld_start_loc(i), 'chj_loc', start_read_loc_chj-match_signal_length+subsignal_starts(subi), 'r_gccs', R_gcc)];
+                match_results = [match_results; struct('yld_start_loc', yld_start_loc(i), 'chj_loc', start_read_loc_chj-match_signal_length+subsignal_starts(subi)+3e8+sub_filter_signal_length/4+34371950, 'r_gccs', R_gcc)];
             end
         end
     end
@@ -134,7 +133,7 @@ close(h);
 % 设置过滤条件
 x_range = [-50000, 50000]; % X 的合理范围
 y_range = [-50000, 50000]; % Y 的合理范围
-z_range = [0, 50000];    % Z 的合理范围（Z > 0）
+z_range = [-50000, 50000];    % Z 的合理范围（Z > 0）
 
 % 过滤数据
 filtered_S = S_results(...
@@ -167,27 +166,4 @@ x = filtered_S(:, 1);
 y = filtered_S(:, 2);
 z = filtered_S(:, 3);
 
-% 将直角坐标转换为球坐标
-[azimuth, elevation, ~] = cart2sph(x, y, z);
-
-% 将弧度转换为角度
-azimuth = azimuth * 180 / pi;
-elevation = elevation * 180 / pi;
-
-% 调整方位角范围为 0-360 度
-azimuth = mod(azimuth, 360);
-azimuth(azimuth < 0) = azimuth(azimuth < 0) + 360;
-
-% 调整仰角范围为 0-90 度
-elevation = abs(elevation); % 确保仰角为非负值
-elevation(elevation > 90) = 90; % 限制最大值为 90 度
-
-% 绘制方位角和仰角的散点图
-figure;
-scatter(azimuth, elevation, 1, 'filled');
-xlabel('方位角 (度)');
-ylabel('仰角 (度)');
-title('方位角和仰角分布');
-grid on;
-axis([0 360 0 90]); % 设置坐标轴范围
-colorbar; % 添加颜色条（可选）
+plot_azimuth_elevation(x, y, z, yld_sit)
