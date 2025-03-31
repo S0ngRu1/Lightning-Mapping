@@ -1,4 +1,19 @@
 clear
+%% Step0 滤波
+% %RFI滤波
+% original_signal_length = 3e8;
+% original_signal_loc = 3e8;
+% sub_filter_signal_length = 60000;
+% yld_signal1 = read_signal('../20240822165932.6610CH1.dat', original_signal_length, original_signal_loc);
+% chj_signal1 = read_signal('../2024 822 85933.651462CH1.dat', original_signal_length, original_signal_loc + 34371950);
+% chj_signal2 = read_signal('../2024 822 85933.651462CH2.dat', original_signal_length, original_signal_loc + 34371950);
+% chj_signal3 = read_signal('../2024 822 85933.651462CH3.dat', original_signal_length, original_signal_loc + 34371950+165/5);
+% filtered_yld_signal1 = rfi_filter(yld_signal1,sub_filter_signal_length);
+% filtered_chj_signal1 = rfi_filter(chj_signal1,sub_filter_signal_length);
+% filtered_chj_signal2 = rfi_filter(chj_signal2,sub_filter_signal_length);
+% filtered_chj_signal3 = rfi_filter(chj_signal3,sub_filter_signal_length);
+%%卡尔曼滤波
+
 %% Step1 读取引雷点的二维定位结果（需要条件筛选出合格的）
 % 引入变量：位置，方位角，仰角
 chj_signal_length = 1024;
@@ -37,11 +52,11 @@ for i =1 :numel(yld_start_loc)
     % 判断是否需要进行大窗口匹配：
     if first_start_read_loc_chj == 0 
         skip_large = 0;  % 进行大窗口匹配
-        [first_start_read_loc_chj, r_gccs] = get_match_single_yld_chj_find_peak(filtered_chj_signal1,filtered_yld_signal1,yld_start_loc(i), skip_large);
+        [first_start_read_loc_chj, r_gccs] = get_match_single_yld_chj_siddle(filtered_chj_signal1,filtered_yld_signal1,yld_start_loc(i), skip_large);
         start_read_loc_chj = first_start_read_loc_chj;
     else
         skip_large = first_start_read_loc_chj + yld_start_loc(i) - yld_start_loc(1);  % 跳过大窗口匹配
-        [start_read_loc_chj, r_gccs] = get_match_single_yld_chj_find_peak(filtered_chj_signal1,filtered_yld_signal1,yld_start_loc(i), skip_large);
+        [start_read_loc_chj, r_gccs] = get_match_single_yld_chj_siddle(filtered_chj_signal1,filtered_yld_signal1,yld_start_loc(i), skip_large);
     end
     if isempty(start_read_loc_chj)
         continue
@@ -50,18 +65,27 @@ for i =1 :numel(yld_start_loc)
     chj_match_signal1 = filtered_chj_signal1(start_read_loc_chj-match_signal_length:start_read_loc_chj+match_signal_length);
     chj_match_signal2 = filtered_chj_signal2(start_read_loc_chj-match_signal_length:start_read_loc_chj+match_signal_length);
     chj_match_signal3 = filtered_chj_signal3(start_read_loc_chj-match_signal_length:start_read_loc_chj+match_signal_length);
-    % 设置滑动窗口参数
-    subsignal_step = match_signal_length/4;
-    subsignal_starts = 1:subsignal_step:match_signal_length*2;
+    
+    % 寻峰匹配计算所有可能的三维源
+    threshold = 30;
+    % 寻找峰值
+    [peaks, locs] = findpeaks(chj_match_signal1, 'MinPeakHeight', threshold, 'MinPeakDistance', 256);
+    all_locs = locs;
+    % 遍历所有峰值
+    num_peaks = numel(all_locs);
+    if num_peaks == 0
+        continue;
+    end
 
-    processed_yld_signal = filtered_yld_signal1(yld_start_loc(i)-3e8+1-sub_filter_signal_length/4 : yld_start_loc(i)-3e8-sub_filter_signal_length/4+chj_signal_length);
-    for subi = 1:numel(subsignal_starts)
-        if subsignal_starts(subi) + chj_signal_length - 1 > match_signal_length*2
-            continue
+    processed_yld_signal = filtered_yld_signal1(yld_start_loc(i)+1-3e8-sub_filter_signal_length/4 : yld_start_loc(i)-3e8-sub_filter_signal_length/4+chj_signal_length);
+    for pi = 1:num_peaks
+        idx = all_locs(pi);
+        if idx - (chj_signal_length / 2 - 1) <= 0 || idx + (chj_signal_length / 2) > match_signal_length*2
+            continue;
         end
-        processed_chj_signal1 = chj_match_signal1(subsignal_starts(subi)+1 : subsignal_starts(subi) + chj_signal_length);
-        processed_chj_signal2 = chj_match_signal2(subsignal_starts(subi)+1 : subsignal_starts(subi) + chj_signal_length);
-        processed_chj_signal3 = chj_match_signal3(subsignal_starts(subi)+1 : subsignal_starts(subi) + chj_signal_length);
+        processed_chj_signal1 = chj_match_signal1(idx - (chj_signal_length / 2)+ 1:idx + (chj_signal_length / 2));
+        processed_chj_signal2 = chj_match_signal2(idx - (chj_signal_length / 2)+ 1:idx + (chj_signal_length / 2));
+        processed_chj_signal3 = chj_match_signal3(idx - (chj_signal_length / 2)+ 1:idx + (chj_signal_length / 2));
         [r_gcc, lags_gcc] = xcorr(processed_chj_signal1, processed_yld_signal, 'normalized');
         R_gcc = max(r_gcc);
         t_gcc = cal_tau(r_gcc, lags_gcc');
@@ -114,7 +138,7 @@ for i =1 :numel(yld_start_loc)
             if dlta <= W
                 sub_S_results = [sub_S_results; sub_S];
                 sub_R_gccs = [sub_R_gccs;R_gcc];
-                match_results = [match_results; struct('yld_start_loc', yld_start_loc(i), 'chj_loc', start_read_loc_chj-match_signal_length+subsignal_starts(subi)+3e8+sub_filter_signal_length/4+34371950, 'r_gccs', R_gcc)];
+                match_results = [match_results; struct('yld_start_loc', yld_start_loc(i), 'chj_loc', start_read_loc_chj-match_signal_length + idx - (chj_signal_length / 2)+1 + 3e8+sub_filter_signal_length/4+34371950, 'r_gccs', R_gcc)];
             end
         end
     end
