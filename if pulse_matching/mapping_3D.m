@@ -22,7 +22,7 @@ yld_result_path = 'result_yld_th1_4_5e8-5_5e8.txt';
 start_read_loc_yld = 451518508;
 end_read_loc_yld = 523330211;    % 引入两个站的位置关系
 yld_sit = [0, 0, 0];
-chj_sit = [7.8115e3, 2.1045e3, 0];
+chj_sit = [1991, -7841, 0];
 dltas = [];
 % yld相对于chj的位置
 p = chj_sit-yld_sit;
@@ -32,10 +32,10 @@ W = 30000; % 时间误差
 
 sub_filter_signal_length = 60000;
 
-load('chj_filtered_ch1_3-6.mat');
-load('chj_filtered_ch2_3-6.mat');
-load('chj_filtered_ch3_3-6.mat');
-load('yld_filtered_ch1_3-6.mat');
+load('../chj_filtered_ch1_3-6.mat');
+load('../chj_filtered_ch2_3-6.mat');
+load('../chj_filtered_ch3_3-6.mat');
+load('../yld_filtered_ch1_3-6.mat');
 S_results = [];
 match_results = struct('yld_start_loc', {}, 'chj_loc', {}, 'r_gccs', {});
 [yld_start_loc, yld_azimuth, yld_elevation, yld_Rcorr, yld_t123] = read_result(yld_result_path,start_read_loc_yld, end_read_loc_yld);
@@ -52,11 +52,11 @@ for i =1 :numel(yld_start_loc)
     % 判断是否需要进行大窗口匹配：
     if first_start_read_loc_chj == 0 
         skip_large = 0;  % 进行大窗口匹配
-        [first_start_read_loc_chj, r_gccs] = get_match_single_yld_chj_siddle(filtered_chj_signal1,filtered_yld_signal1,yld_start_loc(i), skip_large);
+        [first_start_read_loc_chj, r_gccs] = get_match_single_yld_chj_find_peak(filtered_chj_signal1,filtered_yld_signal1,yld_start_loc(i), skip_large);
         start_read_loc_chj = first_start_read_loc_chj;
     else
         skip_large = first_start_read_loc_chj + yld_start_loc(i) - yld_start_loc(1);  % 跳过大窗口匹配
-        [start_read_loc_chj, r_gccs] = get_match_single_yld_chj_siddle(filtered_chj_signal1,filtered_yld_signal1,yld_start_loc(i), skip_large);
+        [start_read_loc_chj, r_gccs] = get_match_single_yld_chj_find_peak(filtered_chj_signal1,filtered_yld_signal1,yld_start_loc(i), skip_large);
     end
     if isempty(start_read_loc_chj)
         continue
@@ -65,27 +65,28 @@ for i =1 :numel(yld_start_loc)
     chj_match_signal1 = filtered_chj_signal1(start_read_loc_chj-match_signal_length:start_read_loc_chj+match_signal_length);
     chj_match_signal2 = filtered_chj_signal2(start_read_loc_chj-match_signal_length:start_read_loc_chj+match_signal_length);
     chj_match_signal3 = filtered_chj_signal3(start_read_loc_chj-match_signal_length:start_read_loc_chj+match_signal_length);
+   
     
-    % 寻峰匹配计算所有可能的三维源
-    threshold = 30;
-    % 寻找峰值
-    [peaks, locs] = findpeaks(chj_match_signal1, 'MinPeakHeight', threshold, 'MinPeakDistance', 256);
-    all_locs = locs;
-    % 遍历所有峰值
-    num_peaks = numel(all_locs);
-    if num_peaks == 0
-        continue;
-    end
+    % 设置滑动窗口参数(遍历匹配）,滑动范围取1024窗前后各6000点
+    subsignal_step = match_signal_length/4;
+    subsignal_starts = 1:subsignal_step:match_signal_length*2;
 
-    processed_yld_signal = filtered_yld_signal1(yld_start_loc(i)+1-3e8-sub_filter_signal_length/4 : yld_start_loc(i)-3e8-sub_filter_signal_length/4+chj_signal_length);
-    for pi = 1:num_peaks
-        idx = all_locs(pi);
-        if idx - (chj_signal_length / 2 - 1) <= 0 || idx + (chj_signal_length / 2) > match_signal_length*2
-            continue;
+    processed_yld_signal = filtered_yld_signal1(yld_start_loc(i)-(3e8+sub_filter_signal_length/4) : yld_start_loc(i)-(3e8+sub_filter_signal_length/4)+chj_signal_length-1);
+    processed_yld_signal = real(windowsignal(detrend(processed_yld_signal)));
+
+
+    for subi = 1:numel(subsignal_starts)
+        if subsignal_starts(subi) + chj_signal_length - 1 > match_signal_length*2
+            continue
         end
-        processed_chj_signal1 = chj_match_signal1(idx - (chj_signal_length / 2)+ 1:idx + (chj_signal_length / 2));
-        processed_chj_signal2 = chj_match_signal2(idx - (chj_signal_length / 2)+ 1:idx + (chj_signal_length / 2));
-        processed_chj_signal3 = chj_match_signal3(idx - (chj_signal_length / 2)+ 1:idx + (chj_signal_length / 2));
+        processed_chj_signal1 = chj_match_signal1(subsignal_starts(subi) : subsignal_starts(subi) + chj_signal_length-1);
+        processed_chj_signal2 = chj_match_signal2(subsignal_starts(subi) : subsignal_starts(subi) + chj_signal_length-1);
+        processed_chj_signal3 = chj_match_signal3(subsignal_starts(subi) : subsignal_starts(subi) + chj_signal_length-1);
+
+        processed_chj_signal1 = real(windowsignal(detrend(processed_chj_signal1)));
+        processed_chj_signal2 = real(windowsignal(detrend(processed_chj_signal2)));
+        processed_chj_signal3 = real(windowsignal(detrend(processed_chj_signal3)));
+
         [r_gcc, lags_gcc] = xcorr(processed_chj_signal1, processed_yld_signal, 'normalized');
         R_gcc = max(r_gcc);
         t_gcc = cal_tau(r_gcc, lags_gcc');
@@ -138,7 +139,7 @@ for i =1 :numel(yld_start_loc)
             if dlta <= W
                 sub_S_results = [sub_S_results; sub_S];
                 sub_R_gccs = [sub_R_gccs;R_gcc];
-                match_results = [match_results; struct('yld_start_loc', yld_start_loc(i), 'chj_loc', start_read_loc_chj-match_signal_length + idx - (chj_signal_length / 2)+1 + 3e8+sub_filter_signal_length/4+34371950, 'r_gccs', R_gcc)];
+                match_results = [match_results; struct('yld_start_loc', yld_start_loc(i), 'chj_loc', start_read_loc_chj-match_signal_length+subsignal_starts(subi)+3e8+sub_filter_signal_length/4+34371950, 'r_gccs', R_gcc)];
             end
         end
     end
@@ -191,3 +192,21 @@ y = filtered_S(:, 2);
 z = filtered_S(:, 3);
 
 plot_azimuth_elevation(x, y, z, yld_sit)
+
+
+% 计算每个点的方位角和仰角
+[az_rad, el_rad, ~] = cart2sph(S_results(:,1), S_results(:,2), S_results(:,3));
+az_deg = rad2deg(az_rad)+360;  % 方位角 (degree)
+el_deg = rad2deg(el_rad);  % 仰角 (degree)
+
+% 绘制散点图
+figure;
+scatter(az_deg, el_deg, 'filled');
+xlabel('Azimuth (°)');
+ylabel('Elevation (°)');
+title('3D Points Projected to 2D Azimuth-Elevation');
+grid on;
+
+% 设置视点坐标为[0, 0, 0]，默认视角
+view([0, 0, 0]);  % 你可以根据需要调整视点
+
