@@ -1,7 +1,7 @@
 function [start_read_loc_chj, r_gccs] = get_match_single_yld_chj_find_peak(filtered_chj_signal1,filtered_yld_signal1,yld_signal_start_loc, skip_large_window)
     start_read_loc_chj = [];
     r_gccs = 0;
-    window_lengths = [2e5, 2e4, 6000];%200us,20us,6us
+    window_lengths = [2e5, 2e4, 6000, 1024];%200us,20us,6us
 
     if skip_large_window ~= 0
         window_lengths = window_lengths(2:end);
@@ -18,10 +18,8 @@ function [start_read_loc_chj, r_gccs] = get_match_single_yld_chj_find_peak(filte
         chj_length = current_window_length * 4;
         % 读取chj信号
         if i == 1 && skip_large_window == 0
-            current_chj_read_loc = yld_signal_start_loc - current_window_length * 2;
+            current_chj_read_loc = yld_signal_start_loc;
             %             chj_length = current_window_length * 2;
-        else
-            current_chj_read_loc = current_chj_read_loc - current_window_length * 2;
         end
         if isempty(current_chj_read_loc)
             continue;
