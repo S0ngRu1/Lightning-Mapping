@@ -149,7 +149,7 @@ for i = 1:num_events
                 fprintf('Event %d: Sequential coarse match found at CHJ index %d > %d (R=%.3f)\n', i, current_coarse_chj_loc, last_successful_coarse_chj_loc, r_gccs_coarse);
             else
                 fprintf('Event %d: Warning! Coarse match %d <= previous %d. Skipping event (Non-sequential).\n', i, temp_loc, last_successful_coarse_chj_loc);
-                current_coarse_chj_loc = []; % Discard non-sequential match
+%                 current_coarse_chj_loc = []; % Discard non-sequential match
             end
         end
     end
