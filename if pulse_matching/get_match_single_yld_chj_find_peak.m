@@ -1,4 +1,4 @@
-function [start_read_loc_chj, r_gccs] = get_match_single_yld_chj_find_peak(filtered_chj_signal1,filtered_yld_signal1,yld_signal_start_loc, skip_large_window)
+function [start_read_loc_chj, r_gccs] = get_match_single_yld_chj_find_peak(r_loction, filtered_chj_signal1,filtered_yld_signal1,yld_signal_start_loc, skip_large_window)
     start_read_loc_chj = [];
     r_gccs = 0;
     window_lengths = [2e5, 2e4, 6000, 1024];%200us,20us,6us
@@ -7,7 +7,7 @@ function [start_read_loc_chj, r_gccs] = get_match_single_yld_chj_find_peak(filte
         window_lengths = window_lengths(2:end);
         current_chj_read_loc = skip_large_window;
     end
-    yld_signal_start_loc = yld_signal_start_loc-3e8-1.5e4 +1;
+    yld_signal_start_loc = yld_signal_start_loc-r_loction +1;
     % 对每个窗口长度进行匹配，逐步精细化
     for i = 1:length(window_lengths)
         current_window_length = window_lengths(i);
