@@ -2,9 +2,9 @@
 % 引入变量：位置，方位角，仰角
 chj_signal_length = 1024;
 match_signal_length = 6000;
-yld_result_path = 'result_yld_4.5-5.5e8——xb.txt';
-start_read_loc_yld = 454083468;
-end_read_loc_yld = 523330353;    % 引入两个站的位置关系
+yld_result_path = 'result_yld_th1_4_5e8-5_5e8.txt';
+start_read_loc_yld = 451518508;
+end_read_loc_yld = 523330211;    % 引入两个站的位置关系
 yld_sit = [0, 0, 0];
 chj_sit = [1991, -7841.2, 0];
 dltas = [];
@@ -14,23 +14,20 @@ dist = 8.09e3; %单位：米
 c = 0.299792458;
 W = 30000; % 时间误差
 
-signal_length=2e7;
-r_loction=4.5e8;
-yld_ch1 = read_signal('..\\20240822165932.6610CH1.dat',signal_length,r_loction);
-yld_ch2 = read_signal('..\\20240822165932.6610CH2.dat',signal_length,r_loction);
-yld_ch3 = read_signal('..\\20240822165932.6610CH3.dat',signal_length,r_loction);
-
-chj_ch1 = read_signal('..\\2024 822 85933.651462CH1.dat',signal_length,r_loction+ 34371950);
-chj_ch2 = read_signal('..\\2024 822 85933.651462CH2.dat',signal_length,r_loction+ 34371950);
-chj_ch3 = read_signal('..\\2024 822 85933.651462CH3.dat',signal_length,r_loction+ 34371950+165/5);
-
-filtered_yld_signal1 = filter_xb(yld_ch1);
-filtered_yld_signal2 = filter_xb(yld_ch2);
-filtered_yld_signal3 = filter_xb(yld_ch3);
-
-filtered_chj_signal1 = filter_xb(chj_ch1);
-filtered_chj_signal2 = filter_xb(chj_ch2);
-filtered_chj_signal3 = filter_xb(chj_ch3);
+signal_length=1e8;
+r_loction=4.4e8;
+% yld_ch1 =normalize(read_signal('..\\20240822165932.6610CH1.dat',signal_length,r_loction));
+% chj_ch1 =normalize(read_signal('..\\2024 822 85933.651462CH1.dat',signal_length,r_loction+ 34236594));
+% chj_ch2 =normalize(read_signal('..\\2024 822 85933.651462CH2.dat',signal_length,r_loction+ 34236594));
+% chj_ch3 =normalize(read_signal('..\\2024 822 85933.651462CH3.dat',signal_length,r_loction+ 34236594+165/5));
+% filtered_yld_signal1 = filter_xb(yld_ch1);
+% filtered_chj_signal1 = filter_xb(chj_ch1);
+% filtered_chj_signal2 = filter_xb(chj_ch2);
+% filtered_chj_signal3 = filter_xb(chj_ch3);
+load('filtered_chj_signal_xb1.mat')
+load('filtered_chj_signal_xb2.mat')
+load('filtered_chj_signal_xb3.mat')
+load('filtered_yld_signal_xb1.mat')
 
 S_results = [];
 match_results = struct('yld_start_loc', {}, 'chj_loc', {}, 'r_gccs', {});
@@ -48,14 +45,13 @@ for i =1 :numel(yld_start_loc)
     % 判断是否需要进行大窗口匹配：
     if first_start_read_loc_chj == 0 
         skip_large = 0;  % 进行大窗口匹配
-        [first_start_read_loc_chj, r_gccs] = get_match_single_yld_chj_find_peak(r_loction, filtered_chj_signal1,filtered_yld_signal1,yld_start_loc(i), skip_large);
+        [first_start_read_loc_chj, r_gccs] = get_match_single_yld_chj_find_peak(filtered_chj_signal1,filtered_yld_signal1,yld_start_loc(i), skip_large);
         start_read_loc_chj = first_start_read_loc_chj;
     else
         skip_large = first_start_read_loc_chj + yld_start_loc(i) - yld_start_loc(1);  % 跳过大窗口匹配
-        [start_read_loc_chj, r_gccs] = get_match_single_yld_chj_find_peak(r_loction, filtered_chj_signal1,filtered_yld_signal1,yld_start_loc(i), skip_large);
+        [start_read_loc_chj, r_gccs] = get_match_single_yld_chj_find_peak(filtered_chj_signal1,filtered_yld_signal1,yld_start_loc(i), skip_large);
     end
     if isempty(start_read_loc_chj)
-        first_start_read_loc_chj = 0;
         continue
     end
     % 读取 match_signal_length*2 长度的信号
@@ -66,12 +62,12 @@ for i =1 :numel(yld_start_loc)
 
     % 寻峰匹配计算所有可能的三维源
     %设置寻峰阈值
-    noise = read_signal('../2024 822 85933.651462CH1.dat',65400,1e8);
-    filtered_chj_noise = rfi_filter(noise,65400);
-    threshold = 5*std(filtered_chj_noise);
+%     noise = read_signal('../2024 822 85933.651462CH1.dat',65400,1e8);
+%     filtered_chj_noise = rfi_filter(noise,65400);
+%     threshold = 5*std(filtered_chj_noise);
 
     % 寻找峰值
-    [peaks, locs] = findpeaks(chj_match_signal1, 'MinPeakHeight', threshold, 'MinPeakDistance', 256);
+    [peaks, locs] = findpeaks(chj_match_signal1, 'MinPeakHeight', 1, 'MinPeakDistance', 256);
     all_locs = locs;
     % 遍历所有峰值
     num_peaks = numel(all_locs);
@@ -79,7 +75,7 @@ for i =1 :numel(yld_start_loc)
         continue;
     end
 
-    processed_yld_signal = filtered_yld_signal1(yld_start_loc(i)+1 : yld_start_loc(i)+chj_signal_length);
+    processed_yld_signal = filtered_yld_signal1(yld_start_loc(i)+1-4.5e8 : yld_start_loc(i)-4.5e8+chj_signal_length);
     processed_yld_signal = real(windowsignal(detrend(processed_yld_signal)));
 
     for pi = 1:num_peaks
@@ -102,7 +98,7 @@ for i =1 :numel(yld_start_loc)
             continue
         end
 
-        [chj_start_loc, chj_azimuth, chj_elevation, chj_Rcorr, chj_t123] = get_2d_result_single_window(start_read_loc_chj,processed_chj_signal1,processed_chj_signal2,processed_chj_signal3);
+        [chj_start_loc, chj_azimuth, chj_elevation, chj_Rcorr, chj_t123] = get_2d_result_single_window(start_read_loc_chj,processed_chj_signal1,processed_chj_signal2,processed_chj_signal3,'chj');
         if chj_start_loc == 0
             continue
         end
@@ -147,7 +143,7 @@ for i =1 :numel(yld_start_loc)
             if dlta <= W
                 sub_S_results = [sub_S_results; sub_S];
                 sub_R_gccs = [sub_R_gccs;R_gcc];
-                match_results = [match_results; struct('yld_start_loc', yld_start_loc(i), 'chj_loc', start_read_loc_chj-match_signal_length + idx+sub_filter_signal_length/4+34371950, 'r_gccs', R_gcc)];
+                match_results = [match_results; struct('yld_start_loc', yld_start_loc(i), 'chj_loc', start_read_loc_chj-match_signal_length + idx- (chj_signal_length / 2)+1 + 4.5e8+34371950, 'r_gccs', R_gcc)];
             end
         end
     end
@@ -166,7 +162,7 @@ close(h);
 % 设置过滤条件
 x_range = [-50000, 50000]; % X 的合理范围
 y_range = [-50000, 0]; % Y 的合理范围
-z_range = [0, 50000];    % Z 的合理范围（Z > 0）
+z_range = [0, 5000];    % Z 的合理范围（Z > 0）
 
 % 过滤数据
 filtered_S = S_results(...
