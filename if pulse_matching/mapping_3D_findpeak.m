@@ -16,18 +16,14 @@ W = 30000; % 时间误差
 
 signal_length=1e8;
 r_loction=4.4e8;
-% yld_ch1 =normalize(read_signal('..\\20240822165932.6610CH1.dat',signal_length,r_loction));
-% chj_ch1 =normalize(read_signal('..\\2024 822 85933.651462CH1.dat',signal_length,r_loction+ 34236594));
-% chj_ch2 =normalize(read_signal('..\\2024 822 85933.651462CH2.dat',signal_length,r_loction+ 34236594));
-% chj_ch3 =normalize(read_signal('..\\2024 822 85933.651462CH3.dat',signal_length,r_loction+ 34236594+165/5));
-% filtered_yld_signal1 = filter_xb(yld_ch1);
-% filtered_chj_signal1 = filter_xb(chj_ch1);
-% filtered_chj_signal2 = filter_xb(chj_ch2);
-% filtered_chj_signal3 = filter_xb(chj_ch3);
-load('filtered_chj_signal_xb1.mat')
-load('filtered_chj_signal_xb2.mat')
-load('filtered_chj_signal_xb3.mat')
-load('filtered_yld_signal_xb1.mat')
+yld_ch1 =normalize(read_signal('..\\20240822165932.6610CH1.dat',signal_length,r_loction));
+chj_ch1 =normalize(read_signal('..\\2024 822 85933.651462CH1.dat',signal_length,r_loction+ 34236594));
+chj_ch2 =normalize(read_signal('..\\2024 822 85933.651462CH2.dat',signal_length,r_loction+ 34236594));
+chj_ch3 =normalize(read_signal('..\\2024 822 85933.651462CH3.dat',signal_length,r_loction+ 34236594+165/5));
+filtered_yld_signal1 = filter_xb(yld_ch1);
+filtered_chj_signal1 = filter_xb(chj_ch1);
+filtered_chj_signal2 = filter_xb(chj_ch2);
+filtered_chj_signal3 = filter_xb(chj_ch3);
 
 S_results = [];
 match_results = struct('yld_start_loc', {}, 'chj_loc', {}, 'r_gccs', {});
