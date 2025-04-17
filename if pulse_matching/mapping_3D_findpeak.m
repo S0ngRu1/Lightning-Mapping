@@ -1,5 +1,6 @@
 %% Step1 读取引雷点的二维定位结果（需要条件筛选出合格的）
 % 引入变量：位置，方位角，仰角
+clear; clc; close all;
 chj_signal_length = 1024;
 match_signal_length = 6000;
 yld_result_path = 'result_yld_th1_4_5e8-5_5e8.txt';
@@ -20,16 +21,29 @@ yld_ch1 =normalize(read_signal('..\\20240822165932.6610CH1.dat',signal_length,r_
 chj_ch1 =normalize(read_signal('..\\2024 822 85933.651462CH1.dat',signal_length,r_loction+ 34236594));
 chj_ch2 =normalize(read_signal('..\\2024 822 85933.651462CH2.dat',signal_length,r_loction+ 34236594));
 chj_ch3 =normalize(read_signal('..\\2024 822 85933.651462CH3.dat',signal_length,r_loction+ 34236594+165/5));
+% 
+% yld_ch1 =read_signal('..\\20240822165932.6610CH1.dat',signal_length,r_loction);
+% chj_ch1 =read_signal('..\\2024 822 85933.651462CH1.dat',signal_length,r_loction+ 34236594);
+% chj_ch2 =read_signal('..\\2024 822 85933.651462CH2.dat',signal_length,r_loction+ 34236594);
+% chj_ch3 =read_signal('..\\2024 822 85933.651462CH3.dat',signal_length,r_loction+ 34236594+165/5);
+% filtered_yld_signal1 = filter_bp(yld_ch1,20e6,80e6,5);
+% filtered_chj_signal1 = filter_bp(chj_ch1,20e6,80e6,5);
+% filtered_chj_signal2 = filter_bp(chj_ch2,20e6,80e6,5);
+% filtered_chj_signal3 = filter_bp(chj_ch3,20e6,80e6,5);
 filtered_yld_signal1 = filter_xb(yld_ch1);
 filtered_chj_signal1 = filter_xb(chj_ch1);
 filtered_chj_signal2 = filter_xb(chj_ch2);
 filtered_chj_signal3 = filter_xb(chj_ch3);
-
 S_results = [];
 match_results = struct('yld_start_loc', {}, 'chj_loc', {}, 'r_gccs', {});
 [yld_start_loc, yld_azimuth, yld_elevation, yld_Rcorr, yld_t123] = read_result(yld_result_path,start_read_loc_yld, end_read_loc_yld);
 h = waitbar(0, 'Processing...');
 first_start_read_loc_chj = 0;
+%设置寻峰阈值
+noise = read_signal('../2024 822 85933.651462CH1.dat',65400,1e8);
+% filtered_chj_noise = rfi_filter(noise,65400);
+filtered_chj_noise = filter_xb(noise);
+threshold = 5*std(normalize(filtered_chj_noise))/3;
 %% Step2 根据引雷点的信号窗口得到匹配到的从化局的信号
 for i =1 :numel(yld_start_loc)
     sub_S_results = [];
@@ -50,20 +64,20 @@ for i =1 :numel(yld_start_loc)
     if isempty(start_read_loc_chj)
         continue
     end
+    if start_read_loc_chj-match_signal_length < 0 || start_read_loc_chj+match_signal_length > length(filtered_chj_signal1)
+        continue
+    end
     % 读取 match_signal_length*2 长度的信号
-    chj_match_signal1 = filtered_chj_signal1(start_read_loc_chj-match_signal_length:start_read_loc_chj+match_signal_length);
-    chj_match_signal2 = filtered_chj_signal2(start_read_loc_chj-match_signal_length:start_read_loc_chj+match_signal_length);
-    chj_match_signal3 = filtered_chj_signal3(start_read_loc_chj-match_signal_length:start_read_loc_chj+match_signal_length);
+    chj_match_signal1 = filtered_chj_signal1(start_read_loc_chj-match_signal_length:start_read_loc_chj+match_signal_length-1);
+    chj_match_signal2 = filtered_chj_signal2(start_read_loc_chj-match_signal_length:start_read_loc_chj+match_signal_length-1);
+    chj_match_signal3 = filtered_chj_signal3(start_read_loc_chj-match_signal_length:start_read_loc_chj+match_signal_length-1);
 
 
     % 寻峰匹配计算所有可能的三维源
-    %设置寻峰阈值
-%     noise = read_signal('../2024 822 85933.651462CH1.dat',65400,1e8);
-%     filtered_chj_noise = rfi_filter(noise,65400);
-%     threshold = 5*std(filtered_chj_noise);
+
 
     % 寻找峰值
-    [peaks, locs] = findpeaks(chj_match_signal1, 'MinPeakHeight', 1, 'MinPeakDistance', 256);
+    [peaks, locs] = findpeaks(chj_match_signal1, 'MinPeakHeight', threshold, 'MinPeakDistance', 256);
     all_locs = locs;
     % 遍历所有峰值
     num_peaks = numel(all_locs);
@@ -94,7 +108,7 @@ for i =1 :numel(yld_start_loc)
             continue
         end
 
-        [chj_start_loc, chj_azimuth, chj_elevation, chj_Rcorr, chj_t123] = get_2d_result_single_window(start_read_loc_chj,processed_chj_signal1,processed_chj_signal2,processed_chj_signal3,'chj');
+        [chj_start_loc, chj_azimuth, chj_elevation, chj_Rcorr, chj_t123] = get_2d_result_single_window(start_read_loc_chj,processed_chj_signal1,processed_chj_signal2,processed_chj_signal3);
         if chj_start_loc == 0
             continue
         end
