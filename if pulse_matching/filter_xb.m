@@ -6,7 +6,7 @@ function filtered_signal = filter_xb(signal)
     sigma = median(abs(c4))/0.6745;
 %     thr = sigma*sqrt(2*log(length(signal)));  % 通用阈值
     thr = sigma*sqrt(log(length(signal)));
-    c_denoised4 = wthresh(c4, 's', thr);  % 使用小波软阈值
+    c_denoised4 = wthresh(c4, 's', 1.5*thr);  % 使用小波软阈值
     filtered_signal = normalize(waverec(c_denoised4, l4, wavelet));
 
 

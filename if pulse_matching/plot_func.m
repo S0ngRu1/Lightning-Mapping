@@ -1,33 +1,30 @@
-%ï¿½ï¿½ï¿½1
-% logicalIndex = abs(result1.t123) < 1 & abs(result1.Rcorr) > 0.3;
-logicalIndex = abs(result1.t123) < 1 & abs(result1.Rcorr) > 0.3 & result1.Start_loc < 4.7e8 & result1.Start_loc > 4.5e8;
+%½á¹û1
+logicalIndex = abs(result1.t123) < 1 & abs(result1.Rcorr) > 0.3;
+% logicalIndex = abs(result1.t123) <1 & abs(result1.Rcorr) > 0.3 &  result1.Start_loc < 523418116+3.3e7 & result1.Start_loc > 451501808+3.3e7;
 filteredTable1 = result1(logicalIndex, :);
 Start_loc = filteredTable1.Start_loc;
-colorValues = (Start_loc - 3e8) / 2e8;
-
-% å°†æ–¹ä½è§’ä»0-360è½¬æ¢ä¸º-180åˆ°180
-% filteredTable1.Azimuth = mod(filteredTable1.Azimuth + 180, 360) - 180;
-
+% colorValues = (Start_loc - 3e8) / 2e8;
+colorValues = (Start_loc - min(Start_loc)) / (max(Start_loc) - min(Start_loc));
+% ×ª»» Azimuth ·¶Î§´Ó 0-360 µ½ -180-180
+filteredTable1.Azimuth = mod(filteredTable1.Azimuth - 180, 360) - 180;
 figure;
-scatter(filteredTable1.Azimuth, filteredTable1.Elevation, 1, colorValues, 'filled');
+scatter(filteredTable1.Azimuth,filteredTable1.Elevation, 2, colorValues, 'filled');
 title('Azimuth vs Elevation');
 xlabel('Azimuth');
-% xlim([-180, 180]); % ä¿®æ”¹xè½´èŒƒå›´
-% xticks(-180:40:180); % ä¿®æ”¹xè½´åˆ»åº¦
-xlim([0, 360]);
-xticks(0:40:360);
+xlim([-180, 180]); % ĞŞ¸Ä x Öá·¶Î§
+xticks(-180:40:180);
 ylabel('Elevation');
 ylim([-40, 100]);
 yticks(-40:20:100);
-colormap('hot');
+colormap('hsv');
 colorbar;
 caxis([0, 1.5]);
 grid on;
-
-%ï¿½ï¿½ï¿½2
-figure;
-% logicalIndex = abs(result2.t123) < 1 & abs(result2.Rcorr) > 0.3 &  result2.Start_loc > 500000000 ;
-logicalIndex = abs(result2.t123) < 1 & abs(result2.Rcorr) > 0.5;
+% 
+% %½á¹û2
+% figure;
+%  logicalIndex = abs(result1.t123) <1 & abs(result1.Rcorr) > 0.4 &  result1.Start_loc < 4.5e8 & result1.Start_loc > 4e8;
+logicalIndex = abs(result2.t123) < 1 & abs(result2.Rcorr) > 0.3;
 filteredTable2 = result2(logicalIndex, :);
 index = 1:256:size(filteredTable2, 1);
 Start_loc = filteredTable2.Start_loc;
@@ -41,88 +38,18 @@ xticks(0:40:360);
 ylabel('Elevation');
 ylim([-40, 100]);
 yticks(-40:20:100);
-colormap('hsv');
+colormap('jet');
 colorbar;
 caxis([0, 1.5]);
 grid on;
 
-%ï¿½ï¿½ï¿½3
-logicalIndex = abs(result3.t123) > 0.001 & abs(result3.Rcorr) < 0.2 &  result3.Start_loc < 600000000 & result3.Start_loc > 400000000;
-filteredTable3 = result3(logicalIndex, :);
-Start_loc = filteredTable3.Start_loc;
-colorValues = (Start_loc - 3e8) / 2e8;
-figure;
-scatter(filteredTable3.Azimuth,filteredTable3.Elevation, 1, colorValues, 'filled');
-title('Azimuth vs Elevation');
-xlabel('Azimuth');
-xlim([0, 360]);
-xticks(0:40:360);
-ylabel('Elevation');
-ylim([-40, 100]);
-yticks(-40:20:100);
-colormap('hsv');
-colorbar;
-caxis([0, 1.5]);
-grid on;
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-% logicalIndex = abs(Untitled.VarName11) < 1 & abs(Untitled.VarName12) > 0.25 & Untitled.Paramers >500000000;
-logicalIndex = abs(Untitled.VarName11) < 1 & abs(Untitled.VarName12) > 0.3 & Untitled.Paramers > 400000000 & Untitled.Paramers < 600000000 ;
-filteredTable3 = Untitled(logicalIndex, :);
-Start_loc = filteredTable3.Paramers;
-colorValues = (Start_loc - 3e8) / 2e8;
-figure;
-scatter(filteredTable3.VarName5,filteredTable3.VarName6, 1, colorValues, 'filled');
-title('Azimuth vs Elevation');
-xlabel('Azimuth');
-xlim([0, 360]);
-xticks(0:40:360);
-ylabel('Elevation');
-ylim([-40, 100]);
-yticks(-40:20:100);
-colormap('hot');
-colorbar;
-caxis([0, 1.5]);
-grid on;
-
-
-
-% logicalIndex = abs(result1.t123) < 1 & abs(result1.Rcorr) > 0.3;
-% filteredTable1 = result1(logicalIndex, :);
-% index = 1:256:size(filteredTable1, 1);
-% Start_loc = filteredTable1.Start_loc;
+% %½á¹û3
+% logicalIndex = abs(result3.t123) > 0.001 & abs(result3.Rcorr) < 0.2 &  result3.Start_loc < 600000000 & result3.Start_loc > 400000000;
+% filteredTable3 = result3(logicalIndex, :);
+% Start_loc = filteredTable3.Start_loc;
 % colorValues = (Start_loc - 3e8) / 2e8;
 % figure;
-% scatter(filteredTable1.Azimuth,filteredTable1.Elevation, 1, colorValues, 'filled');
+% scatter(filteredTable3.Azimuth,filteredTable3.Elevation, 1, colorValues, 'filled');
 % title('Azimuth vs Elevation');
 % xlabel('Azimuth');
 % xlim([0, 360]);
@@ -130,120 +57,182 @@ grid on;
 % ylabel('Elevation');
 % ylim([-40, 100]);
 % yticks(-40:20:100);
-% colormap('hot');
+% colormap('hsv');
 % colorbar;
 % caxis([0, 1.5]);
 % grid on;
 
 
 
+data_original1=window_plus(N,data_original1);
+data_original2=window_plus(N,data_original2);
+Wc=2*80e6/200e6;
+Wp=2*30e6/200e6;
+data_filter1 = datafilter(data_original1,Wc,Wp);
+data_filter2 = datafilter(data_original2,Wc,Wp);
+data_noisefilter1 = datafilter(data_noise1,Wc,Wp);
+data_noisefilter2 = datafilter(data_noise2,Wc,Wp);
 
 
-
-% ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
-plot(processed_yld_signal-50, 'b');
-hold on;
-plot(processed_chj_signal, 'r');
-legend('yld', 'chj');
-xlabel('ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½');
-ylabel('ï¿½ï¿½Öµ');
-title('bp filter');
+Wc=2*80e6/200e6;
+Wp=2*30e6/200e6;
+N = 2e7;
+r_loction = 256;
+ch1 = read_signal('..\\20240822165932.6610CH1.dat',N,r_loction);
+data_original1=window_plus(N,ch1);
+data_filter1 = datafilter(data_original1,Wc,Wp);
 
 
+signal_length = 1024;
+r_loction_yld = 469401640;
+r_loction_chj = 504138238;
+ch_yld = read_signal('..\\20240822165932.6610CH1.dat',signal_length,r_loction_yld-256);
+ch_chj = read_signal('..\\2024 822 85933.651462CH1.dat',signal_length,r_loction_chj);
+% filtered_yld = rfi_filter(ch_yld,1536);
+% filtered_chj = rfi_filter(ch_chj,1536);
+filtered_yld = filter_bp(ch_yld,20e6,80e6,5);
+filtered_chj = filter_bp(ch_chj,20e6,80e6,5);
+subplot(2,1,1);plot(filtered_yld);title('yld');xlabel('²ÉÑùµãÊı');ylabel('·ùÖµ');
+subplot(2,1,2);plot(filtered_chj);title('chj');xlabel('²ÉÑùµãÊı');ylabel('·ùÖµ');
+
+ filtered_chj_signal1 = waveletDenoiseAdaptive(ch2, level, wavelet);
+ filtered_chj_signal2 = filter_bp(ch2,20e6,80e6,5);
+x1 = downsample(ch1,50);
+x2 = downsample(ch2,50);
+x3 = downsample(ch3,50);
+% x3 = downsample(ch3,50);
+subplot(3,1,1);plot(ch1);title('ch1');xlabel('²ÉÑùµãÊı');ylabel('·ùÖµ');
+subplot(3,1,2);plot(data_filter1);title('wf');xlabel('²ÉÑùµãÊı');ylabel('·ùÖµ');
+subplot(3,1,3);plot(filter2);title('bp');xlabel('²ÉÑùµãÊı');ylabel('·ùÖµ');
+
+%»¬¶¯25%ÂË²¨
 
 
-
-
-yld_signal = read_signal('../20240822165932.6610CH1.dat',6000,start_read_loc_yld);
-chj_signal = read_signal('../2024 822 85933.651462CH1.dat',6000,start_read_loc_chj);
-x = downsample(yld_signal,1);
-y = downsample(chj_signal,1);
-subplot(2,1,1);plot(x);title('yld');xlabel('ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½');ylabel('ï¿½ï¿½Öµ');
-subplot(2,1,2);plot(y);title('chj');xlabel('ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½');ylabel('ï¿½ï¿½Öµ');
-
-
-
-
-scatter(filteredTable1.cos_alpha_opt,filteredTable1.cos_beta_opt,2);
-xlim([-1, 1]);
-% Ö¸ï¿½ï¿½yï¿½á·¶Î§ï¿½Í¿Ì¶È±ï¿½ï¿½
-ylim([-1, 1]);
-
-scatter(Untitled.VarName5,Untitled.VarName6,1);
-xlim([0, 360]);
-xticks(0:40:360);
-% Ö¸ï¿½ï¿½yï¿½á·¶Î§ï¿½Í¿Ì¶È±ï¿½ï¿½
-ylim([0, 90]);
-yticks(0:20:90);
-scatter(result1.VarName10,result1.VarName11);
-scatter(result1.cos,result1.cos1);
-histogram(result.VarName11);
-histogram(Untitled.VarName6);
-subplot(3,1,1);plot(signal3);title('ch1');xlabel('ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½');ylabel('ï¿½ï¿½Öµ');
-%ï¿½ï¿½ï¿½Ãºï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Îª32
-
-subplot(3,1,2);plot(filtered_signal3);title('ch2');xlabel('ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½');ylabel('ï¿½ï¿½Öµ');
-
-subplot(3,1,3);plot(filtered_signal3);title('ch3');xlabel('ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½');ylabel('ï¿½ï¿½Öµ');
-
-
-plot(lag12_msw,R12_msw);
-plot(ch1);
- %ï¿½ï¿½ï¿½ï¿½ï¿½Ï²ï¿½ï¿½ï¿½ï¿½Ô±ï¿½Í¼
-plot(ch3_gcc_new, 'b');
-hold on;
-plot(ch3_upsp(:,1), ch3_upsp(:,2), 'r--');
-legend('ch3ï¿½ï¿½ï¿½ï¿½', 'ï¿½Ï²ï¿½ï¿½ï¿½ch3ï¿½ï¿½ï¿½ï¿½');
-xlabel('ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½');
-ylabel('ï¿½ï¿½Öµ');
-plot(lag12_gcc,R12_gcc);
-
- %ï¿½ï¿½ï¿½ï¿½ï¿½Ï²ï¿½ï¿½ï¿½ï¿½Ô±ï¿½Í¼
-plot(filtered_signal1, 'b');
-hold on;
-plot(ch1, 'r--');
-legend('ch2ï¿½ï¿½ï¿½ï¿½', 'ï¿½Ï²ï¿½ï¿½ï¿½ch2ï¿½ï¿½ï¿½ï¿½');
-xlabel('ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½');
-ylabel('ï¿½ï¿½Öµ');
-axis auto
-
-
-% ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
-plot(ch1, 'b');
-hold on;
-plot(IMF(:,3), 'r--');
-legend('ch1ï¿½ï¿½ï¿½ï¿½', 'ï¿½ï¿½ï¿½Ëºï¿½ï¿½ch1ï¿½ï¿½ï¿½ï¿½');
-xlabel('ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½');
-ylabel('ï¿½ï¿½Öµ');
-title('ï¿½ï¿½ï¿½İ»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ßµï¿½ï¿½ï¿½ï¿½Öµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ½ï¿½ÆµÄ½ï¿½ï¿½');
-
-% ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
-plot(ch1_gcc_new, 'b');
-hold on;
-plot(ch3_gcc_new, 'r--');
-legend('Ô­ï¿½Åºï¿½', 'Æ½ï¿½Æºï¿½');
-xlabel('ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½');
-ylabel('ï¿½ï¿½Öµ');
-title('ï¿½ï¿½ï¿½');
-
-
-
-num_bins = 100; % ï¿½ï¿½ï¿½ï¿½Ö±ï¿½ï¿½Í¼ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
-[counts, edges] = histcounts(matched_max_r_gccs, num_bins);
-
-% ï¿½ï¿½ï¿½ï¿½Ã¿ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Äµã£¬ï¿½ï¿½ï¿½Ú»ï¿½ï¿½ï¿½Æµï¿½Ê·Ö²ï¿½Í¼
-centers = edges(1:end-1) + diff(edges) / 2;
-
-% ï¿½ï¿½ï¿½ï¿½Æµï¿½Ê·Ö²ï¿½Í¼
+%ĞÅºÅ²¨ĞÎÓëãĞÖµ¶Ô±ÈÍ¼
+N = 5e7; % ĞÅºÅ×Ü³¤¶È
+subsignal_length = 4000;
+M = ceil(N / subsignal_length); % ×Ü¶ÎÊı
+subsignal_start = 1:subsignal_length:length(filtered_signal1);
+for subi = 1:numel(subsignal_start)
+subsignal1 = filtered_signal1(subsignal_start(subi):subsignal_start(subi)+subsignal_length-1);
+threshold =  mean(abs(subsignal1)) + 3*std(subsignal1);
+end
+% ¼ÙÉèÃ¿¶ÎµÄãĞÖµÒÑ¾­¼ÆËãºÃ£¬´æ´¢ÔÚ thresholds ÖĞ
+threshold = rand(1, M) * 5; % Ê¾ÀıãĞÖµ£¬Êµ¼ÊÖĞÓÃÄãµÄãĞÖµÌæ»»
+% »æÖÆĞÅºÅ
 figure;
-bar(centers, counts);
-xlabel('ï¿½ï¿½ï¿½Ïµï¿½ï¿½ï¿½ï¿½Ğ¡');
-ylabel('ï¿½ï¿½ï¿½ï¿½');
-title('Æ¥ï¿½äµ½ï¿½ï¿½ï¿½ï¿½ï¿½Ïµï¿½ï¿½ï¿½Ö²ï¿½Í¼');
-grid on; % ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+plot(filtered_signal1, 'b', 'LineWidth', 1.5); % »æÖÆĞÅºÅ£¬À¶É«Ïß
+hold on;
+% »æÖÆÃ¿¶ÎµÄãĞÖµ
+for i = 1:M
+    start_index = (i - 1) * subsignal_length + 1;
+    end_index = min(i * subsignal_length, N); % ·ÀÖ¹×îºóÒ»¶Î³¬³öĞÅºÅ³¤¶È
+    x = [start_index, end_index]; % µ±Ç°¶ÎµÄ x ·¶Î§
+    y = [threshold(i), threshold(i)]; % µ±Ç°¶ÎµÄãĞÖµ
+    plot(x, y, 'r--', 'LineWidth', 1.5); % ÓÃºìÉ«ĞéÏß»æÖÆãĞÖµ
+end
+% Ìí¼ÓÍ¼ÀıºÍ±êÇ©
+legend('filtered_signal1', 'Thresholds');
+xlabel('Sample Index');
+ylabel('Amplitude');
+title('Signal and Thresholds Comparison');
+grid on; % Ìí¼ÓÍø¸ñ
+hold off;
 
-current_chj_start_loc = current_chj_read_loc + subsignal_starts(6) + floor(all_t_gccs(6));
-chj_signal = read_signal('../2024 822 85933.651462CH1.dat', yld_signal_length, current_chj_start_loc);
-plot(chj_signal)
+
+
+
+
+%3D×ª2D
+x = filtered_S(:, 1);
+y = filtered_S(:, 2);
+z = filtered_S(:, 3);
+% ½«Ö±½Ç×ø±ê×ª»»ÎªÇò×ø±ê
+[azimuth, elevation, ~] = cart2sph(x, y, z);
+% ½«»¡¶È×ª»»Îª½Ç¶È
+azimuth = azimuth * 180 / pi;
+elevation = elevation * 180 / pi;
+% µ÷Õû·½Î»½Ç·¶Î§Îª 0-360 ¶È
+azimuth = mod(azimuth, 360);
+azimuth(azimuth < 0) = azimuth(azimuth < 0) + 360;
+% µ÷ÕûÑö½Ç·¶Î§Îª 0-90 ¶È
+elevation = abs(elevation); % È·±£Ñö½ÇÎª·Ç¸ºÖµ
+elevation(elevation > 90) = 90; % ÏŞÖÆ×î´óÖµÎª 90 ¶È
+% »æÖÆ·½Î»½ÇºÍÑö½ÇµÄÉ¢µãÍ¼
 figure;
-plot(yld_signal)
+scatter(azimuth, elevation, 1, 'filled');
+xlabel('·½Î»½Ç (¶È)');
+ylabel('Ñö½Ç (¶È)');
+title('·½Î»½ÇºÍÑö½Ç·Ö²¼');
+grid on;
+axis([0 360 0 90]); % ÉèÖÃ×ø±êÖá·¶Î§
+colorbar; % Ìí¼ÓÑÕÉ«Ìõ£¨¿ÉÑ¡£©
+
+
+
+
+subplot(3,1,1);plot(ch1);title('ch1');xlabel('²ÉÑùµãÊı');ylabel('·ùÖµ');
+subplot(3,1,2);plot(ch2);title('ch2');xlabel('²ÉÑùµãÊı');ylabel('·ùÖµ');
+subplot(3,1,3);plot(ch3);title('ch3');xlabel('²ÉÑùµãÊı');ylabel('·ùÖµ');
+
+
+
+
+
+
+
+fs = 200e6;
+signal_length = 71916308;
+r_loction = 451501808;
+ch1_yld = read_signal('..\\20240822165932.6610CH1.dat',signal_length,r_loction);
+ch1_chj = read_signal('..\\2024 822 85933.651462CH1.dat',signal_length,r_loction + 3.3e7);
+ch2 = read_signal('..\\2024 822 85933.651462CH2.dat',signal_length,r_loction);
+ch3 = read_signal('..\\2024 822 85933.651462CH3.dat',signal_length,r_loction+165/5);
+
+% Éè¼Æ´øÍ¨ÂË²¨Æ÷
+[b, a] = butter(4, [20e6, 80e6] / (fs / 2), 'bandpass'); 
+% ¶ÔĞÅºÅ½øĞĞ´øÍ¨ÂË²¨
+filtered_signal1 = filter(b, a, ch1);
+filtered_signal2 = filter(b, a, ch2);
+filtered_signal3 = filter(b, a, ch3);
+
+%bp
+filtered_signal1_yld = filter_bp(ch1_yld, 20e6 ,80e6 ,5);
+filtered_signal1_chj = filter_bp(ch1_chj, 20e6 ,80e6 ,5);
+filtered_signal3 = filter_bp(ch3, 20e6 ,80e6 ,5);
+
+
+
+
+
+
+
+
+subplot(3,1,1);plot(filtered_signal1);title('ch1');xlabel('²ÉÑùµãÊı');ylabel('·ùÖµ');
+subplot(3,1,2);plot(filtered_signal2);title('ch2');xlabel('²ÉÑùµãÊı');ylabel('·ùÖµ');
+subplot(3,1,3);plot(filtered_signal3);title('ch3');xlabel('²ÉÑùµãÊı');ylabel('·ùÖµ');
+
+
+plot(ch3,'b');
+hold on;
+plot(filtered_signal3 +50,'r');
+legend('Ô­ĞÅºÅ','ÂË²¨ºó');
+xlabel('²ÉÑùµãÊı');
+ylabel('·ùÖµ');
+
+
+[R1_x, R1_y, R1_z] = sph2cart(deg2rad(181.588691),deg2rad(49.691292),1);
+% ¼ÆËãÑö½Ç£¨µ¥Î»£º¶È£©
+theta = asin(R1_z) * (180/pi); % È¡Öµ·¶Î§Îª [-90, 90] ¶È
+% ¼ÆËã·½Î»½Ç£¨µ¥Î»£º¶È£©
+phi = atan2(R1_y, R1_x) * (180/pi); % È¡Öµ·¶Î§Îª [-180, 180] ¶È
+% Èç¹ûĞèÒª½«·½Î»½Ç×ª»»Îª [0, 360) ·¶Î§
+if phi < 0
+    phi = phi + 360;
+end
+% Êä³ö½á¹û
+fprintf('·½Î»½Ç (Azimuth): %.2f ¶È\n', phi);
+fprintf('Ñö½Ç (Elevation): %.2f ¶È\n', theta);
+
+
+
