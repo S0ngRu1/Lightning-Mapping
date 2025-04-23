@@ -13,10 +13,10 @@ dltas = [];
 p = chj_sit-yld_sit;
 dist = 8.09e3; %单位：米
 c = 0.299792458;
-W = 30000; % 时间误差
+W = 3000000; % 时间误差
 
-signal_length=1e8;
-r_loction=4e8;
+signal_length=0.5e8;
+r_loction=4.39e8;
 yld_ch1 =read_signal('..\\20240822165932.6610CH1.dat',signal_length,r_loction);
 chj_ch1 =read_signal('..\\2024 822 85933.651462CH1.dat',signal_length,r_loction+ 34151156);
 chj_ch2 =read_signal('..\\2024 822 85933.651462CH2.dat',signal_length,r_loction+ 34151156);
@@ -38,8 +38,6 @@ first_start_read_loc_chj = 0;
 %% Step2 根据引雷点的信号窗口得到匹配到的从化局的信号
 count = 0;
 for i =1 :numel(yld_start_loc)
-    sub_S_results = [];
-    sub_R_gccs = [];
     waitbar(i/numel(yld_start_loc), h, sprintf('Processing %.2f%%', i/numel(yld_start_loc)*100));
     if yld_Rcorr(i) < 0.3 && yld_t123(i) > 1
         continue
@@ -89,18 +87,17 @@ for i =1 :numel(yld_start_loc)
     [r_gcc, lags_gcc] = xcorr(processed_yld_signal, processed_chj_signal1, 'none');
     R_gcc = max(r_gcc);
     t_gcc = cal_tau(r_gcc, lags_gcc');
-    if R_gcc < 0.15
+    if R_gcc < 0.05
         continue
     end
 
     [chj_start_loc, chj_azimuth, chj_elevation, chj_Rcorr, chj_t123] = get_2d_result_single_window(start_read_loc_chj,processed_chj_signal1,processed_chj_signal2,processed_chj_signal3,'chj');
     if chj_start_loc == 0
-        count = count+1
         continue
     end
 
-    [R1_x, R1_y, R1_z] = sph2cart(deg2rad(90-yld_azimuth(i)), deg2rad(yld_elevation(i)),1);
-    [R2_x, R2_y, R2_z] = sph2cart(deg2rad(90-chj_azimuth), deg2rad(chj_elevation),1);
+    [R1_x, R1_y, R1_z] = sph2cart(deg2rad(yld_azimuth(i)), deg2rad(yld_elevation(i)),1);
+    [R2_x, R2_y, R2_z] = sph2cart(deg2rad(chj_azimuth), deg2rad(chj_elevation),1);
     A1 = [R1_x, R1_y, R1_z];
     A2 = [R2_x, R2_y, R2_z];
     C = cross(A1, A2);
@@ -137,17 +134,12 @@ for i =1 :numel(yld_start_loc)
         dlta = abs(dlta_t-dlta_T);
         dltas = [dltas;dlta];
         if dlta <= W
-            sub_S_results = [sub_S_results; sub_S];
-            sub_R_gccs = [sub_R_gccs;R_gcc];
+            S_results = [S_results; sub_S];
             match_results = [match_results; struct('yld_start_loc', yld_start_loc(i), 'chj_loc', start_read_loc_chj +1 + r_loction + 34151156, 'r_gccs', R_gcc)];
         end
     end
+
 end
-[max_R_gcc, max_R_gcc_index] = max(sub_R_gccs);
-
-S_results = [S_results;sub_S_results(max_R_gcc_index,:)];
-
-
 close(h);
 
 %% Step 5: 差分到达时间 (DTOA) 技术
