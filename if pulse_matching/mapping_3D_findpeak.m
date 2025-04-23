@@ -25,10 +25,10 @@ chj_ch3 =read_signal('..\\2024 822 85933.651462CH3.dat',signal_length,r_loction+
 % filtered_chj_signal1 = filter_xb(chj_ch1);
 % filtered_chj_signal2 = filter_xb(chj_ch2);
 % filtered_chj_signal3 = filter_xb(chj_ch3);
-filtered_yld_signal1 = filter_bp(yld_ch1,30e6,80e6,5);
-filtered_chj_signal1 = filter_bp(chj_ch1,30e6,80e6,5);
-filtered_chj_signal2 = filter_bp(chj_ch2,30e6,80e6,5);
-filtered_chj_signal3 = filter_bp(chj_ch3,30e6,80e6,5);
+filtered_yld_signal1 = filter_bp(yld_ch1,20e6,80e6,5);
+filtered_chj_signal1 = filter_bp(chj_ch1,20e6,80e6,5);
+filtered_chj_signal2 = filter_bp(chj_ch2,20e6,80e6,5);
+filtered_chj_signal3 = filter_bp(chj_ch3,20e6,80e6,5);
 
 S_results = [];
 match_results = struct('yld_start_loc', {}, 'chj_loc', {}, 'r_gccs', {});
