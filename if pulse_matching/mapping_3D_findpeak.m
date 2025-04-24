@@ -31,7 +31,7 @@ filtered_chj_signal2 = filter_bp(chj_ch2,20e6,80e6,5);
 filtered_chj_signal3 = filter_bp(chj_ch3,20e6,80e6,5);
 
 S_results = [];
-match_results = struct('yld_start_loc', {}, 'chj_loc', {}, 'r_gccs', {});
+match_results = struct('yld_start_loc', {}, 'chj_loc', {}, 'r_gccs', {}, 'dlta',{});
 [yld_start_loc, yld_azimuth, yld_elevation, yld_Rcorr, yld_t123] = read_result(yld_result_path,start_read_loc_yld, end_read_loc_yld);
 h = waitbar(0, 'Processing...');
 first_start_read_loc_chj = 0;
@@ -86,6 +86,7 @@ for i =1 :numel(yld_start_loc)
 
     [r_gcc, lags_gcc] = xcorr(processed_yld_signal, processed_chj_signal1, 'none');
     R_gcc = max(r_gcc);
+    r_gcc =r_gcc ./ (norm(processed_chj_signal1)* norm(processed_yld_signal));
     t_gcc = cal_tau(r_gcc, lags_gcc');
     if R_gcc < 0.05
         continue
@@ -96,8 +97,8 @@ for i =1 :numel(yld_start_loc)
         continue
     end
 
-    [R1_x, R1_y, R1_z] = sph2cart(deg2rad(yld_azimuth(i)), deg2rad(yld_elevation(i)),1);
-    [R2_x, R2_y, R2_z] = sph2cart(deg2rad(chj_azimuth), deg2rad(chj_elevation),1);
+    [R1_x, R1_y, R1_z] = sph2cart(deg2rad(90-yld_azimuth(i)), deg2rad(yld_elevation(i)),1);
+    [R2_x, R2_y, R2_z] = sph2cart(deg2rad(90-chj_azimuth), deg2rad(chj_elevation),1);
     A1 = [R1_x, R1_y, R1_z];
     A2 = [R2_x, R2_y, R2_z];
     C = cross(A1, A2);
@@ -132,10 +133,9 @@ for i =1 :numel(yld_start_loc)
         dlta_t = abs(t_yld-t_chj);
         dlta_T = abs(t_gcc)*5;
         dlta = abs(dlta_t-dlta_T);
-        dltas = [dltas;dlta];
         if dlta <= W
             S_results = [S_results; sub_S];
-            match_results = [match_results; struct('yld_start_loc', yld_start_loc(i), 'chj_loc', start_read_loc_chj +1 + r_loction + 34151156, 'r_gccs', R_gcc)];
+            match_results = [match_results; struct('yld_start_loc', yld_start_loc(i), 'chj_loc', start_read_loc_chj +1 + r_loction + 34151156, 'r_gccs', R_gcc, 'dlta',dlta)];
         end
     end
 
@@ -148,7 +148,7 @@ close(h);
 % 绘制 S 的结果 设置过滤条件
 x_range = [-50000, 50000]; % X 的合理范围
 y_range = [-50000, 50000]; % Y 的合理范围
-z_range = [-50000, 50000];    % Z 的合理范围（Z > 0）
+z_range = [0, 5000];    % Z 的合理范围（Z > 0）
 
 % 过滤数据
 filtered_S = S_results(...
