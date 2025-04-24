@@ -31,7 +31,7 @@ filtered_chj_signal2 = filter_bp(chj_ch2,20e6,80e6,5);
 filtered_chj_signal3 = filter_bp(chj_ch3,20e6,80e6,5);
 
 S_results = [];
-match_results = struct('yld_start_loc', {}, 'chj_loc', {}, 'r_gccs', {}, 'dlta',{});
+match_results = struct('yld_start_loc', {}, 'chj_loc', {}, 'r_gccs', {}, 'dlta',{}, 'dlta',{});
 [yld_start_loc, yld_azimuth, yld_elevation, yld_Rcorr, yld_t123] = read_result(yld_result_path,start_read_loc_yld, end_read_loc_yld);
 h = waitbar(0, 'Processing...');
 first_start_read_loc_chj = 0;
@@ -85,6 +85,7 @@ for i =1 :numel(yld_start_loc)
     processed_chj_signal3 = real(windowsignal(detrend(chj_match_signal3)));
 
     [r_gcc, lags_gcc] = xcorr(processed_yld_signal, processed_chj_signal1, 'none');
+    r_gcc = r_gcc ./ (norm(processed_chj_signal1) * norm(processed_yld_signal));
     R_gcc = max(r_gcc);
     r_gcc =r_gcc ./ (norm(processed_chj_signal1)* norm(processed_yld_signal));
     t_gcc = cal_tau(r_gcc, lags_gcc');
