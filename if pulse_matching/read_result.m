@@ -17,15 +17,18 @@ function [start_loc, azimuth, elevation, Rcorr, t123] = read_result(result_path,
     % 获取 Start_loc 列数据
     start_loc_full = data{1};
 
-    % 找到 Start_loc 等于 start_read_line 的索引
-    start_index = find(start_loc_full == start_read_line, 1);
+    % 找到大于 start_read_line 的第一个索引
+    start_index = find(start_loc_full > start_read_line, 1, 'first');
     if isempty(start_index)
-        error('start_read_line:未找到 Start_loc 等于 %d 的数据', start_read_line);
+        error('start_read_line:未找到 Start_loc 大于 %d 的数据', start_read_line);
     end
-    end_index = find(start_loc_full == end_read_line, 1);
+
+    % 找到大于 end_read_line 的第一个索引
+    end_index = find(start_loc_full > end_read_line, 1, 'first');
     if isempty(end_index)
-        error('end_read_line:未找到 Start_loc 等于 %d 的数据', end_read_line);
+        error('end_read_line:未找到 Start_loc 大于 %d 的数据', end_read_line);
     end
+
     % 从找到的位置开始提取数据
     start_loc = start_loc_full(start_index:end_index);          % Start_loc
     azimuth = data{8}(start_index:end_index);                   % Azimuth

@@ -3,8 +3,9 @@
 chj_signal_length = 5120;
 match_signal_length = 6000;
 yld_result_path = 'result_yld_window5120.txt';
-start_read_loc_yld = 440115723;
-end_read_loc_yld = 487585901;
+start_signal_loc = 3.6e8;
+end_signal_loc = 5.9e8;
+step = 1e7;  
 % 引入两个站的位置关系
 yld_sit = [0, 0, 0];
 chj_sit = [1991, -7841.2, 0];
@@ -13,35 +14,36 @@ p = chj_sit-yld_sit;
 dist = 8.09e3; %单位：米
 c = 0.299792458;
 W = 30000; % 时间误差
-offset = 34151156 - 12000;
-signal_length=0.5e8;
-r_loction=4.7e8;
-yld_ch1 =read_signal('..\\20240822165932.6610CH1.dat',signal_length,r_loction);
-chj_ch1 =read_signal('..\\2024 822 85933.651462CH1.dat',signal_length,r_loction+ offset);
-chj_ch2 =read_signal('..\\2024 822 85933.651462CH2.dat',signal_length,r_loction+ offset);
-chj_ch3 =read_signal('..\\2024 822 85933.651462CH3.dat',signal_length,r_loction+ offset +165/5);
-% filtered_yld_signal1 = filter_xb(yld_ch1);
-% filtered_chj_signal1 = filter_xb(chj_ch1);
-% filtered_chj_signal2 = filter_xb(chj_ch2);
-% filtered_chj_signal3 = filter_xb(chj_ch3);
-filtered_yld_signal1 = filter_bp(yld_ch1,30e6,80e6,5);
-filtered_chj_signal1 = filter_bp(chj_ch1,30e6,80e6,5);
-filtered_chj_signal2 = filter_bp(chj_ch2,30e6,80e6,5);
-filtered_chj_signal3 = filter_bp(chj_ch3,30e6,80e6,5);
+offsets = [-85000, -79000, -75000, -65000, -57000, -48000, -36000, -30000, -25000, -14000, -5000, 5000, 11000, 16000, 26000, 34000, 38000];
+signal_length=1e7;
+% 所有信号的开始位置
+all_start_signal_loc = start_signal_loc:step:end_signal_loc;
+all_S_results = [];
+for j = 1:numel(all_start_signal_loc)-1
+    start_read_loc_yld = all_start_signal_loc(j);
+    end_read_loc_yld = all_start_signal_loc(j+1);
+    printf('正在处理的信号位置：%d -- %d \n', start_read_loc_yld, end_read_loc_yld);
+    [yld_start_loc, yld_azimuth, yld_elevation, yld_Rcorr, yld_t123] = read_result(yld_result_path,start_read_loc_yld, end_read_loc_yld);
+    yld_ch1 =read_signal('..\\20240822165932.6610CH1.dat',signal_length,start_read_loc_yld);
+    chj_ch1 =read_signal('..\\2024 822 85933.651462CH1.dat',signal_length,start_read_loc_yld+ 34151156 + offsets(j));
+    chj_ch2 =read_signal('..\\2024 822 85933.651462CH2.dat',signal_length,start_read_loc_yld+ 34151156 + offsets(j));
+    chj_ch3 =read_signal('..\\2024 822 85933.651462CH3.dat',signal_length,start_read_loc_yld+ 34151156 + offsets(j) +165/5);
+    filtered_yld_signal1 = filter_bp(yld_ch1,30e6,80e6,5);
+    filtered_chj_signal1 = filter_bp(chj_ch1,30e6,80e6,5);
+    filtered_chj_signal2 = filter_bp(chj_ch2,30e6,80e6,5);
+    filtered_chj_signal3 = filter_bp(chj_ch3,30e6,80e6,5);
+    S_results = [];
+    match_results = struct('yld_start_loc', {}, 'chj_loc', {}, 'r_gccs', {}, 'dlta',{});
+    h = waitbar(0, 'Processing...');
 
-S_results = [];
-match_results = struct('yld_start_loc', {}, 'chj_loc', {}, 'r_gccs', {}, 'dlta',{});
-[yld_start_loc, yld_azimuth, yld_elevation, yld_Rcorr, yld_t123] = read_result(yld_result_path,start_read_loc_yld, end_read_loc_yld);
-h = waitbar(0, 'Processing...');
-first_start_read_loc_chj = 0;
+    first_start_read_loc_chj = 0;
 %% Step2 根据引雷点的信号窗口得到匹配到的从化局的信号
-count = 0;
 for i =1 :numel(yld_start_loc)
     sub_S_results = [];
     sub_R_gccs = [];
     dltas = [];
     sub_chj_locs = [];
-    waitbar(i/numel(yld_start_loc), h, sprintf('Processing %.2f%%', i/numel(yld_start_loc)*100));
+    waitbar(i/numel(yld_start_loc), h, sprintf('正在处理的信号位置：%d -- %d Processing %.2f%%', start_read_loc_yld, end_read_loc_yld, i/numel(yld_start_loc)*100));
     if yld_Rcorr(i) < 0.3 && yld_t123(i) > 1
         continue
     end
@@ -144,8 +146,19 @@ for i =1 :numel(yld_start_loc)
     [max_R_gcc, max_R_gcc_index] = max(sub_R_gccs);
     S_results = [S_results;sub_S_results(max_R_gcc_index,:)];
     match_results = [match_results; struct('yld_start_loc', yld_start_loc(i), 'chj_loc', sub_chj_locs(max_R_gcc_index)+ r_loction + offset+start_read_loc_chj-match_signal_length+1, 'r_gccs', max_R_gcc, 'dlta',dltas(max_R_gcc_index))];
+    % 创建文件名
+    match_results_filename = sprintf('%d_%d_match_results.mat', start_read_loc_yld, end_read_loc_yld);
+    S_results_filename = sprintf('%d_%d_S_results.mat', start_read_loc_yld, end_read_loc_yld);
+    % 保存变量到文件
+    save(match_results_filename, 'match_results');
+    save(S_results_filename, 'S_results');
+    all_S_results = [all_S_results; S_results];
 end
 close(h);
+
+end
+
+
 
 %% Step 5: 差分到达时间 (DTOA) 技术
 
@@ -156,10 +169,10 @@ y_range = [-50000, 50000]; % Y 的合理范围
 z_range = [0, 5000];    % Z 的合理范围（Z > 0）
 
 % 过滤数据
-filtered_S = S_results(...
-    S_results(:,1) >= x_range(1) & S_results(:,1) <= x_range(2) & ... % X 在合理范围内
-    S_results(:,2) >= y_range(1) & S_results(:,2) <= y_range(2) & ... % Y 在合理范围内
-    S_results(:,3) >= z_range(1) & S_results(:,3) <= z_range(2), :); % Z 在合理范围内
+filtered_S = all_S_results(...
+    all_S_results(:,1) >= x_range(1) & all_S_results(:,1) <= x_range(2) & ... % X 在合理范围内
+    all_S_results(:,2) >= y_range(1) & all_S_results(:,2) <= y_range(2) & ... % Y 在合理范围内
+    all_S_results(:,3) >= z_range(1) & all_S_results(:,3) <= z_range(2), :); % Z 在合理范围内
 
 
 % 绘制过滤后的数据
@@ -171,12 +184,6 @@ zlabel('Z');
 title('过滤后的所有 S 点的分布');
 grid on;
 
-% 转换为极坐标 [x, y, z] = deal(filtered_S(:,1), filtered_S(:,2),
-% filtered_S(:,3)); theta = atan2(y, x); % 计算角度 (弧度) r = sqrt(x.^2 + y.^2);
-% % 计算半径
-
-% 绘制极坐标图 figure; polarscatter(theta, r, 1, z, 'filled'); % 使用颜色表示 Z 坐标
-% title('过滤后的所有 S 点的极坐标分布'); colorbar; % 添加颜色条表示 Z 值
 
 x = filtered_S(:, 1);
 y = filtered_S(:, 2);
@@ -207,7 +214,7 @@ figure;
 scatter(azimuths, elevations, 1, 'filled');
 xlabel('方位角 (度)');
 ylabel('仰角 (度)');
-title(['从站点 ', num2str(zero_point_position), ' 看闪电的方位角 vs 仰角']);
+title(['从站点 ', num2str(chj_sit), ' 看闪电的方位角 vs 仰角']);
 grid on;
 % 可以调整 X 轴范围以更好地展示方位角 (0-360度)
 xlim([0, 360]);
