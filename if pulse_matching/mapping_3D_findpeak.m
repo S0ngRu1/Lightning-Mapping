@@ -2,9 +2,9 @@
 % 引入变量：位置，方位角，仰角
 chj_signal_length = 5120;
 match_signal_length = 6000;
-yld_result_path = 'result_yld3.5-5.5.txt';
-start_read_loc_yld = 439997892;
-end_read_loc_yld = 480138689;
+yld_result_path = 'result_yld_window5120.txt';
+start_read_loc_yld = 440115723;
+end_read_loc_yld = 487585901;
 % 引入两个站的位置关系
 yld_sit = [0, 0, 0];
 chj_sit = [1991, -7841.2, 0];
@@ -15,7 +15,7 @@ c = 0.299792458;
 W = 30000; % 时间误差
 offset = 34151156 - 12000;
 signal_length=0.5e8;
-r_loction=4.39e8;
+r_loction=4.7e8;
 yld_ch1 =read_signal('..\\20240822165932.6610CH1.dat',signal_length,r_loction);
 chj_ch1 =read_signal('..\\2024 822 85933.651462CH1.dat',signal_length,r_loction+ offset);
 chj_ch2 =read_signal('..\\2024 822 85933.651462CH2.dat',signal_length,r_loction+ offset);
@@ -196,7 +196,7 @@ for i = 1:num_points
     current_S = filtered_S(i, :);
 
     % 计算从零点位置指向当前定位结果点的向量
-    direction_vector = current_S(:) - yld_sit(:);
+    direction_vector = current_S(:) - chj_sit(:);
 
     % 调用 cart2sph_standard 函数计算方位角和仰角
     [azimuths(i), elevations(i)] = cart2sph_standard(direction_vector);
