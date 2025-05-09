@@ -97,7 +97,7 @@ R3 = -R3;
 if R1_value <= R2_value
     sub_S = R1 + (R1_value / R2_value)*(R1_value / (R1_value + R2_value)) * R3;
 else
-    sub_S = R2 - (R2_value / R1_value)*(R2_value / (R1_value + R2_value)) * R3 + p;
+    sub_S = R2 - (R2_value / R1_value)*(R2_value / (R1_value + R2_value)) * R3 + p; 
 end
 % 还原到地面坐标
 S_result = sub_S + yld_sit;  % 这里注意，需要加上yld_sit作为起点偏移

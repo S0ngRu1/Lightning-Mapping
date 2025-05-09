@@ -3,8 +3,8 @@
 chj_signal_length = 5120;
 match_signal_length = 6000;
 yld_result_path = 'result_yld_window5120_3e8.txt';
-start_signal_loc = 3.6e8;
-end_signal_loc = 5.3e8;
+start_signal_loc = 3.9e8;
+end_signal_loc = 4e8;
 step = 1e7;
 % 引入两个站的位置关系
 yld_sit = [0, 0, 0];
@@ -15,10 +15,11 @@ dist = 8.09e3; %单位：米
 c = 0.299792458;
 W = 30000; % 时间误差
 offsets = [-85000, -79000, -75000, -65000, -57000, -48000, -36000, -30000, -25000, -14000, -5000, 5000, 11000, 16000, 26000, 34000, 38000];
+% offsets = -65000;
 signal_length=1e7;
 % 所有信号的开始位置
 all_start_signal_loc = start_signal_loc:step:end_signal_loc;
-all_S_results = [];
+S_results = [];
 for j = 1:numel(all_start_signal_loc)-1
     start_read_loc_yld = all_start_signal_loc(j);
     end_read_loc_yld = all_start_signal_loc(j+1);
@@ -26,9 +27,9 @@ for j = 1:numel(all_start_signal_loc)-1
     fprintf('正在处理的信号位置：%d -- %d \n', start_read_loc_yld, end_read_loc_yld);
     [yld_start_loc, yld_azimuth, yld_elevation, yld_Rcorr, yld_t123] = read_result(yld_result_path,start_read_loc_yld, end_read_loc_yld);
     yld_ch1 =read_signal('..\\20240822165932.6610CH1.dat',signal_length,start_read_loc_yld);
-    chj_ch1 =read_signal('..\\2024 822 85933.651462CH1.dat',signal_length,start_read_loc_yld+ 34151156 + offsets(j));
-    chj_ch2 =read_signal('..\\2024 822 85933.651462CH2.dat',signal_length,start_read_loc_yld+ 34151156 + offsets(j));
-    chj_ch3 =read_signal('..\\2024 822 85933.651462CH3.dat',signal_length,start_read_loc_yld+ 34151156 + offsets(j) +165/5);
+    chj_ch1 =read_signal('..\\2024 822 85933.651462CH1.dat',signal_length,start_read_loc_yld+ 34151156 - offsets(j));
+    chj_ch2 =read_signal('..\\2024 822 85933.651462CH2.dat',signal_length,start_read_loc_yld+ 34151156 - offsets(j));
+    chj_ch3 =read_signal('..\\2024 822 85933.651462CH3.dat',signal_length,start_read_loc_yld+ 34151156 - offsets(j) +165/5);
     filtered_yld_signal1 = filter_bp(yld_ch1,30e6,80e6,5);
     filtered_chj_signal1 = filter_bp(chj_ch1,30e6,80e6,5);
     filtered_chj_signal2 = filter_bp(chj_ch2,30e6,80e6,5);
@@ -49,6 +50,9 @@ for j = 1:numel(all_start_signal_loc)-1
         % 转换绝对位置到相对位置
         yld_signal_start_loc = yld_start_loc(i) - start_read_loc_yld;
         start_read_loc_chj = yld_signal_start_loc;
+        if yld_signal_start_loc+chj_signal_length > signal_length || yld_signal_start_loc + 1 < 0
+            continue
+        end
         processed_yld_signal = filtered_yld_signal1(yld_signal_start_loc+1 : yld_signal_start_loc+chj_signal_length);
         processed_yld_signal = real(windowsignal(detrend(processed_yld_signal)));
 
@@ -71,7 +75,9 @@ for j = 1:numel(all_start_signal_loc)-1
 
         for pi = 1:num_peaks
             idx = all_locs(pi);
-
+            if idx - (chj_signal_length / 2 - 1) <= 0 || idx + (chj_signal_length / 2) > match_signal_length*2+chj_signal_length
+                continue;
+            end
             processed_chj_signal1 = chj_match_signal1(idx - (chj_signal_length / 2)+ 1:idx + (chj_signal_length / 2));
             processed_chj_signal2 = chj_match_signal2(idx - (chj_signal_length / 2)+ 1:idx + (chj_signal_length / 2));
             processed_chj_signal3 = chj_match_signal3(idx - (chj_signal_length / 2)+ 1:idx + (chj_signal_length / 2));
@@ -101,6 +107,31 @@ for j = 1:numel(all_start_signal_loc)-1
             end
             [R1_x, R1_y, R1_z] = sph2cart(deg2rad(90-yld_azimuth(i)), deg2rad(yld_elevation(i)),1);
             [R2_x, R2_y, R2_z] = sph2cart(deg2rad(90-chj_azimuth), deg2rad(chj_elevation),1);
+%             p = chj_sit(:) - yld_sit(:);
+%             A1 = [R1_x, R1_y, R1_z]';
+%             A2 = [R2_x, R2_y, R2_z]';
+%             % 计算叉乘并检查共线性
+%             C = cross(A1, A2);
+%             if norm(C) < eps
+%                 continue;  % 或处理共线情况
+%             end
+%             c_unit = C / norm(C);
+%             
+%             % 构建矩阵 M = [A1, -A2, c_unit]
+%             M = [A1, -A2, c_unit];
+%             
+%             % 使用矩阵除法替代克莱姆法则
+%             solution = M \ p;
+%             R1_value = solution(1);
+%             R2_value = solution(2);
+%             R3_value = solution(3);
+%             
+%             % 计算定位点（取两站解的平均值）
+%             S_yld = yld_sit(:) + R1_value * A1;
+%             S_chj = chj_sit(:) + R2_value * A2;
+%             sub_S = (S_yld + S_chj) / 2;
+%             sub_S = sub_S';
+
             A1 = [R1_x, R1_y, R1_z];
             A2 = [R2_x, R2_y, R2_z];
             C = cross(A1, A2);
@@ -145,11 +176,11 @@ for j = 1:numel(all_start_signal_loc)-1
         end
         [max_R_gcc, max_R_gcc_index] = max(sub_R_gccs);
         S_results = [S_results;sub_S_results(max_R_gcc_index,:)];
-        match_results = [match_results; struct('yld_start_loc', yld_start_loc(i), 'chj_loc', sub_chj_locs(max_R_gcc_index)+ start_read_loc_yld + 34151156 + offsets(j) +start_read_loc_chj-match_signal_length+1, 'r_gccs', max_R_gcc, 'dlta',dltas(max_R_gcc_index))];
-        all_S_results = [all_S_results; S_results];
+        match_results = [match_results; struct('yld_start_loc', yld_start_loc(i), 'chj_loc', sub_chj_locs(max_R_gcc_index)+ start_read_loc_yld + 34151156 - offsets(j) +start_read_loc_chj-match_signal_length+1, 'r_gccs', max_R_gcc, 'dlta',dltas(max_R_gcc_index))];
     end
     close(h);
     % 创建文件名
+    S_results = [S_results; S_results];
     match_results_filename = sprintf('%d_%d_match_results.mat', start_read_loc_yld, end_read_loc_yld);
     S_results_filename = sprintf('%d_%d_S_results.mat', start_read_loc_yld, end_read_loc_yld);
     % 保存变量到文件
@@ -168,10 +199,10 @@ y_range = [-50000, 50000]; % Y 的合理范围
 z_range = [0, 5000];    % Z 的合理范围（Z > 0）
 
 % 过滤数据
-filtered_S = all_S_results(...
-    all_S_results(:,1) >= x_range(1) & all_S_results(:,1) <= x_range(2) & ... % X 在合理范围内
-    all_S_results(:,2) >= y_range(1) & all_S_results(:,2) <= y_range(2) & ... % Y 在合理范围内
-    all_S_results(:,3) >= z_range(1) & all_S_results(:,3) <= z_range(2), :); % Z 在合理范围内
+filtered_S = S_results(...
+    S_results(:,1) >= x_range(1) & S_results(:,1) <= x_range(2) & ... % X 在合理范围内
+    S_results(:,2) >= y_range(1) & S_results(:,2) <= y_range(2) & ... % Y 在合理范围内
+    S_results(:,3) >= z_range(1) & S_results(:,3) <= z_range(2), :); % Z 在合理范围内
 
 
 % 绘制过滤后的数据
@@ -202,7 +233,7 @@ for i = 1:num_points
     current_S = filtered_S(i, :);
 
     % 计算从零点位置指向当前定位结果点的向量
-    direction_vector = current_S(:) - chj_sit(:);
+    direction_vector = current_S(:) - yld_sit(:);
 
     % 调用 cart2sph_standard 函数计算方位角和仰角
     [azimuths(i), elevations(i)] = cart2sph_standard(direction_vector);
@@ -213,9 +244,11 @@ figure;
 scatter(azimuths, elevations, 1, 'filled');
 xlabel('方位角 (度)');
 ylabel('仰角 (度)');
-title(['从站点 ', num2str(chj_sit), ' 看闪电的方位角 vs 仰角']);
+title(['从站点 ', num2str(yld_sit), ' 看闪电的方位角 vs 仰角']);
 grid on;
-% 可以调整 X 轴范围以更好地展示方位角 (0-360度)
+xlabel('Azimuth');
 xlim([0, 360]);
-% 可以调整 Y 轴范围以更好地展示仰角 (-90-90度)
-ylim([0, 90]);
+xticks(0:40:360);
+ylabel('Elevation');
+ylim([-40, 100]);
+yticks(-40:20:100);
