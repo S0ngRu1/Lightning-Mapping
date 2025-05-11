@@ -6,42 +6,32 @@ window_length = 1024;
 bigwindows_length = window_length+100;
 window = window_length * upsampling_factor;
 msw_length = 50;
-%引雷点
-signal_length = 8e5;
-r_loction = 4.694e8;
-d12 = 24.9586;
-d13 = 34.9335;
-d23 = 24.9675;
-angle12 = -110.8477;
-angle13 = -65.2405;
-angle23 = -19.6541;
-ch1 = read_signal('..\\20240822165932.6610CH1.dat',signal_length,r_loction);
-ch2 = read_signal('..\\20240822165932.6610CH2.dat',signal_length,r_loction);
-ch3 = read_signal('..\\20240822165932.6610CH3.dat',signal_length,r_loction);
+% 从化局
+d12 = 41.6496;
+d13 = 48.5209;
+d23 = 25.0182;
+angle12 = -2.8381;
+angle13 = 28.2006;
+angle23 = 87.3358;
 
+signal_length = 3e8;
+r_loction = 3e8;
+ch1 = read_signal('..\\2024 822 85933.651462CH1.dat',signal_length,r_loction);
+ch2 = read_signal('..\\2024 822 85933.651462CH2.dat',signal_length,r_loction);
+ch3 = read_signal('..\\2024 822 85933.651462CH3.dat',signal_length,r_loction+165/5);
 
-filtered_signal1 = filter_xb(ch1);
-filtered_signal2 = filter_xb(ch2);
-filtered_signal3 = filter_xb(ch3);
+filtered_signal1 = filter_bp(ch1,30e6,80e6,5);
+filtered_signal2 = filter_bp(ch2,30e6,80e6,5);
+filtered_signal3 = filter_bp(ch3,30e6,80e6,5);
 
-
-noise = read_signal('..\\20240822165932.6610CH1.dat',60000,2e8);
+noise = read_signal('..\\2024 822 85933.651462CH1.dat',60000,2e8);
 filtered_noise = filter_xb(noise);
 threshold = 0.5*std(filtered_noise);
 
 % 打开一个文本文件用于写入运行结果
-fileID = fopen('result_yld_4.5-5.5e8——xb.txt', 'w');
+fileID = fopen('result_chj_3-6e8_bp_1667.txt', 'w');
 fprintf(fileID, '%-13s%-15s%-15s%-15s%-15s%-15s%-15s%-15s%-15s%-15s%-15s\n', ...
     'Start_loc','peak','t12', 't13', 't23', 'cos_alpha_opt', 'cos_beta_opt','Azimuth', 'Elevation', 'Rcorr', 't123');
-
-
-% % 设置动态阈值，每4000点取一个阈值
-% subsignal_length = 4000;
-% subsignal_start = 1:subsignal_length:length(filtered_signal1);
-% for subi = 1:numel(subsignal_start)
-% subsignal1 = filtered_signal1(subsignal_start(subi):subsignal_start(subi)+subsignal_length-1);
-% % threshold = 0.5 * mean(abs(subsignal1));
-% threshold =  mean(abs(subsignal1)) + 3*std(subsignal1);
 
 % 寻找峰值
 [peaks, locs] = findpeaks(filtered_signal1, 'MinPeakHeight', threshold, 'MinPeakDistance', window_length/4);
@@ -146,10 +136,10 @@ for pi = 1:num_peaks
                 end
             end
             if size(t12s,1)~=0 && size(t13s,1)~=0 && size(t23s,1)~=0
-                %引雷场
-                t12 = (t12_gcc + mean(t12s))*0.1;
-                t13 = (t13_gcc + mean(t13s))*0.1;
-                t23 = (t23_gcc + mean(t23s))*0.1;
+                                %从化局
+                                t12 = (t12_gcc + mean(t12s))*0.1;
+                                t13 = (t13_gcc + mean(t13s))*0.1+1.667;
+                                t23 = (t23_gcc + mean(t23s))*0.1+1.667;
 
                 cos_beta_0 =((c*t13*d12*sind(angle12))-(c*t12*sind(angle13)*d13))/(d13*d12*sind(angle12-angle13)) ;
                 cos_alpha_0 = ((c*t12)/d12-cos_beta_0*cosd(angle12))/sind(angle12);
@@ -190,10 +180,11 @@ for pi = 1:num_peaks
         end
     end
     if ismsw == 0
-        %引雷场
-        t12 = t12_gcc *0.1;
-        t13 = t13_gcc *0.1;
-        t23 = t23_gcc *0.1;
+%                 从化局
+                t12 = t12_gcc *0.1;
+                t13 = t13_gcc *0.1+1.667;
+                t23 = t23_gcc *0.1+1.667;
+
 
         cos_beta_0 =((c*t13*d12*sind(angle12))-(c*t12*sind(angle13)*d13))/(d13*d12*sind(angle12-angle13)) ;
         cos_alpha_0 = ((c*t12)/d12-cos_beta_0*cosd(angle12))/sind(angle12);
@@ -270,13 +261,13 @@ end
 function tau_ij_obs = calculate_tau_obs(cos_alpha, cos_beta)
     % 初始化输出变量
     tau_ij_obs = zeros(1, 3);
-        % 引雷场
-        angle12 = -110.8477;
-        angle13 = -65.2405;
-        angle23 = -19.6541;
-        d12 = 24.9586;
-        d13 = 34.9335;
-        d23 = 24.9675;
+ % 从化局
+        angle12 = -2.8381;
+        angle13 = 28.2006;
+        angle23 = 87.3358;
+        d12 = 41.6496;
+        d13 = 48.5209;
+        d23 = 25.0182;
 
     % 使用式(3)计算τij的理想值τ_ij^obs
     tau_ij_obs(1) = (cos_alpha * sind(angle12) + cos_beta * cosd(angle12)) * d12 / 0.299792458;
