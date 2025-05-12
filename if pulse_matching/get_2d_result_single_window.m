@@ -42,8 +42,8 @@ t13_gcc = cal_tau(r13_gcc,lags13_gcc');
 t23_gcc = cal_tau(r23_gcc,lags23_gcc');
 %                 从化局
 t12 = t12_gcc *0.1;
-t13 = t13_gcc *0.1+2;
-t23 = t23_gcc *0.1+2;
+t13 = t13_gcc *0.1+1.667;
+t23 = t23_gcc *0.1+1.667;
 cos_beta_0 =((c*t13*d12*sind(angle12))-(c*t12*sind(angle13)*d13))/(d13*d12*sind(angle12-angle13)) ;
 cos_alpha_0 = ((c*t12)/d12-cos_beta_0*cosd(angle12))/sind(angle12);
 if abs(cos_beta_0)>1 || abs(cos_alpha_0)>1

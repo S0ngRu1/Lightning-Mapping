@@ -13,9 +13,9 @@ d23 = 25.0182;
 angle12 = -2.8381;
 angle13 = 28.2006;
 angle23 = 87.3358;
-
-signal_length = 3e8;
-r_loction = 3e8;
+fprintf('代码在运行中...');
+signal_length = 2e8;
+r_loction = 3.5e8;
 ch1 = read_signal('..\\2024 822 85933.651462CH1.dat',signal_length,r_loction);
 ch2 = read_signal('..\\2024 822 85933.651462CH2.dat',signal_length,r_loction);
 ch3 = read_signal('..\\2024 822 85933.651462CH3.dat',signal_length,r_loction+165/5);
@@ -24,9 +24,9 @@ filtered_signal1 = filter_bp(ch1,30e6,80e6,5);
 filtered_signal2 = filter_bp(ch2,30e6,80e6,5);
 filtered_signal3 = filter_bp(ch3,30e6,80e6,5);
 
-noise = read_signal('..\\2024 822 85933.651462CH1.dat',60000,2e8);
-filtered_noise = filter_xb(noise);
-threshold = 0.5*std(filtered_noise);
+% noise = read_signal('..\\2024 822 85933.651462CH1.dat',60000,2e8);
+% filtered_noise = filter_bp(noise,30e6,80e6,5);
+% threshold = 0.5*std(filtered_noise);
 
 % 打开一个文本文件用于写入运行结果
 fileID = fopen('result_chj_3-6e8_bp_1667.txt', 'w');
@@ -34,7 +34,7 @@ fprintf(fileID, '%-13s%-15s%-15s%-15s%-15s%-15s%-15s%-15s%-15s%-15s%-15s\n', ...
     'Start_loc','peak','t12', 't13', 't23', 'cos_alpha_opt', 'cos_beta_opt','Azimuth', 'Elevation', 'Rcorr', 't123');
 
 % 寻找峰值
-[peaks, locs] = findpeaks(filtered_signal1, 'MinPeakHeight', threshold, 'MinPeakDistance', window_length/4);
+[peaks, locs] = findpeaks(filtered_signal1, 'MinPeakHeight', 30, 'MinPeakDistance', window_length/4);
 
 % 存储所有峰值和阈值
 all_peaks = peaks;
