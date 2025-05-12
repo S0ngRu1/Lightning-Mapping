@@ -3,19 +3,19 @@
 chj_signal_length = 5120;
 match_signal_length = 6000;
 yld_result_path = 'result_yld_window5120_3e8.txt';
-start_signal_loc = 3.9e8;
-end_signal_loc = 4.0e8;
+start_signal_loc = 3.6e8;
+end_signal_loc = 4.8e8;
 step = 128200;
 % 引入两个站的位置关系
 yld_sit = [0, 0, 0];
-chj_sit = [1991, -7841.2, 0];
+chj_sit = [1991, -7841.2, -27];
 % offsets = [-85000, -79000, -75000, -65000, -57000, -48000, -36000, -30000, -25000, -14000, -5000, 5000, 11000, 16000, 26000, 34000, 38000];
 % yld相对于chj的位置
 p = chj_sit-yld_sit;
 dist = 8.09e3; %单位：米
 c = 0.299792458;
 W = 30000; % 时间误差
-offsets_init = -65000;
+offsets_init = -85000;
 signal_length=128200;
 % 所有信号的开始位置
 all_start_signal_loc = start_signal_loc:step:end_signal_loc;
@@ -196,13 +196,13 @@ end
 
 
 % 绘制 S 的结果 设置过滤条件
-x_range = [10, 1000]; % X 的合理范围
-y_range = [-1800, 1800]; % Y 的合理范围
+x_range = [-10000, 10000]; % X 的合理范围
+y_range = [-18000, 18000]; % Y 的合理范围
 z_range = [0, 5000];    % Z 的合理范围（Z > 0）
 
 condition1 = [all_match_results.dlta] < 30000;
-condition2 = [all_match_results.yld_start_loc] > 3.9e8;
-condition3 = [all_match_results.yld_start_loc] < 4.0e8;
+condition2 = [all_match_results.yld_start_loc] > 3.6e8;
+condition3 = [all_match_results.yld_start_loc] < 4.8e8;
 % 获取满足条件的行索引
 filtered_match_indices1 = find(condition1);
 filtered_match_indices2 = find(condition2);
@@ -253,7 +253,7 @@ for i = 1:num_points
     current_S = filtered_S(i, :);
 
     % 计算从零点位置指向当前定位结果点的向量
-    direction_vector = current_S(:) - chj_sit(:);
+    direction_vector = current_S(:) - yld_sit(:);
 
     % 调用 cart2sph_standard 函数计算方位角和仰角
     [azimuths(i), elevations(i)] = cart2sph_standard(direction_vector);
@@ -264,7 +264,7 @@ figure;
 scatter(azimuths, elevations, 1, 'filled');
 xlabel('方位角 (度)');
 ylabel('仰角 (度)');
-title(['从站点 ', num2str(chj_sit), ' 看闪电的方位角 vs 仰角']);
+title(['从站点 ', num2str(yld_sit), ' 看闪电的方位角 vs 仰角']);
 grid on;
 xlabel('Azimuth');
 xlim([0, 360]);
