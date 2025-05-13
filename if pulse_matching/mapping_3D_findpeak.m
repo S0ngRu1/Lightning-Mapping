@@ -18,7 +18,16 @@ W = 30000; % 时间误差
 offsets_init = -85000;
 signal_length=128200;
 % 所有信号的开始位置
+all_start_signal_loc_yld = [];
+all_start_signal_loc_chj = [];
 all_start_signal_loc = start_signal_loc:step:end_signal_loc;
+for x = 1:numel(all_start_signal_loc)-1
+   start_read_loc_yld_ = all_start_signal_loc(x);
+   start_read_loc_chj_ = start_read_loc_yld_ + 34151156 - offsets_init+(j-1)*100;
+   all_start_signal_loc_yld = [all_start_signal_loc_yld;start_read_loc_yld_];
+   all_start_signal_loc_chj = [all_start_signal_loc_chj;start_read_loc_chj_];
+end
+
 all_S_results = [];
 all_match_results = [];
 for j = 1:numel(all_start_signal_loc)-1
