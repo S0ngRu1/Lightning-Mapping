@@ -23,7 +23,7 @@ all_start_signal_loc_chj = [];
 all_start_signal_loc = start_signal_loc:step:end_signal_loc;
 for x = 1:numel(all_start_signal_loc)-1
    start_read_loc_yld_ = all_start_signal_loc(x);
-   start_read_loc_chj_ = start_read_loc_yld_ + 34151156 - offsets_init+(j-1)*100;
+   start_read_loc_chj_ = start_read_loc_yld_ + 34151156 - offsets_init+779-(x-1)*110;
    all_start_signal_loc_yld = [all_start_signal_loc_yld;start_read_loc_yld_];
    all_start_signal_loc_chj = [all_start_signal_loc_chj;start_read_loc_chj_];
 end
@@ -37,9 +37,9 @@ for j = 1:numel(all_start_signal_loc)-1
     fprintf('正在处理的信号位置：%d -- %d \n', start_read_loc_yld, end_read_loc_yld);
     [yld_start_loc, yld_azimuth, yld_elevation, yld_Rcorr, yld_t123] = read_result(yld_result_path,start_read_loc_yld, end_read_loc_yld);
     yld_ch1 =read_signal('..\\20240822165932.6610CH1.dat',signal_length,start_read_loc_yld);
-    chj_ch1 =read_signal('..\\2024 822 85933.651462CH1.dat',signal_length,start_read_loc_yld+ 34151156 - offsets_init+(j-1)*100);
-    chj_ch2 =read_signal('..\\2024 822 85933.651462CH2.dat',signal_length,start_read_loc_yld+ 34151156 - offsets_init+(j-1)*100);
-    chj_ch3 =read_signal('..\\2024 822 85933.651462CH3.dat',signal_length,start_read_loc_yld+ 34151156 - offsets_init+(j-1)*100 +165/5);
+    chj_ch1 =read_signal('..\\2024 822 85933.651462CH1.dat',signal_length,start_read_loc_yld+ 34151156 - offsets_init+779-(j-1)*110);
+    chj_ch2 =read_signal('..\\2024 822 85933.651462CH2.dat',signal_length,start_read_loc_yld+ 34151156 - offsets_init+779-(j-1)*110);
+    chj_ch3 =read_signal('..\\2024 822 85933.651462CH3.dat',signal_length,start_read_loc_yld+ 34151156 - offsets_init+779-(j-1)*110 +165/5);
     filtered_yld_signal1 = filter_bp(yld_ch1,30e6,80e6,5);
     filtered_chj_signal1 = filter_bp(chj_ch1,30e6,80e6,5);
     filtered_chj_signal2 = filter_bp(chj_ch2,30e6,80e6,5);
@@ -186,7 +186,7 @@ for j = 1:numel(all_start_signal_loc)-1
         end
         [max_R_gcc, max_R_gcc_index] = max(sub_R_gccs);
         S_results = [S_results;sub_S_results(max_R_gcc_index,:)];
-        match_results = [match_results; struct('yld_start_loc', yld_start_loc(i), 'chj_loc', sub_chj_locs(max_R_gcc_index)+ start_read_loc_yld + 34151156 - offsets_init+(j-1)*100 +start_read_loc_chj-match_signal_length+1, 'r_gccs', max_R_gcc, 'dlta',dltas(max_R_gcc_index))];
+        match_results = [match_results; struct('yld_start_loc', yld_start_loc(i), 'chj_loc', sub_chj_locs(max_R_gcc_index)+ start_read_loc_yld + 34151156 - offsets_init+779-(j-1)*110 +start_read_loc_chj-match_signal_length+1, 'r_gccs', max_R_gcc, 'dlta',dltas(max_R_gcc_index))];
     end
     close(h);
     % 创建文件名
@@ -210,7 +210,7 @@ y_range = [-50000, 50000]; % Y 的合理范围
 z_range = [0, 5000];    % Z 的合理范围（Z > 0）
 
 condition1 = [all_match_results.dlta] < 30000;
-condition2 = [all_match_results.yld_start_loc] > 3.6e8;
+condition2 = [all_match_results.yld_start_loc] > 4.6e8;
 condition3 = [all_match_results.yld_start_loc] < 4.8e8;
 % 获取满足条件的行索引
 filtered_match_indices1 = find(condition1);
@@ -279,5 +279,5 @@ xlabel('Azimuth');
 xlim([0, 360]);
 xticks(0:40:360);
 ylabel('Elevation');
-ylim([-40, 100]);
-yticks(-40:20:100);
+ylim([0, 90]);
+yticks(0:10:90);
