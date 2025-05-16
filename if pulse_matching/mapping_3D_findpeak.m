@@ -33,6 +33,10 @@ all_match_results = [];
 for j = 1:numel(all_start_signal_loc)-1
     start_read_loc_yld = all_start_signal_loc(j);
     end_read_loc_yld = all_start_signal_loc(j+1);
+   if  start_read_loc_yld < 3.9e8
+       continue
+   end
+   
     % 记录处理的位置
     fprintf('正在处理的信号位置：%d -- %d \n', start_read_loc_yld, end_read_loc_yld);
     [yld_start_loc, yld_azimuth, yld_elevation, yld_Rcorr, yld_t123] = read_result(yld_result_path,start_read_loc_yld, end_read_loc_yld);
@@ -210,8 +214,8 @@ y_range = [-50000, 50000]; % Y 的合理范围
 z_range = [0, 5000];    % Z 的合理范围（Z > 0）
 
 condition1 = [all_match_results.dlta] < 30000;
-condition2 = [all_match_results.yld_start_loc] > 4.6e8;
-condition3 = [all_match_results.yld_start_loc] < 4.8e8;
+condition2 = [all_match_results.yld_start_loc] > 3.6e8;
+condition3 = [all_match_results.yld_start_loc] < 3.9e8;
 % 获取满足条件的行索引
 filtered_match_indices1 = find(condition1);
 filtered_match_indices2 = find(condition2);

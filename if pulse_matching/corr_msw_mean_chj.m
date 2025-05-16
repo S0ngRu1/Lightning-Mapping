@@ -11,11 +11,11 @@ d12 = 41.6496;
 d13 = 48.5209;
 d23 = 25.0182;
 angle12 = -2.8381;
-angle13 = 28.2006;
-angle23 = 87.3358;
+angle13 = 28.2006-180;
+angle23 = 87.3358-180;
 fprintf('代码在运行中...');
-signal_length = 2e8;
-r_loction = 3.5e8;
+signal_length = 3.4e7;
+r_loction = 3.9e8;
 ch1 = read_signal('..\\2024 822 85933.651462CH1.dat',signal_length,r_loction);
 ch2 = read_signal('..\\2024 822 85933.651462CH2.dat',signal_length,r_loction);
 ch3 = read_signal('..\\2024 822 85933.651462CH3.dat',signal_length,r_loction+165/5);
@@ -29,7 +29,7 @@ filtered_signal3 = filter_bp(ch3,30e6,80e6,5);
 % threshold = 0.5*std(filtered_noise);
 
 % 打开一个文本文件用于写入运行结果
-fileID = fopen('result_chj_3-6e8_bp_1667.txt', 'w');
+fileID = fopen('result_chj_3.9-4.3e8.txt', 'w');
 fprintf(fileID, '%-13s%-15s%-15s%-15s%-15s%-15s%-15s%-15s%-15s%-15s%-15s\n', ...
     'Start_loc','peak','t12', 't13', 't23', 'cos_alpha_opt', 'cos_beta_opt','Azimuth', 'Elevation', 'Rcorr', 't123');
 
@@ -136,10 +136,10 @@ for pi = 1:num_peaks
                 end
             end
             if size(t12s,1)~=0 && size(t13s,1)~=0 && size(t23s,1)~=0
-                                %从化局
-                                t12 = (t12_gcc + mean(t12s))*0.1;
-                                t13 = (t13_gcc + mean(t13s))*0.1+1.667;
-                                t23 = (t23_gcc + mean(t23s))*0.1+1.667;
+                %从化局
+                t12 = (t12_gcc + mean(t12s))*0.1;
+                t13 = (t13_gcc + mean(t13s))*0.1+1.667;
+                t23 = (t23_gcc + mean(t23s))*0.1+1.667;
 
                 cos_beta_0 =((c*t13*d12*sind(angle12))-(c*t12*sind(angle13)*d13))/(d13*d12*sind(angle12-angle13)) ;
                 cos_alpha_0 = ((c*t12)/d12-cos_beta_0*cosd(angle12))/sind(angle12);
@@ -174,16 +174,16 @@ for pi = 1:num_peaks
 
                 % 写入计算后的数据
                 fprintf(fileID, '%-13d%-15d%-15.6f%-15.6f%-15.6f%-15.6f%-15.6f%-15.6f%-15.6f%-15.6f%-15.6f\n', ...
-                     r_loction+idx-window/100,window/100, t12, t13, t23, cos_alpha_opt, cos_beta_opt, Az_deg, El_deg, Rcorr,t123);
+                    r_loction+idx-window/100,window/100, t12, t13, t23, cos_alpha_opt, cos_beta_opt, Az_deg, El_deg, Rcorr,t123);
                 ismsw = ismsw + 1;
             end
         end
     end
     if ismsw == 0
-%                 从化局
-                t12 = t12_gcc *0.1;
-                t13 = t13_gcc *0.1+1.667;
-                t23 = t23_gcc *0.1+1.667;
+        %                 从化局
+        t12 = t12_gcc *0.1;
+        t13 = t13_gcc *0.1+1.667;
+        t23 = t23_gcc *0.1+1.667;
 
 
         cos_beta_0 =((c*t13*d12*sind(angle12))-(c*t12*sind(angle13)*d13))/(d13*d12*sind(angle12-angle13)) ;
@@ -218,7 +218,7 @@ for pi = 1:num_peaks
 
         % 写入计算后的数据
         fprintf(fileID, '%-13d%-15d%-15.6f%-15.6f%-15.6f%-15.6f%-15.6f%-15.6f%-15.6f%-15.6f%-15.6f\n', ...
-             r_loction+idx-window/100,window/100, t12, t13, t23, cos_alpha_opt, cos_beta_opt, Az_deg, El_deg, Rcorr,t123);
+            r_loction+idx-window/100,window/100, t12, t13, t23, cos_alpha_opt, cos_beta_opt, Az_deg, El_deg, Rcorr,t123);
     end
 end
 % 关闭文件
@@ -228,50 +228,50 @@ close(h);
 
 
 function signal = read_signal(signal_path, r_length,r_loction)
-    fid  = fopen(signal_path,'r');%读取数据的位置
+fid  = fopen(signal_path,'r');%读取数据的位置
 
-    %使用fseek函数将文件指针移动到指定位置，以便读取数据。
-    %这里指定移动位置为r_location，表示移动到指定位置开始读取数据。
-    fseek(fid,r_loction*2,'bof');
-    %使用fread函数从文件中读取数据，读取的数据长度为r_length，数据以int16格式读取。
-    %将读取到的数据分别保存到变量ch_1、ch_2和ch_3中。
-    signal = fread(fid,r_length,'int16');
-    %关闭所有文件
-    fclose('all');
+%使用fseek函数将文件指针移动到指定位置，以便读取数据。
+%这里指定移动位置为r_location，表示移动到指定位置开始读取数据。
+fseek(fid,r_loction*2,'bof');
+%使用fread函数从文件中读取数据，读取的数据长度为r_length，数据以int16格式读取。
+%将读取到的数据分别保存到变量ch_1、ch_2和ch_3中。
+signal = fread(fid,r_length,'int16');
+%关闭所有文件
+fclose('all');
 end
 
 
 % 定义目标函数
 function F = objective(x,t12,t13,t23)
-    % 提取待优化的变量
-    cos_alpha = x(1);
-    cos_beta = x(2);
+% 提取待优化的变量
+cos_alpha = x(1);
+cos_beta = x(2);
 
-    % 计算τij的理想值τ_ij^obs
-    tau_ij_obs = calculate_tau_obs(cos_alpha, cos_beta);
-    % 计算Δt12, Δt13, Δt23
-    delta_t12 = delta_t(t12,tau_ij_obs(1));
-    delta_t13 = delta_t(t13,tau_ij_obs(2));
-    delta_t23 = delta_t(t23,tau_ij_obs(3));
+% 计算τij的理想值τ_ij^obs
+tau_ij_obs = calculate_tau_obs(cos_alpha, cos_beta);
+% 计算Δt12, Δt13, Δt23
+delta_t12 = delta_t(t12,tau_ij_obs(1));
+delta_t13 = delta_t(t13,tau_ij_obs(2));
+delta_t23 = delta_t(t23,tau_ij_obs(3));
 
-    % 计算目标函数，即式(4)
-    F = (delta_t12^2 + delta_t13^2 + delta_t23^2) / 75;
+% 计算目标函数，即式(4)
+F = (delta_t12^2 + delta_t13^2 + delta_t23^2) / 75;
 end
 
 function tau_ij_obs = calculate_tau_obs(cos_alpha, cos_beta)
-    % 初始化输出变量
-    tau_ij_obs = zeros(1, 3);
- % 从化局
-        angle12 = -2.8381;
-        angle13 = 28.2006;
-        angle23 = 87.3358;
-        d12 = 41.6496;
-        d13 = 48.5209;
-        d23 = 25.0182;
+% 初始化输出变量
+tau_ij_obs = zeros(1, 3);
+% 从化局
+angle12 = -2.8381;
+angle13 = 28.2006-180;
+angle23 = 87.3358-180;
+d12 = 41.6496;
+d13 = 48.5209;
+d23 = 25.0182;
 
-    % 使用式(3)计算τij的理想值τ_ij^obs
-    tau_ij_obs(1) = (cos_alpha * sind(angle12) + cos_beta * cosd(angle12)) * d12 / 0.299792458;
-    tau_ij_obs(2) = (cos_alpha * sind(angle13) + cos_beta * cosd(angle13)) * d13 / 0.299792458;
-    tau_ij_obs(3) = (cos_alpha * sind(angle23) + cos_beta * cosd(angle23)) * d23 / 0.299792458;
+% 使用式(3)计算τij的理想值τ_ij^obs
+tau_ij_obs(1) = (cos_alpha * sind(angle12) + cos_beta * cosd(angle12)) * d12 / 0.299792458;
+tau_ij_obs(2) = (cos_alpha * sind(angle13) + cos_beta * cosd(angle13)) * d13 / 0.299792458;
+tau_ij_obs(3) = (cos_alpha * sind(angle23) + cos_beta * cosd(angle23)) * d23 / 0.299792458;
 end
 
