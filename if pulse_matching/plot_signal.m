@@ -1,5 +1,5 @@
-signal_length = 1E8; 
-start_read_loc_yld = 3.5e8;
+signal_length = 1E6; 
+start_read_loc_yld = 4.69e8;
 start_read_loc_chj = start_read_loc_yld+34151156;
 yld_signal = read_signal('../20240822165932.6610CH1.dat',signal_length,start_read_loc_yld);
 chj_signal = read_signal('../2024 822 85933.651462CH1.dat',signal_length,start_read_loc_chj);
@@ -8,6 +8,10 @@ y = downsample(chj_signal,1);
 % plot(x);
 subplot(2,1,1);plot(x);title('yld');xlabel('采样点');ylabel('振幅');
 subplot(2,1,2);plot(y);title('chj');xlabel('采样点');ylabel('振幅');
+figure;
+plot(chj_signal);title('chj');xlabel('采样点');ylabel('振幅');
+filtered_chj_signal1 = filter_bp(chj_signal,30e6,80e6,5);
+plot(filtered_chj_signal1);title('chj');xlabel('采样点');ylabel('振幅');
 
 
 signal_length = 12820000; 
@@ -47,3 +51,12 @@ error1 = A(1,1)*x_sol + A(1,2)*b_sol - B(1);
 error2 = A(2,1)*x_sol + A(2,2)*b_sol - B(2);
 fprintf('方程1的误差: %e\n', error1);
 fprintf('方程2的误差: %e\n', error2);
+
+
+
+% 求两个点的距离
+x1 = 0;
+y1 = 0;
+x2 = -2.0622;
+y2 = 41.5985;
+d = sqrt((x1-x2)^2+(y1-y2)^2);

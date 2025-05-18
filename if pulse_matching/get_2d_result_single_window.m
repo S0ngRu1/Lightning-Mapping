@@ -17,7 +17,6 @@ elseif strcmp(type, 'yld')
     d23 = 24.9675;
 
 end
-start_loc = 0;
 Az_deg = 0;
 El_deg = 0;
 Rcorr = 0;
@@ -47,6 +46,7 @@ t23 = t23_gcc *0.1+1.667;
 cos_beta_0 =((c*t13*d12*sind(angle12))-(c*t12*sind(angle13)*d13))/(d13*d12*sind(angle12-angle13)) ;
 cos_alpha_0 = ((c*t12)/d12-cos_beta_0*cosd(angle12))/sind(angle12);
 if abs(cos_beta_0)>1 || abs(cos_alpha_0)>1
+    start_loc = 0;
     return;
 end
 x0 = [cos_alpha_0,cos_beta_0];
@@ -57,10 +57,12 @@ x = lsqnonlin(@(x) objective(x, t12, t13, t23,type), x0, [-1 -1],[1 1], options)
 cos_alpha_opt = x(1);
 cos_beta_opt = x(2);
 if abs(cos_alpha_opt)>1 || abs(cos_beta_opt)>1
+    start_loc = 0;
     return;
 end
 Az = atan2( cos_alpha_opt,cos_beta_opt);
 if abs(cos_beta_opt/cos(Az)) > 1
+    start_loc = 0;
     return;
 end
 El = acos( cos_beta_opt/cos(Az) );

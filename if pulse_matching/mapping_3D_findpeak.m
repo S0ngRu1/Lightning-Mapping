@@ -1,9 +1,11 @@
 %% Step1 读取引雷点的二维定位结果（需要条件筛选出合格的）
 % 引入变量：位置，方位角，仰角
+clear
 chj_signal_length = 5120;
 match_signal_length = 6000;
 yld_result_path = 'result_yld_window5120_3e8.txt';
 start_signal_loc = 3.6e8;
+mapping_start_signal_loc = 4.68e8;
 end_signal_loc = 4.8e8;
 step = 128200;
 % 引入两个站的位置关系
@@ -14,16 +16,16 @@ chj_sit = [1991, -7841.2, -27];
 p = chj_sit-yld_sit;
 dist = 8.09e3; %单位：米
 c = 0.299792458;
-W = 30000; % 时间误差
+W = 3000000; % 时间误差
 offsets_init = -85000;
-signal_length=128200;
+signal_length = 128200;
 % 所有信号的开始位置
 all_start_signal_loc_yld = [];
 all_start_signal_loc_chj = [];
 all_start_signal_loc = start_signal_loc:step:end_signal_loc;
 for x = 1:numel(all_start_signal_loc)-1
    start_read_loc_yld_ = all_start_signal_loc(x);
-   start_read_loc_chj_ = start_read_loc_yld_ + 34151156 - offsets_init+779-(x-1)*110;
+   start_read_loc_chj_ = start_read_loc_yld_ + 34151156 - offsets_init-(x-1)*100;
    all_start_signal_loc_yld = [all_start_signal_loc_yld;start_read_loc_yld_];
    all_start_signal_loc_chj = [all_start_signal_loc_chj;start_read_loc_chj_];
 end
@@ -33,7 +35,7 @@ all_match_results = [];
 for j = 1:numel(all_start_signal_loc)-1
     start_read_loc_yld = all_start_signal_loc(j);
     end_read_loc_yld = all_start_signal_loc(j+1);
-   if  start_read_loc_yld < 3.9e8
+   if  start_read_loc_yld < mapping_start_signal_loc || end_read_loc_yld > end_signal_loc
        continue
    end
    
@@ -41,13 +43,13 @@ for j = 1:numel(all_start_signal_loc)-1
     fprintf('正在处理的信号位置：%d -- %d \n', start_read_loc_yld, end_read_loc_yld);
     [yld_start_loc, yld_azimuth, yld_elevation, yld_Rcorr, yld_t123] = read_result(yld_result_path,start_read_loc_yld, end_read_loc_yld);
     yld_ch1 =read_signal('..\\20240822165932.6610CH1.dat',signal_length,start_read_loc_yld);
-    chj_ch1 =read_signal('..\\2024 822 85933.651462CH1.dat',signal_length,start_read_loc_yld+ 34151156 - offsets_init+779-(j-1)*110);
-    chj_ch2 =read_signal('..\\2024 822 85933.651462CH2.dat',signal_length,start_read_loc_yld+ 34151156 - offsets_init+779-(j-1)*110);
-    chj_ch3 =read_signal('..\\2024 822 85933.651462CH3.dat',signal_length,start_read_loc_yld+ 34151156 - offsets_init+779-(j-1)*110 +165/5);
-    filtered_yld_signal1 = filter_bp(yld_ch1,30e6,80e6,5);
-    filtered_chj_signal1 = filter_bp(chj_ch1,30e6,80e6,5);
-    filtered_chj_signal2 = filter_bp(chj_ch2,30e6,80e6,5);
-    filtered_chj_signal3 = filter_bp(chj_ch3,30e6,80e6,5);
+    chj_ch1 =read_signal('..\\2024 822 85933.651462CH1.dat',signal_length,start_read_loc_yld+ 34151156 - offsets_init-(j-1)*100);
+    chj_ch2 =read_signal('..\\2024 822 85933.651462CH2.dat',signal_length,start_read_loc_yld+ 34151156 - offsets_init-(j-1)*100);
+    chj_ch3 =read_signal('..\\2024 822 85933.651462CH3.dat',signal_length,start_read_loc_yld+ 34151156 - offsets_init-(j-1)*100 +165/5);
+    filtered_yld_signal1 = filter_bp(yld_ch1,10e6,90e6,5);
+    filtered_chj_signal1 = filter_bp(chj_ch1,10e6,90e6,5);
+    filtered_chj_signal2 = filter_bp(chj_ch2,10e6,90e6,5);
+    filtered_chj_signal3 = filter_bp(chj_ch3,10e6,90e6,5);
     S_results = [];
     match_results = struct('yld_start_loc', {}, 'chj_loc', {}, 'r_gccs', {}, 'dlta',{});
     h = waitbar(0, 'Processing...');
@@ -79,7 +81,7 @@ for j = 1:numel(all_start_signal_loc)-1
         chj_match_signal3 = filtered_chj_signal3(start_read_loc_chj-match_signal_length+1:start_read_loc_chj+match_signal_length+chj_signal_length);
 
         % 寻找峰值
-        [peaks, locs] = findpeaks(chj_match_signal1, 'MinPeakHeight', 13, 'MinPeakDistance', 512);
+        [peaks, locs] = findpeaks(chj_match_signal1, 'MinPeakHeight', 5, 'MinPeakDistance', 512);
         all_locs = locs;
         % 遍历所有峰值
         num_peaks = numel(all_locs);
@@ -116,7 +118,7 @@ for j = 1:numel(all_start_signal_loc)-1
             processed_chj_signal2 = real(windowsignal(detrend(processed_chj_signal2)));
             processed_chj_signal3 = real(windowsignal(detrend(processed_chj_signal3)));
             [chj_start_loc, chj_azimuth, chj_elevation, chj_Rcorr, chj_t123] = get_2d_result_single_window(start_read_loc_chj,processed_chj_signal1,processed_chj_signal2,processed_chj_signal3,'chj');
-            if chj_start_loc == 0 && chj_Rcorr < 0.3 && chj_t123 > 1
+            if chj_start_loc == 0 || chj_Rcorr < 0.3 || abs(chj_t123) > 1
                 continue
             end
             [R1_x, R1_y, R1_z] = sph2cart(deg2rad(90-yld_azimuth(i)), deg2rad(yld_elevation(i)),1);
@@ -174,6 +176,8 @@ for j = 1:numel(all_start_signal_loc)-1
                 % 使用第二个公式
                 sub_S = R2 - (R2_value / R1_value)* (R2_value / (R1_value + R2_value))  * R3 + p;
             end
+%             sub_S = R1 + (R1_value / (R1_value + R2_value)) * R3;
+%             sub_S = R2 -  (R2_value / (R1_value + R2_value))  * R3 + p;
             if ~isempty(sub_S)
                 t_chj = sqrt(sum((sub_S - chj_sit).^2))/c;
                 t_yld = sqrt(sum((sub_S - yld_sit).^2))/c;
@@ -190,7 +194,7 @@ for j = 1:numel(all_start_signal_loc)-1
         end
         [max_R_gcc, max_R_gcc_index] = max(sub_R_gccs);
         S_results = [S_results;sub_S_results(max_R_gcc_index,:)];
-        match_results = [match_results; struct('yld_start_loc', yld_start_loc(i), 'chj_loc', sub_chj_locs(max_R_gcc_index)+ start_read_loc_yld + 34151156 - offsets_init+779-(j-1)*110 +start_read_loc_chj-match_signal_length+1, 'r_gccs', max_R_gcc, 'dlta',dltas(max_R_gcc_index))];
+        match_results = [match_results; struct('yld_start_loc', yld_start_loc(i), 'chj_loc', sub_chj_locs(max_R_gcc_index)+ start_read_loc_yld + 34151156 - offsets_init-(j-1)*100 +start_read_loc_chj-match_signal_length+1, 'r_gccs', max_R_gcc, 'dlta',dltas(max_R_gcc_index))];
     end
     close(h);
     % 创建文件名
@@ -207,15 +211,14 @@ end
 
 %% Step 5: 差分到达时间 (DTOA) 技术
 
-
 % 绘制 S 的结果 设置过滤条件
 x_range = [-50000, 50000]; % X 的合理范围
 y_range = [-50000, 50000]; % Y 的合理范围
-z_range = [0, 5000];    % Z 的合理范围（Z > 0）
+z_range = [0, 50000];    % Z 的合理范围（Z > 0）
 
-condition1 = [all_match_results.dlta] < 30000;
-condition2 = [all_match_results.yld_start_loc] > 3.6e8;
-condition3 = [all_match_results.yld_start_loc] < 3.9e8;
+condition1 = [all_match_results.dlta] < 3000000;
+condition2 = [all_match_results.yld_start_loc] > start_signal_loc;
+condition3 = [all_match_results.yld_start_loc] < end_signal_loc;
 % 获取满足条件的行索引
 filtered_match_indices1 = find(condition1);
 filtered_match_indices2 = find(condition2);

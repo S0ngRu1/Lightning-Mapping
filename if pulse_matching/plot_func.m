@@ -1,10 +1,11 @@
-%½á¹û1
-logicalIndex = abs(result1.t123) <1 & abs(result1.Rcorr) > 0.3 &  result1.Start_loc < 4.24e8 & result1.Start_loc > 3.9e8;
+%ï¿½1ï¿½7ï¿½1ï¿½7ï¿½1ï¿½71
+logicalIndex = abs(result1.t123) <1 & abs(result1.Rcorr) > 0.3 &  result1.Start_loc < 4.8e8 & result1.Start_loc > 4.68e8;
+% logicalIndex = abs(result1.t123) <1 & abs(result1.Rcorr) > 0.3 &  result1.Start_loc < 4.3e8+34151156 & result1.Start_loc > 3.9e8+34151156;
 filteredTable1 = result1(logicalIndex, :);
 Start_loc = filteredTable1.Start_loc;
 % colorValues = (Start_loc - 3e8) / 2e8;
 colorValues = (Start_loc - min(Start_loc)) / (max(Start_loc) - min(Start_loc));
-% ×ª»» Azimuth ·¶Î§´Ó 0-360 µ½ -180-180
+% ï¿½0ï¿½8ï¿½1ï¿½7ï¿½1ï¿½7 Azimuth ï¿½1ï¿½7ï¿½1ï¿½7ï¿½ï¿½ï¿½1ï¿½7ï¿½1ï¿½7 0-360 ï¿½1ï¿½7ï¿½1ï¿½7 -180-180
 % filteredTable1.Azimuth = mod(filteredTable1.Azimuth - 180, 360) - 180;
 figure;
 scatter(filteredTable1.Azimuth,filteredTable1.Elevation, 2, colorValues, 'filled');
@@ -13,14 +14,14 @@ xlabel('Azimuth');
 xlim([0, 360]);
 xticks(0:40:360);
 ylabel('Elevation');
-ylim([-40, 100]);
-yticks(-40:20:100);
-colormap('hsv');
+ylim([0, 100]);
+yticks(0:10:90);
+colormap('hot');
 colorbar;
 caxis([0, 1.5]);
 grid on;
 % 
-% %½á¹û2
+% %ï¿½1ï¿½7ï¿½1ï¿½7ï¿½1ï¿½72
 % figure;
 %  logicalIndex = abs(result1.t123) <1 & abs(result1.Rcorr) > 0.4 &  result1.Start_loc < 4.5e8 & result1.Start_loc > 4e8;
 logicalIndex = abs(result2.t123) < 1 & abs(result2.Rcorr) > 0.3;
@@ -42,7 +43,7 @@ colorbar;
 caxis([0, 1.5]);
 grid on;
 
-% %½á¹û3
+% %ï¿½1ï¿½7ï¿½1ï¿½7ï¿½1ï¿½73
 % logicalIndex = abs(result3.t123) > 0.001 & abs(result3.Rcorr) < 0.2 &  result3.Start_loc < 600000000 & result3.Start_loc > 400000000;
 % filteredTable3 = result3(logicalIndex, :);
 % Start_loc = filteredTable3.Start_loc;
@@ -61,7 +62,12 @@ grid on;
 % caxis([0, 1.5]);
 % grid on;
 
-
+signal1 = downsample(ch1,50);
+signal2 = downsample(ch2,50);
+signal3 = downsample(ch3,50);
+plot_signal_spectrum(ch1(1:7000000));
+plot_signal_spectrum(ch1(1e7:1.5e7));
+plot_signal_spectrum(ch1(2.4e7:2.6e7));
 
 data_original1=window_plus(N,data_original1);
 data_original2=window_plus(N,data_original2);
@@ -91,8 +97,8 @@ ch_chj = read_signal('..\\2024 822 85933.651462CH1.dat',signal_length,r_loction_
 % filtered_chj = rfi_filter(ch_chj,1536);
 filtered_yld = filter_bp(ch_yld,20e6,80e6,5);
 filtered_chj = filter_bp(ch_chj,20e6,80e6,5);
-subplot(2,1,1);plot(filtered_yld);title('yld');xlabel('²ÉÑùµãÊý');ylabel('·ùÖµ');
-subplot(2,1,2);plot(filtered_chj);title('chj');xlabel('²ÉÑùµãÊý');ylabel('·ùÖµ');
+subplot(2,1,1);plot(filtered_yld);title('yld');xlabel('ï¿½1ï¿½7ï¿½1ï¿½7ï¿½1ï¿½7ï¿½1ï¿½7ï¿½1ï¿½7ï¿½1ï¿½7ï¿½1ï¿½7ï¿½1ï¿½7');ylabel('ï¿½1ï¿½7ï¿½1ï¿½7ï¿½0ï¿½5');
+subplot(2,1,2);plot(filtered_chj);title('chj');xlabel('ï¿½1ï¿½7ï¿½1ï¿½7ï¿½1ï¿½7ï¿½1ï¿½7ï¿½1ï¿½7ï¿½1ï¿½7ï¿½1ï¿½7ï¿½1ï¿½7');ylabel('ï¿½1ï¿½7ï¿½1ï¿½7ï¿½0ï¿½5');
 
  filtered_chj_signal1 = waveletDenoiseAdaptive(ch2, level, wavelet);
  filtered_chj_signal2 = filter_bp(ch2,20e6,80e6,5);
@@ -100,79 +106,79 @@ x1 = downsample(ch1,50);
 x2 = downsample(ch2,50);
 x3 = downsample(ch3,50);
 % x3 = downsample(ch3,50);
-subplot(3,1,1);plot(ch1);title('ch1');xlabel('²ÉÑùµãÊý');ylabel('·ùÖµ');
-subplot(3,1,2);plot(data_filter1);title('wf');xlabel('²ÉÑùµãÊý');ylabel('·ùÖµ');
-subplot(3,1,3);plot(filter2);title('bp');xlabel('²ÉÑùµãÊý');ylabel('·ùÖµ');
+subplot(3,1,1);plot(ch1);title('ch1');xlabel('ï¿½1ï¿½7ï¿½1ï¿½7ï¿½1ï¿½7ï¿½1ï¿½7ï¿½1ï¿½7ï¿½1ï¿½7ï¿½1ï¿½7ï¿½1ï¿½7');ylabel('ï¿½1ï¿½7ï¿½1ï¿½7ï¿½0ï¿½5');
+subplot(3,1,2);plot(data_filter1);title('wf');xlabel('ï¿½1ï¿½7ï¿½1ï¿½7ï¿½1ï¿½7ï¿½1ï¿½7ï¿½1ï¿½7ï¿½1ï¿½7ï¿½1ï¿½7ï¿½1ï¿½7');ylabel('ï¿½1ï¿½7ï¿½1ï¿½7ï¿½0ï¿½5');
+subplot(3,1,3);plot(filter2);title('bp');xlabel('ï¿½1ï¿½7ï¿½1ï¿½7ï¿½1ï¿½7ï¿½1ï¿½7ï¿½1ï¿½7ï¿½1ï¿½7ï¿½1ï¿½7ï¿½1ï¿½7');ylabel('ï¿½1ï¿½7ï¿½1ï¿½7ï¿½0ï¿½5');
 
-%»¬¶¯25%ÂË²¨
+%ï¿½1ï¿½7ï¿½1ï¿½7ï¿½1ï¿½7ï¿½1ï¿½725%ï¿½1ï¿½7ï¿½0ï¿½2ï¿½1ï¿½7
 
 
-%ÐÅºÅ²¨ÐÎÓëãÐÖµ¶Ô±ÈÍ¼
-N = 5e7; % ÐÅºÅ×Ü³¤¶È
+%ï¿½1ï¿½7ï¿½0ï¿½2ï¿½0ï¿½4ï¿½1ï¿½7ï¿½1ï¿½7ï¿½1ï¿½7ï¿½1ï¿½7ï¿½1ï¿½7ï¿½1ï¿½7ï¿½1ï¿½7ï¿½0ï¿½5ï¿½1ï¿½7ï¿½0ï¿½3ï¿½1ï¿½7ï¿½0ï¿½0
+N = 5e7; % ï¿½1ï¿½7ï¿½0ï¿½2ï¿½1ï¿½7ï¿½1ï¿½7ï¿½1ï¿½7ï¿½1ï¿½7ï¿½1ï¿½7ï¿½1ï¿½7
 subsignal_length = 4000;
-M = ceil(N / subsignal_length); % ×Ü¶ÎÊý
+M = ceil(N / subsignal_length); % ï¿½1ï¿½7ï¿½1ï¿½0ï¿½1ï¿½7ï¿½1ï¿½7ï¿½1ï¿½7
 subsignal_start = 1:subsignal_length:length(filtered_signal1);
 for subi = 1:numel(subsignal_start)
 subsignal1 = filtered_signal1(subsignal_start(subi):subsignal_start(subi)+subsignal_length-1);
 threshold =  mean(abs(subsignal1)) + 3*std(subsignal1);
 end
-% ¼ÙÉèÃ¿¶ÎµÄãÐÖµÒÑ¾­¼ÆËãºÃ£¬´æ´¢ÔÚ thresholds ÖÐ
-threshold = rand(1, M) * 5; % Ê¾ÀýãÐÖµ£¬Êµ¼ÊÖÐÓÃÄãµÄãÐÖµÌæ»»
-% »æÖÆÐÅºÅ
+% ï¿½1ï¿½7ï¿½1ï¿½7ï¿½1ï¿½7ï¿½1ï¿½7ï¿½0ï¿½7ï¿½1ï¿½7ï¿½Å„1ï¿½7ï¿½1ï¿½7ï¿½1ï¿½7ï¿½0ï¿½5ï¿½1ï¿½7ï¿½0ï¿½4ï¿½1ï¿½7ï¿½1ï¿½7ï¿½1ï¿½7ï¿½1ï¿½7ï¿½1ï¿½7ï¿½0ï¿½0ï¿½1ï¿½7ï¿½1ï¿½7ï¿½ï¿½ï¿½1ï¿½7ï¿½1ï¿½7 thresholds ï¿½1ï¿½7ï¿½1ï¿½7
+threshold = rand(1, M) * 5; % ï¿½0ï¿½5ï¿½1ï¿½7ï¿½1ï¿½7ï¿½1ï¿½7ï¿½1ï¿½7ï¿½0ï¿½5ï¿½1ï¿½7ï¿½1ï¿½7ï¿½0ï¿½6ï¿½1ï¿½7ï¿½1ï¿½7ï¿½1ï¿½7ï¿½1ï¿½7ï¿½1ï¿½7ï¿½1ï¿½7ï¿½1ï¿½7ï¿½1ï¿½7ï¿½1ï¿½7ï¿½1ï¿½7ï¿½1ï¿½7ï¿½0ï¿½5ï¿½1ï¿½7ï¿½I
+% ï¿½1ï¿½7ï¿½1ï¿½7ï¿½1ï¿½7ï¿½1ï¿½7ï¿½1ï¿½7ï¿½0ï¿½2ï¿½1ï¿½7
 figure;
-plot(filtered_signal1, 'b', 'LineWidth', 1.5); % »æÖÆÐÅºÅ£¬À¶É«Ïß
+plot(filtered_signal1, 'b', 'LineWidth', 1.5); % ï¿½1ï¿½7ï¿½1ï¿½7ï¿½1ï¿½7ï¿½1ï¿½7ï¿½1ï¿½7ï¿½0ï¿½2ï¿½0ï¿½0ï¿½1ï¿½7ï¿½1ï¿½7ï¿½1ï¿½7ï¿½0ï¿½2ï¿½1ï¿½7ï¿½1ï¿½7
 hold on;
-% »æÖÆÃ¿¶ÎµÄãÐÖµ
+% ï¿½1ï¿½7ï¿½1ï¿½7ï¿½1ï¿½7ï¿½1ï¿½7ï¿½0ï¿½7ï¿½1ï¿½7ï¿½Å„1ï¿½7ï¿½1ï¿½7ï¿½1ï¿½7ï¿½0ï¿½5
 for i = 1:M
     start_index = (i - 1) * subsignal_length + 1;
-    end_index = min(i * subsignal_length, N); % ·ÀÖ¹×îºóÒ»¶Î³¬³öÐÅºÅ³¤¶È
-    x = [start_index, end_index]; % µ±Ç°¶ÎµÄ x ·¶Î§
-    y = [threshold(i), threshold(i)]; % µ±Ç°¶ÎµÄãÐÖµ
-    plot(x, y, 'r--', 'LineWidth', 1.5); % ÓÃºìÉ«ÐéÏß»æÖÆãÐÖµ
+    end_index = min(i * subsignal_length, N); % ï¿½1ï¿½7ï¿½1ï¿½7ï¿½0ï¿½9ï¿½1ï¿½7ï¿½1ï¿½7ï¿½1ï¿½7ï¿½0ï¿½5ï¿½1ï¿½7ï¿½Ã„1ï¿½7ï¿½1ï¿½7ï¿½1ï¿½7ï¿½1ï¿½7ï¿½0ï¿½2ï¿½0ï¿½5ï¿½1ï¿½7ï¿½1ï¿½7ï¿½1ï¿½7
+    x = [start_index, end_index]; % ï¿½1ï¿½7ï¿½1ï¿½7ï¿½0ï¿½2ï¿½1ï¿½7ï¿½Å„1ï¿½7 x ï¿½1ï¿½7ï¿½1ï¿½7ï¿½ï¿½
+    y = [threshold(i), threshold(i)]; % ï¿½1ï¿½7ï¿½1ï¿½7ï¿½0ï¿½2ï¿½1ï¿½7ï¿½Å„1ï¿½7ï¿½1ï¿½7ï¿½1ï¿½7ï¿½0ï¿½5
+    plot(x, y, 'r--', 'LineWidth', 1.5); % ï¿½1ï¿½7ï¿½ï¿½ï¿½1ï¿½7ï¿½0ï¿½2ï¿½1ï¿½7ï¿½1ï¿½7ï¿½1ï¿½7ï¿½1ï¿½7ï¿½1ï¿½7ï¿½1ï¿½7ï¿½1ï¿½7ï¿½1ï¿½7ï¿½1ï¿½7ï¿½0ï¿½5
 end
-% Ìí¼ÓÍ¼ÀýºÍ±êÇ©
+% ï¿½1ï¿½7ï¿½1ï¿½7ï¿½1ï¿½7ï¿½1ï¿½7ï¿½0ï¿½0ï¿½1ï¿½7ï¿½1ï¿½7ï¿½1ï¿½7ï¿½0ï¿½9ï¿½1ï¿½7ï¿½0ï¿½5
 legend('filtered_signal1', 'Thresholds');
 xlabel('Sample Index');
 ylabel('Amplitude');
 title('Signal and Thresholds Comparison');
-grid on; % Ìí¼ÓÍø¸ñ
+grid on; % ï¿½1ï¿½7ï¿½1ï¿½7ï¿½1ï¿½7ï¿½1ï¿½7ï¿½1ï¿½7ï¿½1ï¿½7ï¿½1ï¿½7ï¿½1ï¿½7
 hold off;
 
 
 
 
 
-%3D×ª2D
+%3Dï¿½0ï¿½82D
 x = filtered_S(:, 1);
 y = filtered_S(:, 2);
 z = filtered_S(:, 3);
-% ½«Ö±½Ç×ø±ê×ª»»ÎªÇò×ø±ê
+% ï¿½1ï¿½7ï¿½1ï¿½7ï¿½0ï¿½1ï¿½1ï¿½7ï¿½1ï¿½7ï¿½1ï¿½7ï¿½1ï¿½7ï¿½1ï¿½7ï¿½1ï¿½7ï¿½0ï¿½8ï¿½1ï¿½7ï¿½1ï¿½7ï¿½0ï¿½2ï¿½1ï¿½7ï¿½1ï¿½7ï¿½1ï¿½7ï¿½1ï¿½7ï¿½1ï¿½7ï¿½1ï¿½7
 [azimuth, elevation, ~] = cart2sph(x, y, z);
-% ½«»¡¶È×ª»»Îª½Ç¶È
+% ï¿½1ï¿½7ï¿½1ï¿½7ï¿½1ï¿½7ï¿½1ï¿½7ï¿½1ï¿½7ï¿½1ï¿½7ï¿½0ï¿½8ï¿½1ï¿½7ï¿½1ï¿½7ï¿½0ï¿½2ï¿½1ï¿½7ï¿½0ï¿½8ï¿½1ï¿½7
 azimuth = azimuth * 180 / pi;
 elevation = elevation * 180 / pi;
-% µ÷Õû·½Î»½Ç·¶Î§Îª 0-360 ¶È
+% ï¿½1ï¿½7ï¿½1ï¿½7ï¿½1ï¿½7ï¿½1ï¿½7ï¿½1ï¿½7ï¿½1ï¿½7ï¿½Ë„1ï¿½7ï¿½0ï¿½9ï¿½1ï¿½7ï¿½ï¿½ï¿½0ï¿½2 0-360 ï¿½1ï¿½7ï¿½1ï¿½7
 azimuth = mod(azimuth, 360);
 azimuth(azimuth < 0) = azimuth(azimuth < 0) + 360;
-% µ÷ÕûÑö½Ç·¶Î§Îª 0-90 ¶È
-elevation = abs(elevation); % È·±£Ñö½ÇÎª·Ç¸ºÖµ
-elevation(elevation > 90) = 90; % ÏÞÖÆ×î´óÖµÎª 90 ¶È
-% »æÖÆ·½Î»½ÇºÍÑö½ÇµÄÉ¢µãÍ¼
+% ï¿½1ï¿½7ï¿½1ï¿½7ï¿½1ï¿½7ï¿½1ï¿½7ï¿½1ï¿½7ï¿½1ï¿½7ï¿½1ï¿½7ï¿½0ï¿½9ï¿½1ï¿½7ï¿½ï¿½ï¿½0ï¿½2 0-90 ï¿½1ï¿½7ï¿½1ï¿½7
+elevation = abs(elevation); % ï¿½0ï¿½2ï¿½1ï¿½7ï¿½1ï¿½7ï¿½1ï¿½7ï¿½1ï¿½7ï¿½1ï¿½7ï¿½1ï¿½7ï¿½0ï¿½2ï¿½1ï¿½7ï¿½0ï¿½0ï¿½1ï¿½7ï¿½0ï¿½5
+elevation(elevation > 90) = 90; % ï¿½1ï¿½7ï¿½1ï¿½7ï¿½1ï¿½7ï¿½1ï¿½7ï¿½1ï¿½7ï¿½1ï¿½7ï¿½1ï¿½7ï¿½0ï¿½5ï¿½0ï¿½2 90 ï¿½1ï¿½7ï¿½1ï¿½7
+% ï¿½1ï¿½7ï¿½1ï¿½7ï¿½1ï¿½7ï¿½0ï¿½3ï¿½1ï¿½7ï¿½Ë„1ï¿½7ï¿½0ï¿½1ï¿½1ï¿½7ï¿½1ï¿½7ï¿½1ï¿½7ï¿½1ï¿½7ï¿½0ï¿½7ï¿½1ï¿½7ï¿½0ï¿½3ï¿½1ï¿½7ï¿½1ï¿½7ï¿½0ï¿½0
 figure;
 scatter(azimuth, elevation, 1, 'filled');
-xlabel('·½Î»½Ç (¶È)');
-ylabel('Ñö½Ç (¶È)');
-title('·½Î»½ÇºÍÑö½Ç·Ö²¼');
+xlabel('ï¿½1ï¿½7ï¿½1ï¿½7ï¿½Ë„1ï¿½7ï¿½1ï¿½7 (ï¿½1ï¿½7ï¿½1ï¿½7)');
+ylabel('ï¿½1ï¿½7ï¿½1ï¿½7ï¿½1ï¿½7ï¿½1ï¿½7 (ï¿½1ï¿½7ï¿½1ï¿½7)');
+title('ï¿½1ï¿½7ï¿½1ï¿½7ï¿½Ë„1ï¿½7ï¿½0ï¿½1ï¿½1ï¿½7ï¿½1ï¿½7ï¿½1ï¿½7ï¿½1ï¿½7ï¿½0ï¿½9ï¿½0ï¿½2ï¿½1ï¿½7');
 grid on;
-axis([0 360 0 90]); % ÉèÖÃ×ø±êÖá·¶Î§
-colorbar; % Ìí¼ÓÑÕÉ«Ìõ£¨¿ÉÑ¡£©
+axis([0 360 0 90]); % ï¿½1ï¿½7ï¿½1ï¿½7ï¿½1ï¿½7ï¿½1ï¿½7ï¿½1ï¿½7ï¿½1ï¿½7ï¿½1ï¿½7ï¿½1ï¿½7ï¿½1ï¿½7ï¿½5ï¿½4ï¿½ï¿½
+colorbar; % ï¿½1ï¿½7ï¿½1ï¿½7ï¿½1ï¿½7ï¿½1ï¿½7ï¿½1ï¿½7ï¿½1ï¿½7ï¿½0ï¿½2ï¿½1ï¿½7ï¿½1ï¿½7ï¿½1ï¿½7ï¿½1ï¿½7ï¿½1ï¿½7ï¿½1ï¿½7ï¿½0ï¿½5ï¿½1ï¿½7ï¿½1ï¿½7
 
 
 
 
-subplot(3,1,1);plot(ch1);title('ch1');xlabel('²ÉÑùµãÊý');ylabel('·ùÖµ');
-subplot(3,1,2);plot(ch2);title('ch2');xlabel('²ÉÑùµãÊý');ylabel('·ùÖµ');
-subplot(3,1,3);plot(ch3);title('ch3');xlabel('²ÉÑùµãÊý');ylabel('·ùÖµ');
+subplot(3,1,1);plot(ch1);title('ch1');xlabel('ï¿½1ï¿½7ï¿½1ï¿½7ï¿½1ï¿½7ï¿½1ï¿½7ï¿½1ï¿½7ï¿½1ï¿½7ï¿½1ï¿½7ï¿½1ï¿½7');ylabel('ï¿½1ï¿½7ï¿½1ï¿½7ï¿½0ï¿½5');
+subplot(3,1,2);plot(ch2);title('ch2');xlabel('ï¿½1ï¿½7ï¿½1ï¿½7ï¿½1ï¿½7ï¿½1ï¿½7ï¿½1ï¿½7ï¿½1ï¿½7ï¿½1ï¿½7ï¿½1ï¿½7');ylabel('ï¿½1ï¿½7ï¿½1ï¿½7ï¿½0ï¿½5');
+subplot(3,1,3);plot(ch3);title('ch3');xlabel('ï¿½1ï¿½7ï¿½1ï¿½7ï¿½1ï¿½7ï¿½1ï¿½7ï¿½1ï¿½7ï¿½1ï¿½7ï¿½1ï¿½7ï¿½1ï¿½7');ylabel('ï¿½1ï¿½7ï¿½1ï¿½7ï¿½0ï¿½5');
 
 
 
@@ -188,9 +194,9 @@ ch1_chj = read_signal('..\\2024 822 85933.651462CH1.dat',signal_length,r_loction
 ch2 = read_signal('..\\2024 822 85933.651462CH2.dat',signal_length,r_loction);
 ch3 = read_signal('..\\2024 822 85933.651462CH3.dat',signal_length,r_loction+165/5);
 
-% Éè¼Æ´øÍ¨ÂË²¨Æ÷
+% ï¿½1ï¿½7ï¿½1ï¿½7ï¿½0ï¿½0ï¿½1ï¿½7ï¿½0ï¿½0ï¿½1ï¿½7ï¿½0ï¿½2ï¿½1ï¿½7ï¿½1ï¿½7ï¿½1ï¿½7
 [b, a] = butter(4, [20e6, 80e6] / (fs / 2), 'bandpass'); 
-% ¶ÔÐÅºÅ½øÐÐ´øÍ¨ÂË²¨
+% ï¿½1ï¿½7ï¿½1ï¿½7ï¿½1ï¿½7ï¿½0ï¿½2ï¿½0ï¿½5ï¿½1ï¿½7ï¿½1ï¿½7ï¿½Õ„1ï¿½7ï¿½0ï¿½0ï¿½1ï¿½7ï¿½0ï¿½2ï¿½1ï¿½7
 filtered_signal1 = filter(b, a, ch1);
 filtered_signal2 = filter(b, a, ch2);
 filtered_signal3 = filter(b, a, ch3);
@@ -207,31 +213,31 @@ filtered_signal3 = filter_bp(ch3, 20e6 ,80e6 ,5);
 
 
 
-subplot(3,1,1);plot(filtered_signal1);title('ch1');xlabel('²ÉÑùµãÊý');ylabel('·ùÖµ');
-subplot(3,1,2);plot(filtered_signal2);title('ch2');xlabel('²ÉÑùµãÊý');ylabel('·ùÖµ');
-subplot(3,1,3);plot(filtered_signal3);title('ch3');xlabel('²ÉÑùµãÊý');ylabel('·ùÖµ');
+subplot(3,1,1);plot(filtered_signal1);title('ch1');xlabel('ï¿½1ï¿½7ï¿½1ï¿½7ï¿½1ï¿½7ï¿½1ï¿½7ï¿½1ï¿½7ï¿½1ï¿½7ï¿½1ï¿½7ï¿½1ï¿½7');ylabel('ï¿½1ï¿½7ï¿½1ï¿½7ï¿½0ï¿½5');
+subplot(3,1,2);plot(filtered_signal2);title('ch2');xlabel('ï¿½1ï¿½7ï¿½1ï¿½7ï¿½1ï¿½7ï¿½1ï¿½7ï¿½1ï¿½7ï¿½1ï¿½7ï¿½1ï¿½7ï¿½1ï¿½7');ylabel('ï¿½1ï¿½7ï¿½1ï¿½7ï¿½0ï¿½5');
+subplot(3,1,3);plot(filtered_signal3);title('ch3');xlabel('ï¿½1ï¿½7ï¿½1ï¿½7ï¿½1ï¿½7ï¿½1ï¿½7ï¿½1ï¿½7ï¿½1ï¿½7ï¿½1ï¿½7ï¿½1ï¿½7');ylabel('ï¿½1ï¿½7ï¿½1ï¿½7ï¿½0ï¿½5');
 
 
 plot(ch3,'b');
 hold on;
 plot(filtered_signal3 +50,'r');
-legend('Ô­ÐÅºÅ','ÂË²¨ºó');
-xlabel('²ÉÑùµãÊý');
-ylabel('·ùÖµ');
+legend('ï¿½0ï¿½9ï¿½1ï¿½7ï¿½0ï¿½2ï¿½1ï¿½7','ï¿½1ï¿½7ï¿½0ï¿½2ï¿½1ï¿½7ï¿½1ï¿½7ï¿½1ï¿½7');
+xlabel('ï¿½1ï¿½7ï¿½1ï¿½7ï¿½1ï¿½7ï¿½1ï¿½7ï¿½1ï¿½7ï¿½1ï¿½7ï¿½1ï¿½7ï¿½1ï¿½7');
+ylabel('ï¿½1ï¿½7ï¿½1ï¿½7ï¿½0ï¿½5');
 
 
 [R1_x, R1_y, R1_z] = sph2cart(deg2rad(181.588691),deg2rad(49.691292),1);
-% ¼ÆËãÑö½Ç£¨µ¥Î»£º¶È£©
-theta = asin(R1_z) * (180/pi); % È¡Öµ·¶Î§Îª [-90, 90] ¶È
-% ¼ÆËã·½Î»½Ç£¨µ¥Î»£º¶È£©
-phi = atan2(R1_y, R1_x) * (180/pi); % È¡Öµ·¶Î§Îª [-180, 180] ¶È
-% Èç¹ûÐèÒª½«·½Î»½Ç×ª»»Îª [0, 360) ·¶Î§
+% ï¿½1ï¿½7ï¿½1ï¿½7ï¿½1ï¿½7ï¿½1ï¿½7ï¿½1ï¿½7ï¿½1ï¿½7ï¿½1ï¿½7ï¿½0ï¿½9ï¿½1ï¿½7ï¿½1ï¿½7ï¿½1ï¿½7ï¿½Ë„1ï¿½7ï¿½1ï¿½7ï¿½1ï¿½7ï¿½0ï¿½2ï¿½1ï¿½7
+theta = asin(R1_z) * (180/pi); % ï¿½0ï¿½0ï¿½0ï¿½5ï¿½1ï¿½7ï¿½1ï¿½7ï¿½ï¿½ï¿½0ï¿½2 [-90, 90] ï¿½1ï¿½7ï¿½1ï¿½7
+% ï¿½1ï¿½7ï¿½1ï¿½7ï¿½1ï¿½7ï¿½1ï¿½2ï¿½Ë„1ï¿½7ï¿½0ï¿½9ï¿½1ï¿½7ï¿½1ï¿½7ï¿½1ï¿½7ï¿½Ë„1ï¿½7ï¿½1ï¿½7ï¿½1ï¿½7ï¿½0ï¿½2ï¿½1ï¿½7
+phi = atan2(R1_y, R1_x) * (180/pi); % ï¿½0ï¿½0ï¿½0ï¿½5ï¿½1ï¿½7ï¿½1ï¿½7ï¿½ï¿½ï¿½0ï¿½2 [-180, 180] ï¿½1ï¿½7ï¿½1ï¿½7
+% ï¿½1ï¿½7ï¿½1ï¿½7ï¿½1ï¿½7ï¿½1ï¿½7ï¿½1ï¿½7ï¿½0ï¿½8ï¿½1ï¿½7ï¿½1ï¿½7ï¿½1ï¿½7ï¿½1ï¿½7ï¿½Ë„1ï¿½7ï¿½1ï¿½7ï¿½0ï¿½8ï¿½1ï¿½7ï¿½1ï¿½7ï¿½0ï¿½2 [0, 360) ï¿½1ï¿½7ï¿½1ï¿½7ï¿½ï¿½
 if phi < 0
     phi = phi + 360;
 end
-% Êä³ö½á¹û
-fprintf('·½Î»½Ç (Azimuth): %.2f ¶È\n', phi);
-fprintf('Ñö½Ç (Elevation): %.2f ¶È\n', theta);
+% ï¿½1ï¿½7ï¿½1ï¿½7ï¿½1ï¿½7ï¿½1ï¿½7ï¿½1ï¿½7ï¿½1ï¿½7
+fprintf('ï¿½1ï¿½7ï¿½1ï¿½7ï¿½Ë„1ï¿½7ï¿½1ï¿½7 (Azimuth): %.2f ï¿½1ï¿½7ï¿½1ï¿½7\n', phi);
+fprintf('ï¿½1ï¿½7ï¿½1ï¿½7ï¿½1ï¿½7ï¿½1ï¿½7 (Elevation): %.2f ï¿½1ï¿½7ï¿½1ï¿½7\n', theta);
 
 
 
