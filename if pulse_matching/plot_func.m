@@ -1,6 +1,6 @@
 %�1�7�1�7�1�71
-logicalIndex = abs(result1.t123) <1 & abs(result1.Rcorr) > 0.3 &  result1.Start_loc < 4.8e8 & result1.Start_loc > 4.68e8;
-% logicalIndex = abs(result1.t123) <1 & abs(result1.Rcorr) > 0.3 &  result1.Start_loc < 4.3e8+34151156 & result1.Start_loc > 3.9e8+34151156;
+% logicalIndex = abs(result1.t123) <1 & abs(result1.Rcorr) > 0.3 &  result1.Start_loc < 4.8e8 & result1.Start_loc > 4.68e8;
+logicalIndex = abs(result1.t123) <1 & abs(result1.Rcorr) > 0.3 &  result1.Start_loc < 4.705+34151156 & result1.Start_loc > 4.698e8+34151156;
 filteredTable1 = result1(logicalIndex, :);
 Start_loc = filteredTable1.Start_loc;
 % colorValues = (Start_loc - 3e8) / 2e8;

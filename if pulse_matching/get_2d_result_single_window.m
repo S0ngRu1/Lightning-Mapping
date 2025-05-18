@@ -5,8 +5,8 @@ if strcmp(type, 'chj')
     d13 = 48.5209;
     d23 = 25.0182;
     angle12 = -2.8381;
-    angle13 = 28.2006-180;
-    angle23 = 87.3358-180;
+    angle13 = 28.2006;
+    angle23 = 87.3358;
 elseif strcmp(type, 'yld')
     % 引雷点
     angle12 = -110.8477;

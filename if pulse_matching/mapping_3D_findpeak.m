@@ -5,8 +5,8 @@ chj_signal_length = 5120;
 match_signal_length = 6000;
 yld_result_path = 'result_yld_window5120_3e8.txt';
 start_signal_loc = 3.6e8;
-mapping_start_signal_loc = 4.68e8;
-end_signal_loc = 4.8e8;
+mapping_start_signal_loc = 4.697e8;
+end_signal_loc = 4.705e8;
 step = 128200;
 % 引入两个站的位置关系
 yld_sit = [0, 0, 0];
@@ -16,7 +16,7 @@ chj_sit = [1991, -7841.2, -27];
 p = chj_sit-yld_sit;
 dist = 8.09e3; %单位：米
 c = 0.299792458;
-W = 3000000; % 时间误差
+W = 30000; % 时间误差
 offsets_init = -85000;
 signal_length = 128200;
 % 所有信号的开始位置
@@ -46,10 +46,10 @@ for j = 1:numel(all_start_signal_loc)-1
     chj_ch1 =read_signal('..\\2024 822 85933.651462CH1.dat',signal_length,start_read_loc_yld+ 34151156 - offsets_init-(j-1)*100);
     chj_ch2 =read_signal('..\\2024 822 85933.651462CH2.dat',signal_length,start_read_loc_yld+ 34151156 - offsets_init-(j-1)*100);
     chj_ch3 =read_signal('..\\2024 822 85933.651462CH3.dat',signal_length,start_read_loc_yld+ 34151156 - offsets_init-(j-1)*100 +165/5);
-    filtered_yld_signal1 = filter_bp(yld_ch1,10e6,90e6,5);
-    filtered_chj_signal1 = filter_bp(chj_ch1,10e6,90e6,5);
-    filtered_chj_signal2 = filter_bp(chj_ch2,10e6,90e6,5);
-    filtered_chj_signal3 = filter_bp(chj_ch3,10e6,90e6,5);
+    filtered_yld_signal1 = filter_bp(yld_ch1,30e6,80e6,5);
+    filtered_chj_signal1 = filter_bp(chj_ch1,30e6,80e6,5);
+    filtered_chj_signal2 = filter_bp(chj_ch2,30e6,80e6,5);
+    filtered_chj_signal3 = filter_bp(chj_ch3,30e6,80e6,5);
     S_results = [];
     match_results = struct('yld_start_loc', {}, 'chj_loc', {}, 'r_gccs', {}, 'dlta',{});
     h = waitbar(0, 'Processing...');
@@ -81,7 +81,7 @@ for j = 1:numel(all_start_signal_loc)-1
         chj_match_signal3 = filtered_chj_signal3(start_read_loc_chj-match_signal_length+1:start_read_loc_chj+match_signal_length+chj_signal_length);
 
         % 寻找峰值
-        [peaks, locs] = findpeaks(chj_match_signal1, 'MinPeakHeight', 5, 'MinPeakDistance', 512);
+        [peaks, locs] = findpeaks(chj_match_signal1, 'MinPeakHeight', 13, 'MinPeakDistance', 512);
         all_locs = locs;
         % 遍历所有峰值
         num_peaks = numel(all_locs);
@@ -123,31 +123,6 @@ for j = 1:numel(all_start_signal_loc)-1
             end
             [R1_x, R1_y, R1_z] = sph2cart(deg2rad(90-yld_azimuth(i)), deg2rad(yld_elevation(i)),1);
             [R2_x, R2_y, R2_z] = sph2cart(deg2rad(90-chj_azimuth), deg2rad(chj_elevation),1);
-%             p = chj_sit(:) - yld_sit(:);
-%             A1 = [R1_x, R1_y, R1_z]';
-%             A2 = [R2_x, R2_y, R2_z]';
-%             % 计算叉乘并检查共线性
-%             C = cross(A1, A2);
-%             if norm(C) < eps
-%                 continue;  % 或处理共线情况
-%             end
-%             c_unit = C / norm(C);
-%             
-%             % 构建矩阵 M = [A1, -A2, c_unit]
-%             M = [A1, -A2, c_unit];
-%             
-%             % 使用矩阵除法替代克莱姆法则
-%             solution = M \ p;
-%             R1_value = solution(1);
-%             R2_value = solution(2);
-%             R3_value = solution(3);
-%             
-%             % 计算定位点（取两站解的平均值）
-%             S_yld = yld_sit(:) + R1_value * A1;
-%             S_chj = chj_sit(:) + R2_value * A2;
-%             sub_S = (S_yld + S_chj) / 2;
-%             sub_S = sub_S';
-
             A1 = [R1_x, R1_y, R1_z];
             A2 = [R2_x, R2_y, R2_z];
             C = cross(A1, A2);
@@ -192,6 +167,9 @@ for j = 1:numel(all_start_signal_loc)-1
                 end
             end
         end
+        if isempty(sub_S_results)
+            continue;
+        end
         [max_R_gcc, max_R_gcc_index] = max(sub_R_gccs);
         S_results = [S_results;sub_S_results(max_R_gcc_index,:)];
         match_results = [match_results; struct('yld_start_loc', yld_start_loc(i), 'chj_loc', sub_chj_locs(max_R_gcc_index)+ start_read_loc_yld + 34151156 - offsets_init-(j-1)*100 +start_read_loc_chj-match_signal_length+1, 'r_gccs', max_R_gcc, 'dlta',dltas(max_R_gcc_index))];
@@ -217,7 +195,7 @@ y_range = [-50000, 50000]; % Y 的合理范围
 z_range = [0, 50000];    % Z 的合理范围（Z > 0）
 
 condition1 = [all_match_results.dlta] < 3000000;
-condition2 = [all_match_results.yld_start_loc] > start_signal_loc;
+condition2 = [all_match_results.yld_start_loc] > mapping_start_signal_loc;
 condition3 = [all_match_results.yld_start_loc] < end_signal_loc;
 % 获取满足条件的行索引
 filtered_match_indices1 = find(condition1);
@@ -226,6 +204,7 @@ filtered_match_indices3 = find(condition3);
 filtered_match_indices = intersect(intersect(filtered_match_indices1,filtered_match_indices2),filtered_match_indices3) ;
 % 使用筛选出的索引从 S_results 中提取对应的行
 filtered_S_temp = all_S_results(filtered_match_indices, :);
+% filtered_S_temp = all_S_results;
 % % 过滤数据
 filtered_S = filtered_S_temp(...
 filtered_S_temp(:,1) >= x_range(1) & filtered_S_temp(:,1) <= x_range(2) & ... % X 在合理范围内

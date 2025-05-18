@@ -6,8 +6,8 @@ function tau_ij_obs = calculate_tau_obs(cos_alpha, cos_beta, type)
     % 根据 type 参数选择不同的参数集
     if strcmp(type, 'chj') % 从化局
         angle12 = -2.8381;
-        angle13 = 28.2006-180;
-        angle23 = 87.3358-180;
+        angle13 = 28.2006;
+        angle23 = 87.3358;
         d12 = 41.6496;
         d13 = 48.5209;
         d23 = 25.0182;
