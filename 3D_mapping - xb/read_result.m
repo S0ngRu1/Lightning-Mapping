@@ -1,4 +1,4 @@
-function [start_loc, azimuth, elevation, Rcorr, t123] = read_result(result_path, start_read_line, end_read_line)
+function [start_loc,t12,t13,t23, azimuth, elevation, Rcorr, t123] = read_result(result_path, start_read_line, end_read_line)
     % 打开文件读取数据
     fileID = fopen(result_path, 'r');
     if fileID == -1
@@ -31,6 +31,9 @@ function [start_loc, azimuth, elevation, Rcorr, t123] = read_result(result_path,
 
     % 从找到的位置开始提取数据
     start_loc = start_loc_full(start_index:end_index);          % Start_loc
+    t12 = data{3}(start_index:end_index);
+    t13 = data{4}(start_index:end_index);
+    t23 = data{5}(start_index:end_index);
     azimuth = data{8}(start_index:end_index);                   % Azimuth
     elevation = data{9}(start_index:end_index);                 % Elevation
     Rcorr = data{10}(start_index:end_index);                    % Rcorr

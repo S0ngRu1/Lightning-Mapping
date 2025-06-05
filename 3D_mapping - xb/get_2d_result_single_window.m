@@ -1,4 +1,4 @@
-function [start_loc, Az_deg, El_deg, Rcorr, t123]  = get_2d_result_single_window(start_loc,ch1,ch2,ch3 ,type)
+function [start_loc,t12,t13,t23, Az_deg, El_deg, Rcorr, t123]  = get_2d_result_single_window(start_loc,ch1,ch2,ch3 ,type)
 if strcmp(type, 'chj')
     % 从化局
     d12 = 41.6496;

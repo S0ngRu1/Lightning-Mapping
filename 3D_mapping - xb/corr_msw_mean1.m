@@ -17,7 +17,10 @@ r_loction = 404238787;
 ch1 = read_signal('..\\2024 822 85933.651462CH1.dat',signal_length,r_loction);
 ch2 = read_signal('..\\2024 822 85933.651462CH2.dat',signal_length,r_loction);
 % ch3 = read_signal('..\\2024 822 85933.651462CH3.dat',signal_length,r_loction+215/5);%速度2.3m/s,217.3913ns
-ch3 = read_signal('..\\2024 822 85933.651462CH3.dat',signal_length,r_loction+250/5);%速度2m/s，250ns
+% ch3 = read_signal('..\\2024 822 85933.651462CH3.dat',signal_length,r_loction+200/5);%速度2.5m/s,200ns
+% ch3 = read_signal('..\\2024 822 85933.651462CH3.dat',signal_length,r_loction+205/5);%速度2.4m/s,208.3333ns
+% ch3 = read_signal('..\\2024 822 85933.651462CH3.dat',signal_length,r_loction+250/5);%速度2m/s，250ns
+ch3 = read_signal('..\\2024 822 85933.651462CH3.dat',signal_length,r_loction+225/5);%速度2.2m/s,227.2727ns
 % %引雷点
 % signal_length = 2e7;
 % r_loction = 3.7e8;
@@ -38,7 +41,7 @@ filtered_signal3 = filter_bp(ch3,20e6,80e6,5);
 
 
 % 打开一个文本文件用于写入运行结果
-fileID = fopen('result_chj_window4096_3.7-3.9_250.txt', 'w');
+fileID = fopen('result_chj_window4096_3.7-3.9_227.txt', 'w');
 fprintf(fileID, '%-13s%-15s%-15s%-15s%-15s%-15s%-15s%-15s%-15s%-15s%-15s\n', ...
     'Start_loc','peak','t12', 't13', 't23', 'cos_alpha_opt', 'cos_beta_opt','Azimuth', 'Elevation', 'Rcorr', 't123');
 
@@ -48,7 +51,7 @@ all_peaks = [];
 all_locs = [];
 
 % 寻找峰值
-[peaks, locs] = findpeaks(filtered_signal1, 'MinPeakHeight', 5, 'MinPeakDistance', 1024);
+[peaks, locs] = findpeaks(filtered_signal1, 'MinPeakHeight', 5, 'MinPeakDistance', window_length/4);
 
 % 存储所有峰值和阈值
 all_peaks = peaks;
@@ -105,8 +108,12 @@ for pi = 1:num_peaks
         t12 = t12_gcc *0.1;
 %         t13 = t13_gcc *0.1+2.3913;
 %         t23 = t23_gcc *0.1+2.3913;
-        t13 = t13_gcc *0.1;
-        t23 = t23_gcc *0.1;
+%         t13 = t13_gcc *0.1+3.3333;
+%         t23 = t23_gcc *0.1+3.3333;
+        t13 = t13_gcc *0.1+2.2727;
+        t23 = t23_gcc *0.1+2.2727;
+%         t13 = t13_gcc *0.1;
+%         t23 = t23_gcc *0.1;
 
 %     %引雷场
 %     t12 = t12_gcc *0.1;
