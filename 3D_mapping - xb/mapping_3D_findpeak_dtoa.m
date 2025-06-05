@@ -4,8 +4,8 @@ chj_signal_length = 5120;
 match_signal_length = 6000;
 yld_result_path = 'result_yld_window5120_3e8.txt';
 start_signal_loc = 3.6e8;
-mapping_start_signal_loc = 4.688e8;
-end_signal_loc = 4.703e8;
+mapping_start_signal_loc = 3.7e8;
+end_signal_loc = 3.8e8;
 step = 128200;
 % 引入两个站的位置关系
 yld_sit = [0, 0, 0];
@@ -54,7 +54,7 @@ all_baseline_definitions(4, :) = [chj_ant_global_coords(1,:), chj_ant_global_coo
 all_baseline_definitions(5, :) = [chj_ant_global_coords(1,:), chj_ant_global_coords(3,:)];
 all_baseline_definitions(6, :) = [chj_ant_global_coords(2,:), chj_ant_global_coords(3,:)];
 % 站间基线 (YLD参考天线 - CHJ参考天线)
-all_baseline_definitions(7, :) = [chj_sit, yld_sit];
+all_baseline_definitions(7, :) = [yld_sit, chj_sit];
 
 % --- DTOA测量不确定度  ---
 sigmas_ns = [
@@ -163,7 +163,7 @@ for j = 1:numel(all_start_signal_loc)-1
             A1 = [R1_x, R1_y, R1_z];
             A2 = [R2_x, R2_y, R2_z];
             C = cross(A1, A2);
-            if norm(c) < eps
+            if norm(C) < eps
                 continue;  % 避免除以零
             end
             c_unit = C  / norm(C);  % 单位向量
@@ -222,7 +222,7 @@ for j = 1:numel(all_start_signal_loc)-1
         all_measured_dtoas_ns(1:3) = [yld_t12(i),yld_t13(i),yld_t23(i)];  % YLD站内 (ns)
         all_measured_dtoas_ns(4:6) = sub_chj_dtoa_t(max_R_gcc_index);% CHJ站内 (ns)
         % 站间DTOA (ns)
-        all_measured_dtoas_ns(7) = yld_chj_dlta_ts(max_R_gcc_index);
+        all_measured_dtoas_ns(7) = yld_chj_dlta_Ts(max_R_gcc_index); 
 
         % --- DTOA 优化 ---
         S_initial = sub_S_results(max_R_gcc_index,:); % 使用三角测量结果作为初值
@@ -247,7 +247,7 @@ for j = 1:numel(all_start_signal_loc)-1
                 fprintf('优化未收敛 (exitflag=%d) for YLD event %d (sample loc %d)\n', exitflag, i, current_yld_start_abs_samples);
             end
         catch ME_optim
-            fprintf('DTOA优化错误 for YLD event %d (sample loc %d): %s\n', i, current_yld_start_abs_samples, ME_optim.message);
+            fprintf('DTOA优化错误 for YLD event %d (sample loc %d): %s\n', i, yld_start_loc(i), ME_optim.message);
         end
 
         % --- 使用优化后的S重新进行时间校验 ---

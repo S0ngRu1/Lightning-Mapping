@@ -1,10 +1,10 @@
 x_range = [-50000, 50000];
 y_range = [-50000, 50000];
-z_range = [0, 10000];
+z_range = [0, 50000];
 
 condition1 = [all_match_results.dlta] < 20000;
-condition2 = [all_match_results.yld_start_loc] > 3.7e8;
-condition3 = [all_match_results.yld_start_loc] < 3.8e8;
+condition2 = [all_match_results.yld_start_loc] > mapping_start_signal_loc;
+condition3 = [all_match_results.yld_start_loc] < end_signal_loc;
 condition4 = [all_match_results.r_gccs] > 0.1;
 filtered_match_indices1 = find(condition1(:)');
 filtered_match_indices2 = find(condition2(:)');
@@ -45,7 +45,7 @@ title('源的三维空间分布');
 grid on; 
 axis equal;
 colorbar; 
-colormap(gca, 'hot');
+colormap(gca, 'cool');
 daspect([1 1 1]); 
 
 % --- 4.2 二维投影图 (按时间着色) ---
@@ -58,7 +58,7 @@ title('XY 平面投影 (东-北)');
 grid on;
 axis equal; 
 colorbar;
-colormap(gca, 'hot');
+colormap(gca, 'cool');
 
 % XZ 平面投影 (侧视图: 东-上)
 figure; 
@@ -70,7 +70,7 @@ title('XZ 平面投影 (东-上)');
 grid on;
 axis equal;
 colorbar;
-colormap(gca, 'hot');
+colormap(gca, 'cool');
 
 % YZ 平面投影 (前/后视图: 北-上)
 figure; 
@@ -82,7 +82,7 @@ title('YZ 平面投影 (北-上)');
 grid on;
 axis equal;
 colorbar;
-colormap(gca, 'hot');
+colormap(gca, 'cool');
 
 % --- 4.3极坐标系下 ---
 theta = atan2(y, x); 
@@ -92,7 +92,7 @@ figure;
 polarscatter(theta, rho, marker_size, time_colors, 'filled');
 title('极坐标系下');
 colorbar;
-colormap(gca, 'hot');
+colormap(gca, 'cool');
 
 
 % --- 4.4 方位角 - 仰角 ---
@@ -104,7 +104,7 @@ elevations = zeros(num_points, 1);
     % 当前定位结果点 (确保是行向量)
     current_S = filtered_S(i, :);
     % 计算从零点位置指向当前定位结果点的向量
-    direction_vector = current_S(:) - chj_sit(:);
+    direction_vector = current_S(:) - yld_sit(:);
     % 调用 cart2sph_standard 函数计算方位角和仰角
     [azimuths(i), elevations(i)] = cart2sph_standard(direction_vector);
     end
@@ -112,11 +112,11 @@ elevations = zeros(num_points, 1);
     scatter(azimuths, elevations, marker_size, time_colors, 'filled');
     xlabel('方位角 (度)');
 ylabel('仰角 (度)');
-    title(['从站点 ', num2str(chj_sit), ' 看闪电的方位角 vs 仰角']);
+    title(['从站点 ', num2str(yld_sit), ' 看闪电的方位角 vs 仰角']);
     grid on;
     xlim([0, 360]);
     xticks(0:40:360);
     ylim([0, 90]);
     yticks(0:10:90);
     colorbar;
-    colormap(gca, 'jet');
+    colormap(gca, 'cool');
