@@ -55,12 +55,12 @@ all_baseline_definitions(5, :) = [chj_ant_global_coords(1,:), chj_ant_global_coo
 all_baseline_definitions(6, :) = [chj_ant_global_coords(2,:), chj_ant_global_coords(3,:)];
 % 站间基线 (YLD参考天线 - CHJ参考天线)
 all_baseline_definitions(7, :) = [yld_sit, chj_sit];
-
+all_residuals_history = []; 
 % --- DTOA测量不确定度  ---
 sigmas_ns = [
-    1.0; 1.0; 1.0; % YLD 站内基线 DTOA 不确定度 (ns)
-    1.0; 1.0; 1.0; % CHJ 站内基线 DTOA 不确定度 (ns)
-    200.0          % 站间基线 DTOA 不确定度 (ns)
+    4.22; 5.54; 7.95; % YLD 站内基线 DTOA 不确定度 (ns)
+    3.61; 13.89; 39.28; % CHJ 站内基线 DTOA 不确定度 (ns)
+    18120.28          % 站间基线 DTOA 不确定度 (ns)
     ];
 
 
@@ -77,7 +77,7 @@ for j = 1:numel(all_start_signal_loc)-1
     yld_ch1 =read_signal('..\\20240822165932.6610CH1.dat',signal_length,start_read_loc_yld);
     chj_ch1 =read_signal('..\\2024 822 85933.651462CH1.dat',signal_length,start_read_loc_yld+ 34151156 - offsets_init-(j-1)*100);
     chj_ch2 =read_signal('..\\2024 822 85933.651462CH2.dat',signal_length,start_read_loc_yld+ 34151156 - offsets_init-(j-1)*100);
-    chj_ch3 =read_signal('..\\2024 822 85933.651462CH3.dat',signal_length,start_read_loc_yld+ 34151156 - offsets_init-(j-1)*100 +235/5);
+    chj_ch3 =read_signal('..\\2024 822 85933.651462CH3.dat',signal_length,start_read_loc_yld+ 34151156 - offsets_init-(j-1)*100 +205/5);
     filtered_yld_signal1 = filter_bp(yld_ch1,30e6,80e6,5);
     filtered_chj_signal1 = filter_bp(chj_ch1,30e6,80e6,5);
     filtered_chj_signal2 = filter_bp(chj_ch2,30e6,80e6,5);
@@ -118,7 +118,7 @@ for j = 1:numel(all_start_signal_loc)-1
         chj_match_signal3 = filtered_chj_signal3(start_read_loc_chj-match_signal_length+1:start_read_loc_chj+match_signal_length+chj_signal_length);
 
         % 寻找峰值
-        [peaks, locs] = findpeaks(chj_match_signal1, 'MinPeakHeight', 3, 'MinPeakDistance', 512);
+        [peaks, locs] = findpeaks(chj_match_signal1, 'MinPeakHeight', 5, 'MinPeakDistance', 1024);
         all_locs = locs;
         % 遍历所有峰值
         num_peaks = numel(all_locs);
@@ -194,8 +194,8 @@ for j = 1:numel(all_start_signal_loc)-1
             if ~isempty(sub_S)
                 t_chj = sqrt(sum((sub_S - chj_sit).^2))/c;
                 t_yld = sqrt(sum((sub_S - yld_sit).^2))/c;
-                dlta_t = abs(t_yld-t_chj);
-                dlta_T = abs(-match_signal_length + chj_start_idx)*5;
+                dlta_t = t_yld-t_chj;
+                dlta_T = (match_signal_length - chj_start_idx)*5;
                 dlta = abs(dlta_t-dlta_T);
                 if dlta <= W
                     dltas = [dltas;dlta];
@@ -218,11 +218,11 @@ for j = 1:numel(all_start_signal_loc)-1
         %% Step 5: 差分到达时间 (DTOA) 技术
         % --- 收集所有测量的DTOA值 (单位: ns) ---
         all_measured_dtoas_ns = zeros(7,1);
-        
+
         all_measured_dtoas_ns(1:3) = [yld_t12(i),yld_t13(i),yld_t23(i)];  % YLD站内 (ns)
         all_measured_dtoas_ns(4:6) = sub_chj_dtoa_t(max_R_gcc_index);% CHJ站内 (ns)
         % 站间DTOA (ns)
-        all_measured_dtoas_ns(7) = yld_chj_dlta_Ts(max_R_gcc_index); 
+        all_measured_dtoas_ns(7) = yld_chj_dlta_Ts(max_R_gcc_index);
 
         % --- DTOA 优化 ---
         S_initial = sub_S_results(max_R_gcc_index,:); % 使用三角测量结果作为初值
@@ -234,8 +234,8 @@ for j = 1:numel(all_start_signal_loc)-1
             c);
 
         options = optimoptions('lsqnonlin', 'Algorithm', 'levenberg-marquardt', ...
-            'Display', 'off', 'TolFun', 1e-9, 'TolX', 1e-9, ...
-            'MaxIterations', 100, 'StepTolerance', 1e-9);
+            'Display', 'off', 'TolFun', 1e-3, 'TolX', 1e-3, ...
+            'MaxIterations', 50, 'StepTolerance', 1e-3);
         S_optimized = S_initial; % 默认值
         optimization_successful = false;
         try
@@ -248,6 +248,20 @@ for j = 1:numel(all_start_signal_loc)-1
             end
         catch ME_optim
             fprintf('DTOA优化错误 for YLD event %d (sample loc %d): %s\n', i, yld_start_loc(i), ME_optim.message);
+        end
+
+        if optimization_successful
+            % 用最终的优化解 S_optimized 再次调用目标函数，获取最终的理论DTOA
+            final_theoretical_dtoas_ns = dtoa_objective_function_ns(S_optimized, ...
+                all_baseline_definitions, ...
+                all_measured_dtoas_ns, ...
+                sigmas_ns, ...
+                c);
+            % 残差 = 理论DTOA - 测量DTOA
+            final_residuals_ns = final_theoretical_dtoas_ns;
+
+            all_residuals_history = [all_residuals_history; final_residuals_ns(:)'];
+
         end
 
         % --- 使用优化后的S重新进行时间校验 ---
@@ -299,6 +313,61 @@ for j = 1:numel(all_start_signal_loc)-1
     close(h);
 end
 
+
+
+if ~isempty(all_residuals_history)
+
+    baseline_names = {
+        'YLD 1-2'; 'YLD 1-3'; 'YLD 2-3'; ...
+        'CHJ 1-2'; 'CHJ 1-3'; 'CHJ 2-3'; ...
+        'Inter-Station YLD-CHJ'
+    };
+    
+    num_baselines = size(all_residuals_history, 2);
+    num_events = size(all_residuals_history, 1);
+    
+    fprintf('\n--- 逐条基线不确定度验证 ---\n');
+    
+    % 创建一个新的 figure 用于绘制所有基线的残差直方图
+    figure;
+    sgtitle(sprintf('所有基线的残差分布 (基于 %d 个事件)', num_events)); % 为整个图添加总标题
+    
+    for k_base = 1:num_baselines
+        % 提取当前基线的所有残差
+        current_residuals = all_residuals_history(:, k_base);
+        
+        % 计算残差的均值和标准差
+        mean_residual = mean(current_residuals);
+        std_dev_residual = std(current_residuals);
+        
+        % 获取预设的不确定度值
+        assumed_sigma = sigmas_ns(k_base);
+        
+        % --- 在命令窗口打印数值结果 ---
+        fprintf('\n--- 基线 #%d: %s ---\n', k_base, baseline_names{k_base});
+        fprintf('预设的不确定度 (σ): %.2f ns\n', assumed_sigma);
+        fprintf('从 %d 个事件的残差中计算出的统计结果:\n', num_events);
+        fprintf('  - 残差均值: %.2f ns\n', mean_residual);
+        fprintf('  - 残差标准差: %.2f ns\n', std_dev_residual);
+        
+        % --- 在子图中绘制直方图和正态分布拟合曲线 ---
+        subplot(3, 3, k_base); % 创建一个 3x3 的子图布局，并激活第 k_base 个
+        histogram(current_residuals, 50, 'Normalization', 'pdf', 'EdgeColor', 'none');
+        hold on;
+        
+        % 拟合一个正态分布曲线进行对比
+        x_range = linspace(min(current_residuals), max(current_residuals), 100);
+        pdf_fit = normpdf(x_range, mean_residual, std_dev_residual);
+        plot(x_range, pdf_fit, 'r-', 'LineWidth', 1.5);
+        
+        title(baseline_names{k_base});
+        xlabel('残差 (ns)');
+        ylabel('概率密度');
+        grid on;
+        legend('残差分布', '正态拟合');
+        hold off;
+    end
+end
 % plot_3d;
 
 % --- DTOA 目标函数 ---
@@ -308,13 +377,13 @@ errors = zeros(num_baselines, 1);
 S_guess_xyz = S_guess_xyz(:)'; % 确保是行向量 [1x3]
 
 for k_base = 1:num_baselines
-    ant1_pos = all_baseline_ant_coords(k_base, 1:3); 
+    ant1_pos = all_baseline_ant_coords(k_base, 1:3);
     ant2_pos = all_baseline_ant_coords(k_base, 4:6);
 
     dist_to_ant1 = norm(S_guess_xyz - ant1_pos);
     dist_to_ant2 = norm(S_guess_xyz - ant2_pos);
 
-    % 理论 DTOA (ns) 
+    % 理论 DTOA (ns)
     theoretical_dtoa_ns = (dist_to_ant1 - dist_to_ant2) / c_mpns;
 
     errors(k_base) = (theoretical_dtoa_ns - all_measured_dtoas_ns(k_base)) / all_sigmas_ns(k_base);
