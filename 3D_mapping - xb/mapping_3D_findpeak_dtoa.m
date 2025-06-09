@@ -6,7 +6,7 @@ yld_result_path = 'result_yld_window5120_3e8.txt';
 start_signal_loc = 3.6e8;
 mapping_start_signal_loc = 3.7e8;
 end_signal_loc = 3.8e8;
-step = 128200;
+step = 127200;
 % 引入两个站的位置关系
 yld_sit = [0, 0, 0];
 chj_sit = [2003.7972, -7844.7836, -27];
@@ -16,8 +16,8 @@ p = chj_sit-yld_sit;
 dist = 8.0967e3; %单位：米
 c = 0.299792458;
 W = 30000; % 时间误差
-offsets_init = -85000;
-signal_length=128200;
+offsets_init = -85438;
+signal_length=step;
 % 所有信号的开始位置
 all_start_signal_loc = start_signal_loc:step:end_signal_loc;
 all_S_results = [];   % 存储DTOA优化后的结果
@@ -60,7 +60,7 @@ all_residuals_history = [];
 sigmas_ns = [
     4.22; 5.54; 7.95; % YLD 站内基线 DTOA 不确定度 (ns)
     3.61; 13.89; 39.28; % CHJ 站内基线 DTOA 不确定度 (ns)
-    18120.28          % 站间基线 DTOA 不确定度 (ns)
+    3000         % 站间基线 DTOA 不确定度 (ns)
     ];
 
 
@@ -77,7 +77,7 @@ for j = 1:numel(all_start_signal_loc)-1
     yld_ch1 =read_signal('..\\20240822165932.6610CH1.dat',signal_length,start_read_loc_yld);
     chj_ch1 =read_signal('..\\2024 822 85933.651462CH1.dat',signal_length,start_read_loc_yld+ 34151156 - offsets_init-(j-1)*100);
     chj_ch2 =read_signal('..\\2024 822 85933.651462CH2.dat',signal_length,start_read_loc_yld+ 34151156 - offsets_init-(j-1)*100);
-    chj_ch3 =read_signal('..\\2024 822 85933.651462CH3.dat',signal_length,start_read_loc_yld+ 34151156 - offsets_init-(j-1)*100 +205/5);
+    chj_ch3 =read_signal('..\\2024 822 85933.651462CH3.dat',signal_length,start_read_loc_yld+ 34151156 - offsets_init-(j-1)*100 +215/5);
     filtered_yld_signal1 = filter_bp(yld_ch1,30e6,80e6,5);
     filtered_chj_signal1 = filter_bp(chj_ch1,30e6,80e6,5);
     filtered_chj_signal2 = filter_bp(chj_ch2,30e6,80e6,5);
