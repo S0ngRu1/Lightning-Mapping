@@ -1,8 +1,8 @@
 %% Step1 读取引雷点的二维定位结果（需要条件筛选出合格的）
 % 引入变量：位置，方位角，仰角
-chj_signal_length = 5120;
+chj_signal_length = 4096;
 match_signal_length = 6000;
-yld_result_path = 'result_yld_window5120_3e8.txt';
+yld_result_path = 'result_yld_window4096_3.7-3.9.txt';
 start_signal_loc = 3.6e8;
 mapping_start_signal_loc = 3.7e8;
 end_signal_loc = 3.8e8;
@@ -10,13 +10,11 @@ step = 127200;
 % 引入两个站的位置关系
 yld_sit = [0, 0, 0];
 chj_sit = [2003.7972, -7844.7836, -27];
-% offsets = [-85000, -79000, -75000, -65000, -57000, -48000, -36000, -30000, -25000, -14000, -5000, 5000, 11000, 16000, 26000, 34000, 38000];
 % yld相对于chj的位置
 p = chj_sit-yld_sit;
 dist = 8.0967e3; %单位：米
 c = 0.299792458;
 W = 30000; % 时间误差
-offsets_init = -85438;
 signal_length=step;
 % 所有信号的开始位置
 all_start_signal_loc = start_signal_loc:step:end_signal_loc;
@@ -44,7 +42,8 @@ baseline_ant_indices = [
     1, 3; % 基线13
     2, 3  % 基线23
     ];
-
+search_radius_xy = 100; 
+search_radius_z  = 100;  
 % --- 所有基线的天线全局坐标 (6条站内 + 1条站间) ---
 all_baseline_definitions = zeros(7, 6);
 all_baseline_definitions(1, :) = [yld_ant_global_coords(1,:), yld_ant_global_coords(2,:)];
@@ -60,7 +59,7 @@ all_residuals_history = [];
 sigmas_ns = [
     4.22; 5.54; 7.95; % YLD 站内基线 DTOA 不确定度 (ns)
     3.61; 13.89; 39.28; % CHJ 站内基线 DTOA 不确定度 (ns)
-    3000         % 站间基线 DTOA 不确定度 (ns)
+    1000         % 站间基线 DTOA 不确定度 (ns)
     ];
 
 
@@ -75,9 +74,9 @@ for j = 1:numel(all_start_signal_loc)-1
     fprintf('正在处理的信号位置：%d -- %d \n', start_read_loc_yld, end_read_loc_yld);
     [yld_start_loc, yld_t12, yld_t13,yld_t23,yld_azimuth, yld_elevation, yld_Rcorr, yld_t123] = read_result(yld_result_path,start_read_loc_yld, end_read_loc_yld);
     yld_ch1 =read_signal('..\\20240822165932.6610CH1.dat',signal_length,start_read_loc_yld);
-    chj_ch1 =read_signal('..\\2024 822 85933.651462CH1.dat',signal_length,start_read_loc_yld+ 34151156 - offsets_init-(j-1)*100);
-    chj_ch2 =read_signal('..\\2024 822 85933.651462CH2.dat',signal_length,start_read_loc_yld+ 34151156 - offsets_init-(j-1)*100);
-    chj_ch3 =read_signal('..\\2024 822 85933.651462CH3.dat',signal_length,start_read_loc_yld+ 34151156 - offsets_init-(j-1)*100 +215/5);
+    chj_ch1 =read_signal('..\\2024 822 85933.651462CH1.dat',signal_length,start_read_loc_yld+ 34236722-(j-1)*100);
+    chj_ch2 =read_signal('..\\2024 822 85933.651462CH2.dat',signal_length,start_read_loc_yld+ 34236722-(j-1)*100);
+    chj_ch3 =read_signal('..\\2024 822 85933.651462CH3.dat',signal_length,start_read_loc_yld+ 34236722-(j-1)*100 +215/5);
     filtered_yld_signal1 = filter_bp(yld_ch1,30e6,80e6,5);
     filtered_chj_signal1 = filter_bp(chj_ch1,30e6,80e6,5);
     filtered_chj_signal2 = filter_bp(chj_ch2,30e6,80e6,5);
@@ -233,13 +232,13 @@ for j = 1:numel(all_start_signal_loc)-1
             sigmas_ns, ...
             c);
 
-        options = optimoptions('lsqnonlin', 'Algorithm', 'levenberg-marquardt', ...
-            'Display', 'off', 'TolFun', 1e-3, 'TolX', 1e-3, ...
-            'MaxIterations', 50, 'StepTolerance', 1e-3);
+        dynamic_lb = S_initial - [search_radius_xy, search_radius_xy, search_radius_z];
+        dynamic_ub = S_initial + [search_radius_xy, search_radius_xy, search_radius_z];
+        options = optimoptions('lsqnonlin', 'TolFun', 1e-6, 'MaxIter', 100);
         S_optimized = S_initial; % 默认值
         optimization_successful = false;
         try
-            [S_optimized_temp, ~, ~, exitflag, ~] = lsqnonlin(objective_fun, S_initial, [], [], options);
+            [S_optimized_temp, ~, ~, exitflag, ~] = lsqnonlin(objective_fun, S_initial, dynamic_lb, dynamic_ub, options);
             if exitflag > 0 % 检查优化是否成功收敛
                 S_optimized = S_optimized_temp;
                 optimization_successful = true;
@@ -282,7 +281,7 @@ for j = 1:numel(all_start_signal_loc)-1
             all_S_results = [all_S_results; S_optimized];
             match_info_dtoa = struct(...
                 'yld_start_loc', yld_start_loc(i), ...
-                'chj_loc', sub_chj_locs(max_R_gcc_index)+ start_read_loc_yld + 34151156 - offsets_init-(j-1)*100 +start_read_loc_chj-match_signal_length+1, ...
+                'chj_loc', sub_chj_locs(max_R_gcc_index)+ start_read_loc_yld + 34236722-(j-1)*100 +start_read_loc_chj-match_signal_length+1, ...
                 'chj_azimuth', sub_chj_azimuth(max_R_gcc_index), ...
                 'chj_elevation', sub_chj_elevation(max_R_gcc_index), ...
                 'r_gccs', max_R_gcc, ...
@@ -299,7 +298,7 @@ for j = 1:numel(all_start_signal_loc)-1
                 all_S_results = [all_S_results; S_initial];
                 match_info_dtoa = struct(...
                     'yld_start_loc', yld_start_loc(i), ...
-                    'chj_loc', sub_chj_locs(max_R_gcc_index)+ start_read_loc_yld + 34151156 - offsets_init-(j-1)*100 +start_read_loc_chj-match_signal_length+1, ...
+                    'chj_loc', sub_chj_locs(max_R_gcc_index)+ start_read_loc_yld + 34236722-(j-1)*100 +start_read_loc_chj-match_signal_length+1, ...
                     'chj_azimuth', sub_chj_azimuth(max_R_gcc_index), ...
                     'chj_elevation', sub_chj_elevation(max_R_gcc_index), ...
                     'r_gccs', max_R_gcc, ...
@@ -314,60 +313,60 @@ for j = 1:numel(all_start_signal_loc)-1
 end
 
 
-
-if ~isempty(all_residuals_history)
-
-    baseline_names = {
-        'YLD 1-2'; 'YLD 1-3'; 'YLD 2-3'; ...
-        'CHJ 1-2'; 'CHJ 1-3'; 'CHJ 2-3'; ...
-        'Inter-Station YLD-CHJ'
-    };
-    
-    num_baselines = size(all_residuals_history, 2);
-    num_events = size(all_residuals_history, 1);
-    
-    fprintf('\n--- 逐条基线不确定度验证 ---\n');
-    
-    % 创建一个新的 figure 用于绘制所有基线的残差直方图
-    figure;
-    sgtitle(sprintf('所有基线的残差分布 (基于 %d 个事件)', num_events)); % 为整个图添加总标题
-    
-    for k_base = 1:num_baselines
-        % 提取当前基线的所有残差
-        current_residuals = all_residuals_history(:, k_base);
-        
-        % 计算残差的均值和标准差
-        mean_residual = mean(current_residuals);
-        std_dev_residual = std(current_residuals);
-        
-        % 获取预设的不确定度值
-        assumed_sigma = sigmas_ns(k_base);
-        
-        % --- 在命令窗口打印数值结果 ---
-        fprintf('\n--- 基线 #%d: %s ---\n', k_base, baseline_names{k_base});
-        fprintf('预设的不确定度 (σ): %.2f ns\n', assumed_sigma);
-        fprintf('从 %d 个事件的残差中计算出的统计结果:\n', num_events);
-        fprintf('  - 残差均值: %.2f ns\n', mean_residual);
-        fprintf('  - 残差标准差: %.2f ns\n', std_dev_residual);
-        
-        % --- 在子图中绘制直方图和正态分布拟合曲线 ---
-        subplot(3, 3, k_base); % 创建一个 3x3 的子图布局，并激活第 k_base 个
-        histogram(current_residuals, 50, 'Normalization', 'pdf', 'EdgeColor', 'none');
-        hold on;
-        
-        % 拟合一个正态分布曲线进行对比
-        x_range = linspace(min(current_residuals), max(current_residuals), 100);
-        pdf_fit = normpdf(x_range, mean_residual, std_dev_residual);
-        plot(x_range, pdf_fit, 'r-', 'LineWidth', 1.5);
-        
-        title(baseline_names{k_base});
-        xlabel('残差 (ns)');
-        ylabel('概率密度');
-        grid on;
-        legend('残差分布', '正态拟合');
-        hold off;
-    end
-end
+% 
+% if ~isempty(all_residuals_history)
+% 
+%     baseline_names = {
+%         'YLD 1-2'; 'YLD 1-3'; 'YLD 2-3'; ...
+%         'CHJ 1-2'; 'CHJ 1-3'; 'CHJ 2-3'; ...
+%         'Inter-Station YLD-CHJ'
+%     };
+%     
+%     num_baselines = size(all_residuals_history, 2);
+%     num_events = size(all_residuals_history, 1);
+%     
+%     fprintf('\n--- 逐条基线不确定度验证 ---\n');
+%     
+%     % 创建一个新的 figure 用于绘制所有基线的残差直方图
+%     figure;
+%     sgtitle(sprintf('所有基线的残差分布 (基于 %d 个事件)', num_events)); % 为整个图添加总标题
+%     
+%     for k_base = 1:num_baselines
+%         % 提取当前基线的所有残差
+%         current_residuals = all_residuals_history(:, k_base);
+%         
+%         % 计算残差的均值和标准差
+%         mean_residual = mean(current_residuals);
+%         std_dev_residual = std(current_residuals);
+%         
+%         % 获取预设的不确定度值
+%         assumed_sigma = sigmas_ns(k_base);
+%         
+%         % --- 在命令窗口打印数值结果 ---
+%         fprintf('\n--- 基线 #%d: %s ---\n', k_base, baseline_names{k_base});
+%         fprintf('预设的不确定度 (σ): %.2f ns\n', assumed_sigma);
+%         fprintf('从 %d 个事件的残差中计算出的统计结果:\n', num_events);
+%         fprintf('  - 残差均值: %.2f ns\n', mean_residual);
+%         fprintf('  - 残差标准差: %.2f ns\n', std_dev_residual);
+%         
+%         % --- 在子图中绘制直方图和正态分布拟合曲线 ---
+%         subplot(3, 3, k_base); % 创建一个 3x3 的子图布局，并激活第 k_base 个
+%         histogram(current_residuals, 50, 'Normalization', 'pdf', 'EdgeColor', 'none');
+%         hold on;
+%         
+%         % 拟合一个正态分布曲线进行对比
+%         x_range = linspace(min(current_residuals), max(current_residuals), 100);
+%         pdf_fit = normpdf(x_range, mean_residual, std_dev_residual);
+%         plot(x_range, pdf_fit, 'r-', 'LineWidth', 1.5);
+%         
+%         title(baseline_names{k_base});
+%         xlabel('残差 (ns)');
+%         ylabel('概率密度');
+%         grid on;
+%         legend('残差分布', '正态拟合');
+%         hold off;
+%     end
+% end
 % plot_3d;
 
 % --- DTOA 目标函数 ---
