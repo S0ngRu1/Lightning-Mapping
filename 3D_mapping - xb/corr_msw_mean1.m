@@ -3,36 +3,32 @@ N = 3;
 c = 0.299792458;
 fs = 200e6;
 upsampling_factor = 50;
-window_length = 4096;
+window_length = 512;
 window = window_length * upsampling_factor;
 % 从化局
-angle12 = -2.8381;
-angle13 = 50.3964;
-angle23 = 120.6568;
-d12 = 41.6496;
-d13 = 36.9015;
-d23 = 35.4481;
+% angle12 = -2.8381;
+% angle13 = 50.3964;
+% angle23 = 120.6568;
+% d12 = 41.6496;
+% d13 = 36.9015;
+% d23 = 35.4481;
+% signal_length = 2.1e8;
+% r_loction = 3.9e8;
+% ch1 = read_signal('..\\2024 822 85933.651462CH1.dat',signal_length,r_loction);
+% ch2 = read_signal('..\\2024 822 85933.651462CH2.dat',signal_length,r_loction);
+% ch3 = read_signal('..\\2024 822 85933.651462CH3.dat',signal_length,r_loction+215/5);
+%引雷点
 signal_length = 2e7;
-r_loction = 404238787;
-ch1 = read_signal('..\\2024 822 85933.651462CH1.dat',signal_length,r_loction);
-ch2 = read_signal('..\\2024 822 85933.651462CH2.dat',signal_length,r_loction);
-% ch3 = read_signal('..\\2024 822 85933.651462CH3.dat',signal_length,r_loction+215/5);%速度2.3m/s,217.3913ns
-% ch3 = read_signal('..\\2024 822 85933.651462CH3.dat',signal_length,r_loction+200/5);%速度2.5m/s,200ns
-% ch3 = read_signal('..\\2024 822 85933.651462CH3.dat',signal_length,r_loction+205/5);%速度2.4m/s,208.3333ns
-% ch3 = read_signal('..\\2024 822 85933.651462CH3.dat',signal_length,r_loction+250/5);%速度2m/s，250ns
-ch3 = read_signal('..\\2024 822 85933.651462CH3.dat',signal_length,r_loction+225/5);%速度2.2m/s,227.2727ns
-% %引雷点
-% signal_length = 2e7;
-% r_loction = 3.7e8;
-% d12 = 24.9586;
-% d13 = 34.9335;
-% d23 = 24.9675;
-% angle12 = -110.8477;
-% angle13 = -65.2405;
-% angle23 = -19.6541;
-% ch1 = read_signal('..\\20240822165932.6610CH1.dat',signal_length,r_loction);
-% ch2 = read_signal('..\\20240822165932.6610CH2.dat',signal_length,r_loction);
-% ch3 = read_signal('..\\20240822165932.6610CH3.dat',signal_length,r_loction);
+r_loction = 3.7e8;
+d12 = 24.9586;
+d13 = 34.9335;
+d23 = 24.9675;
+angle12 = -110.8477;
+angle13 = -65.2405;
+angle23 = -19.6541;
+ch1 = read_signal('..\\20240822165932.6610CH1.dat',signal_length,r_loction);
+ch2 = read_signal('..\\20240822165932.6610CH2.dat',signal_length,r_loction);
+ch3 = read_signal('..\\20240822165932.6610CH3.dat',signal_length,r_loction);
 
 
 filtered_signal1 = filter_bp(ch1,20e6,80e6,5);
@@ -41,7 +37,7 @@ filtered_signal3 = filter_bp(ch3,20e6,80e6,5);
 
 
 % 打开一个文本文件用于写入运行结果
-fileID = fopen('result_chj_window4096_3.7-3.9_227.txt', 'w');
+fileID = fopen('result_yld_window512_128_3.7-3.9_new.txt', 'w');
 fprintf(fileID, '%-13s%-15s%-15s%-15s%-15s%-15s%-15s%-15s%-15s%-15s%-15s\n', ...
     'Start_loc','peak','t12', 't13', 't23', 'cos_alpha_opt', 'cos_beta_opt','Azimuth', 'Elevation', 'Rcorr', 't123');
 
@@ -51,7 +47,21 @@ all_peaks = [];
 all_locs = [];
 
 % 寻找峰值
-[peaks, locs] = findpeaks(filtered_signal1, 'MinPeakHeight', 5, 'MinPeakDistance', window_length/4);
+% [peaks, locs] = findpeaks(filtered_signal1, 'MinPeakHeight', 5, 'MinPeakDistance', window_length/4);
+
+% 计算三个通道的包络
+env1 = abs(hilbert(filtered_signal1));
+env2 = abs(hilbert(filtered_signal2));
+env3 = abs(hilbert(filtered_signal3));
+
+% 合成信号
+combined_signal = env1 + env2 + env3;
+
+% 在合成信号上寻峰
+noise_level = median(combined_signal) / 0.6745;
+dynamic_threshold = 5 * noise_level;
+
+[peaks, locs] = findpeaks(combined_signal, 'MinPeakHeight', dynamic_threshold, 'MinPeakDistance', window_length/4);
 
 % 存储所有峰值和阈值
 all_peaks = peaks;
@@ -105,20 +115,16 @@ for pi = 1:num_peaks
 
 
         %从化局
-        t12 = t12_gcc *0.1;
-%         t13 = t13_gcc *0.1+2.3913;
-%         t23 = t23_gcc *0.1+2.3913;
-%         t13 = t13_gcc *0.1+3.3333;
-%         t23 = t23_gcc *0.1+3.3333;
-        t13 = t13_gcc *0.1+2.2727;
-        t23 = t23_gcc *0.1+2.2727;
+%         t12 = t12_gcc *0.1;
+%         t13 = t13_gcc *0.1+1.600061;
+%         t23 = t23_gcc *0.1+1.600061;
 %         t13 = t13_gcc *0.1;
 %         t23 = t23_gcc *0.1;
 
 %     %引雷场
-%     t12 = t12_gcc *0.1;
-%     t13 = t13_gcc *0.1;
-%     t23 = t23_gcc *0.1;
+    t12 = t12_gcc *0.1;
+    t13 = t13_gcc *0.1;
+    t23 = t23_gcc *0.1;
 
     cos_beta_0 =((c*t13*d12*sind(angle12))-(c*t12*sind(angle13)*d13))/(d13*d12*sind(angle12-angle13)) ;
     cos_alpha_0 = ((c*t12)/d12-cos_beta_0*cosd(angle12))/sind(angle12);
@@ -128,7 +134,7 @@ for pi = 1:num_peaks
     x0 = [cos_alpha_0,cos_beta_0];
     % 调用lsqnonlin函数进行优化
     options = optimoptions('lsqnonlin', 'MaxIter', 1000, 'TolFun', 1e-6);
-    x = lsqnonlin(@(x) objective(x, t12, t13, t23,'chj'), x0, [-1 -1],[1 1], options);
+    x = lsqnonlin(@(x) objective(x, t12, t13, t23,'yld'), x0, [-1 -1],[1 1], options);
     % 输出最优的cos(α)和cos(β)值
     cos_alpha_opt = x(1);
     cos_beta_opt = x(2);

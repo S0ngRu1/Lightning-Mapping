@@ -1,11 +1,11 @@
-%% Step1 读取引雷点的二维定位结果（需要条件筛选出合格的）
+%% Step1 读取引雷点的二维定位结果（需要条件筛选出合格的）   
 % 引入变量：位置，方位角，仰角
 chj_signal_length = 4096;
 match_signal_length = 6000;
-yld_result_path = 'result_yld_window4096_3.7-3.9.txt';
+yld_result_path = 'result_yld_window4096_all.txt';
 start_signal_loc = 3.6e8;
-mapping_start_signal_loc = 3.7e8;
-end_signal_loc = 3.8e8;
+mapping_start_signal_loc = 4.69e8;
+end_signal_loc = 4.703e8;
 step = 127200;
 % 引入两个站的位置关系
 yld_sit = [0, 0, 0];
@@ -57,8 +57,8 @@ all_baseline_definitions(7, :) = [yld_sit, chj_sit];
 all_residuals_history = []; 
 % --- DTOA测量不确定度  ---
 sigmas_ns = [
-    4.22; 5.54; 7.95; % YLD 站内基线 DTOA 不确定度 (ns)
-    3.61; 13.89; 39.28; % CHJ 站内基线 DTOA 不确定度 (ns)
+    2; 2; 2; % YLD 站内基线 DTOA 不确定度 (ns)
+    2; 2; 2; % CHJ 站内基线 DTOA 不确定度 (ns)
     1000         % 站间基线 DTOA 不确定度 (ns)
     ];
 
@@ -117,7 +117,7 @@ for j = 1:numel(all_start_signal_loc)-1
         chj_match_signal3 = filtered_chj_signal3(start_read_loc_chj-match_signal_length+1:start_read_loc_chj+match_signal_length+chj_signal_length);
 
         % 寻找峰值
-        [peaks, locs] = findpeaks(chj_match_signal1, 'MinPeakHeight', 5, 'MinPeakDistance', 1024);
+        [peaks, locs] = findpeaks(chj_match_signal1, 'MinPeakHeight', 5, 'MinPeakDistance', chj_signal_length/4);
         all_locs = locs;
         % 遍历所有峰值
         num_peaks = numel(all_locs);

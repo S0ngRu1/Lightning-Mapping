@@ -12,10 +12,10 @@ filtered_match_indices3 = find(condition3(:)');
 filtered_match_indices4 = find(condition4(:)');
 
 % 取优化前的原始三维结果
-% initial_S_matrix = vertcat(all_match_results.S_initial_triangulation);
+initial_S_matrix = vertcat(all_match_results.S_initial_triangulation);
 
 filtered_match_indices = intersect(intersect(filtered_match_indices1,filtered_match_indices2),intersect(filtered_match_indices3,filtered_match_indices4)) ;
-filtered_S_temp = all_S_results(filtered_match_indices, :);
+filtered_S_temp = initial_S_matrix(filtered_match_indices, :);
 filtered_match_result_temp = all_match_results(filtered_match_indices); 
 range_condition_s = filtered_S_temp(:,1) >= x_range(1) & filtered_S_temp(:,1) <= x_range(2) & ...
     filtered_S_temp(:,2) >= y_range(1) & filtered_S_temp(:,2) <= y_range(2) & ...
@@ -107,7 +107,7 @@ elevations = zeros(num_points, 1);
     % 当前定位结果点 (确保是行向量)
     current_S = filtered_S(i, :);
     % 计算从零点位置指向当前定位结果点的向量
-    direction_vector = current_S(:) - chj_sit(:);
+    direction_vector = current_S(:) - yld_sit(:);
     % 调用 cart2sph_standard 函数计算方位角和仰角
     [azimuths(i), elevations(i)] = cart2sph_standard(direction_vector);
     end
@@ -115,7 +115,7 @@ elevations = zeros(num_points, 1);
     scatter(azimuths, elevations, marker_size, time_colors, 'filled');
     xlabel('方位角 (度)');
 ylabel('仰角 (度)');
-    title(['从站点 ', num2str(chj_sit), ' 看闪电的方位角 vs 仰角']);
+    title(['从站点 ', num2str(yld_sit), ' 看闪电的方位角 vs 仰角']);
     grid on;
     xlim([0, 360]);
     xticks(0:40:360);
