@@ -1,6 +1,6 @@
 %结果1
 % logicalIndex = abs(result1.t123) < 1 & abs(result1.Rcorr) > 0.3;
-logicalIndex = abs(result1.t123) <1 & abs(result1.Rcorr) > 0.3 &  result1.Start_loc < 3.9e8 & result1.Start_loc > 3.6e8;
+logicalIndex = abs(result1.t123) <0.5 & abs(result1.Rcorr) > 0.4 &  result1.Start_loc < 3.9e8 & result1.Start_loc > 3.6e8;
 filteredTable1 = result1(logicalIndex, :);
 Start_loc = filteredTable1.Start_loc;
 % colorValues = (Start_loc - 3e8) / 2e8;
@@ -19,6 +19,21 @@ yticks(0:10:90);
 colormap('cool');
 colorbar;
 caxis([0, 1.5]);
+grid on;
+
+
+% %结果2
+logicalIndex = abs(resultyldclustermethod.t123) <1 & abs(resultyldclustermethod.Rcorr) > 0.3 ;
+filteredTable1 = resultyldclustermethod(logicalIndex, :);
+figure;
+scatter(filteredTable1.Azimuth,filteredTable1.Elevation, 2, 'filled');
+title('Azimuth vs Elevation');
+xlabel('Azimuth');
+xlim([0, 360]); % 修改 x 轴范围
+xticks(0:40:360);
+ylabel('Elevation');
+ylim([0,90]);
+yticks(0:10:90);
 grid on;
 % 
 % %结果2

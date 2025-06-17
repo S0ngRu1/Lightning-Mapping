@@ -31,13 +31,13 @@ ch2 = read_signal('..\\20240822165932.6610CH2.dat',signal_length,r_loction);
 ch3 = read_signal('..\\20240822165932.6610CH3.dat',signal_length,r_loction);
 
 
-filtered_signal1 = filter_bp(ch1,20e6,80e6,5);
-filtered_signal2 = filter_bp(ch2,20e6,80e6,5);
-filtered_signal3 = filter_bp(ch3,20e6,80e6,5);
+filtered_signal1 = filter_bp(ch1,30e6,80e6,5);
+filtered_signal2 = filter_bp(ch2,30e6,80e6,5);
+filtered_signal3 = filter_bp(ch3,30e6,80e6,5);
 
 
 % 打开一个文本文件用于写入运行结果
-fileID = fopen('result_yld_window512_128_3.7-3.9_new.txt', 'w');
+fileID = fopen('result_yld_window512_128_阈值_2n_3.7-3.9_new——30——80.txt', 'w');
 fprintf(fileID, '%-13s%-15s%-15s%-15s%-15s%-15s%-15s%-15s%-15s%-15s%-15s\n', ...
     'Start_loc','peak','t12', 't13', 't23', 'cos_alpha_opt', 'cos_beta_opt','Azimuth', 'Elevation', 'Rcorr', 't123');
 
@@ -45,9 +45,11 @@ fprintf(fileID, '%-13s%-15s%-15s%-15s%-15s%-15s%-15s%-15s%-15s%-15s%-15s\n', ...
 all_peaks = [];
 % all_thresholds = [];
 all_locs = [];
-
+% % 在合成信号上寻峰
+% noise_level = median(filtered_signal1) / 0.6745;
+% dynamic_threshold = 5 * noise_level;
 % 寻找峰值
-% [peaks, locs] = findpeaks(filtered_signal1, 'MinPeakHeight', 5, 'MinPeakDistance', window_length/4);
+% [peaks, locs] = findpeaks(filtered_signal1, 'MinPeakHeight', 20, 'MinPeakDistance', window_length);
 
 % 计算三个通道的包络
 env1 = abs(hilbert(filtered_signal1));
@@ -59,7 +61,7 @@ combined_signal = env1 + env2 + env3;
 
 % 在合成信号上寻峰
 noise_level = median(combined_signal) / 0.6745;
-dynamic_threshold = 5 * noise_level;
+dynamic_threshold = 2 * noise_level;
 
 [peaks, locs] = findpeaks(combined_signal, 'MinPeakHeight', dynamic_threshold, 'MinPeakDistance', window_length/4);
 
@@ -87,6 +89,18 @@ for pi = 1:num_peaks
         filtered_signal1(idx-(window_length/2-1):idx+(window_length/2)), ...
         filtered_signal2(idx-(window_length/2-1):idx+(window_length/2)), ...
         filtered_signal3(idx-(window_length/2-1):idx+(window_length/2)));
+
+%     corr_win_half = 64; 
+%     center_point = window_length / 2; 
+%     
+%     % 创建一个掩码 (mask)，只在中心区域为1，其余为0
+%     mask = zeros(window_length, 1);
+%     mask(center_point - corr_win_half : center_point + corr_win_half) = 1;
+%     
+%     % 应用掩码，得到“净化”后的信号
+%     signal1 = signal1_wide .* mask;
+%     signal2 = signal2_wide .* mask;
+%     signal3 = signal3_wide .* mask;
     % 去直流分量并应用窗函数
     [ch1_new, ch2_new, ch3_new] = deal(...
         real(windowsignal(detrend(signal1))), ...
