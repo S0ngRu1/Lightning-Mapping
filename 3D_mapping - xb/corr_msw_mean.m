@@ -2,7 +2,7 @@ N = 3;
 c = 0.299792458;
 fs = 200e6;
 upsampling_factor = 50;
-window_length = 5120;
+window_length = 512;
 bigwindows_length = window_length+100;
 window = window_length * upsampling_factor;
 msw_length = 50;
@@ -21,8 +21,8 @@ msw_length = 50;
 % ch3 = read_signal('..\\2024 822 85933.651462CH3.dat',signal_length,r_loction165/5);
 
 %引雷点
-signal_length = 5e7;
-r_loction = 4.39e8;
+signal_length = 4e7;
+r_loction = 3.6e8;
 d12 = 24.9586;
 d13 = 34.9335;
 d23 = 24.9675;
@@ -49,12 +49,12 @@ filtered_signal2 = filter_bp(ch2, 30e6 ,80e6 ,5);
 filtered_signal3 = filter_bp(ch3, 30e6 ,80e6 ,5);
 
 
-% noise = read_signal('..\\20240822165932.6610CH1.dat',60000,2e8);
-% filtered_noise = rfi_filter(noise,60000);
-% threshold = 7*std(filtered_noise);
+noise = read_signal('..\\20240822165932.6610CH1.dat',60000,2e8);
+filtered_noise = rfi_filter(noise,60000);
+threshold = 7*std(filtered_noise);
 
 % 打开一个文本文件用于写入运行结果
-fileID = fopen('result_yld_5120.txt', 'w');
+fileID = fopen('result_yld_512_corr_msw_mean.txt', 'w');
 fprintf(fileID, '%-13s%-15s%-15s%-15s%-15s%-15s%-15s%-15s%-15s%-15s%-15s\n', ...
     'Start_loc','peak','t12', 't13', 't23', 'cos_alpha_opt', 'cos_beta_opt','Azimuth', 'Elevation', 'Rcorr', 't123');
 
@@ -71,7 +71,7 @@ all_locs = [];
 % threshold =  mean(abs(subsignal1)) + 3*std(subsignal1);
 
 % 寻找峰值
-[peaks, locs] = findpeaks(filtered_yld_signal1, 'MinPeakHeight', threshold, 'MinPeakDistance', window_length/4);
+[peaks, locs] = findpeaks(filtered_signal1, 'MinPeakHeight', threshold, 'MinPeakDistance', window_length/4);
 
 % 存储所有峰值和阈值
 all_peaks = peaks;
@@ -88,15 +88,15 @@ for pi = 1:num_peaks
     idx = all_locs(pi);
 
     % 确保峰值不超出信号范围
-    if idx - (bigwindows_length / 2 - 1) <= 0 || idx + (bigwindows_length / 2) > length(filtered_yld_signal1)
+    if idx - (bigwindows_length / 2 - 1) <= 0 || idx + (bigwindows_length / 2) > length(filtered_signal1)
         continue;
     end
 
     % 截取窗口信号
     [signal1, signal2, signal3] = deal(...
-        filtered_yld_signal1(idx-(bigwindows_length/2-1):idx+(bigwindows_length/2)), ...
-        filtered_yld_signal2(idx-(bigwindows_length/2-1):idx+(bigwindows_length/2)), ...
-        filtered_yld_signal3(idx-(bigwindows_length/2-1):idx+(bigwindows_length/2)));
+        filtered_signal1(idx-(bigwindows_length/2-1):idx+(bigwindows_length/2)), ...
+        filtered_signal1(idx-(bigwindows_length/2-1):idx+(bigwindows_length/2)), ...
+        filtered_signal1(idx-(bigwindows_length/2-1):idx+(bigwindows_length/2)));
     % 去直流分量并应用窗函数
     [ch1_new, ch2_new, ch3_new] = deal(...
         real(windowsignal(detrend(signal1))), ...
@@ -162,7 +162,7 @@ for pi = 1:num_peaks
                 [R12_msw,lags12_msw] = xcorr(ch1_msw,ch2_msw,'normalized');
                 [R13_msw,lags13_msw] = xcorr(ch1_msw,ch3_msw,'normalized');
                 [R23_msw,lags23_msw] = xcorr(ch2_msw,ch3_msw,'normalized');
-                if max(R12_msw) > 0.8 && max(R13_msw) > 0.8 && max(R23_msw) > 0.8
+                if max(R12_msw) > 0.5 && max(R13_msw) > 0.5 && max(R23_msw) > 0.5
                     t12_msw = cal_tau(R12_msw,lags12_msw');
                     t13_msw = cal_tau(R13_msw,lags13_msw');
                     t23_msw = cal_tau(R23_msw,lags23_msw');
@@ -175,10 +175,10 @@ for pi = 1:num_peaks
                 end
             end
             if size(t12s,1)~=0 && size(t13s,1)~=0 && size(t23s,1)~=0
-%                                 %从化局
-%                                 t12 = (t12_gcc + mean(t12s))*0.1;
-%                                 t13 = (t13_gcc + mean(t13s))*0.1+2;
-%                                 t23 = (t23_gcc + mean(t23s))*0.1+2;
+                %                                 %从化局
+                %                                 t12 = (t12_gcc + mean(t12s))*0.1;
+                %                                 t13 = (t13_gcc + mean(t13s))*0.1+2;
+                %                                 t23 = (t23_gcc + mean(t23s))*0.1+2;
                 %引雷场
                 t12 = (t12_gcc + mean(t12s))*0.1;
                 t13 = (t13_gcc + mean(t13s))*0.1;
@@ -192,8 +192,9 @@ for pi = 1:num_peaks
 
                 x0 = [cos_alpha_0,cos_beta_0];
                 % 调用lsqnonlin函数进行优化
-                options = optimoptions('lsqnonlin', 'MaxIter', 1000, 'TolFun', 1e-6);
-                x = lsqnonlin(@(x) objective(x, t12, t13, t23), x0, [-1 -1],[1 1], options);
+                options = optimoptions('lsqnonlin', 'Display','off', 'MaxIter', 1000, 'TolFun', 1e-6);
+                % 假设您已将 objective 升级为返回向量的正确版本
+                x = lsqnonlin(@(x) objective(x, t12, t13, t23,'yld'), x0, [-1 -1],[1 1], options);
                 % 输出最优的cos(α)和cos(β)值
                 cos_alpha_opt = x(1);
                 cos_beta_opt = x(2);
@@ -217,16 +218,16 @@ for pi = 1:num_peaks
 
                 % 写入计算后的数据
                 fprintf(fileID, '%-13d%-15d%-15.6f%-15.6f%-15.6f%-15.6f%-15.6f%-15.6f%-15.6f%-15.6f%-15.6f\n', ...
-                    original_signal_loc+15000+idx-window/100,window/100, t12, t13, t23, cos_alpha_opt, cos_beta_opt, Az_deg, El_deg, Rcorr,t123);
+                    r_loction+15000+idx-window/100,window/100, t12, t13, t23, cos_alpha_opt, cos_beta_opt, Az_deg, El_deg, Rcorr,t123);
                 ismsw = ismsw + 1;
             end
         end
     end
     if ismsw == 0
-%                 从化局
-%                 t12 = t12_gcc *0.1;
-%                 t13 = t13_gcc *0.1+2;
-%                 t23 = t23_gcc *0.1+2;
+        %                 从化局
+        %                 t12 = t12_gcc *0.1;
+        %                 t13 = t13_gcc *0.1+2;
+        %                 t23 = t23_gcc *0.1+2;
         %引雷场
         t12 = t12_gcc *0.1;
         t13 = t13_gcc *0.1;
@@ -264,7 +265,7 @@ for pi = 1:num_peaks
 
         % 写入计算后的数据
         fprintf(fileID, '%-13d%-15d%-15.6f%-15.6f%-15.6f%-15.6f%-15.6f%-15.6f%-15.6f%-15.6f%-15.6f\n', ...
-            original_signal_loc+15000+idx-window/100,window/100, t12, t13, t23, cos_alpha_opt, cos_beta_opt, Az_deg, El_deg, Rcorr,t123);
+            r_loction+15000+idx-window/100,window/100, t12, t13, t23, cos_alpha_opt, cos_beta_opt, Az_deg, El_deg, Rcorr,t123);
     end
 end
 % 关闭文件

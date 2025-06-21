@@ -6,42 +6,48 @@ upsampling_factor = 50;
 window_length = 512;
 window = window_length * upsampling_factor;
 % 从化局
-% angle12 = -2.8381;
-% angle13 = 50.3964;
-% angle23 = 120.6568;
-% d12 = 41.6496;
-% d13 = 36.9015;
-% d23 = 35.4481;
-% signal_length = 2.1e8;
-% r_loction = 3.9e8;
-% ch1 = read_signal('..\\2024 822 85933.651462CH1.dat',signal_length,r_loction);
-% ch2 = read_signal('..\\2024 822 85933.651462CH2.dat',signal_length,r_loction);
-% ch3 = read_signal('..\\2024 822 85933.651462CH3.dat',signal_length,r_loction+215/5);
-%引雷点
-signal_length = 1e7;
-r_loction = 4.65e8;
-d12 = 24.9586;
-d13 = 34.9335;
-d23 = 24.9675;
-angle12 = -110.8477;
-angle13 = -65.2405;
-angle23 = -19.6541;
-ch1 = read_signal('..\\20240822165932.6610CH1.dat',signal_length,r_loction);
-ch2 = read_signal('..\\20240822165932.6610CH2.dat',signal_length,r_loction);
-ch3 = read_signal('..\\20240822165932.6610CH3.dat',signal_length,r_loction);
+angle12 = -2.8381;
+angle13 = 50.3964;
+angle23 = 120.6568;
+d12 = 41.6496;
+d13 = 36.9015;
+d23 = 35.4481;
+signal_length = 4e7;
+r_loction = 3.95e8;
+ch1 = read_signal('..\\2024 822 85933.651462CH1.dat',signal_length,r_loction);
+ch2 = read_signal('..\\2024 822 85933.651462CH2.dat',signal_length,r_loction);
+ch3 = read_signal('..\\2024 822 85933.651462CH3.dat',signal_length,r_loction+215/5);
+% %引雷点
+% signal_length = 4e7;
+% r_loction = 3.6e8;
+% d12 = 24.9586;
+% d13 = 34.9335;
+% d23 = 24.9675;
+% angle12 = -110.8477;
+% angle13 = -65.2405;
+% angle23 = -19.6541;
+% ch1 = read_signal('..\\20240822165932.6610CH1.dat',signal_length,r_loction);
+% ch2 = read_signal('..\\20240822165932.6610CH2.dat',signal_length,r_loction);
+% ch3 = read_signal('..\\20240822165932.6610CH3.dat',signal_length,r_loction);
 
 
-filtered_signal1 = filter_bp(ch1,20e6,80e6,5);
-filtered_signal2 = filter_bp(ch2,20e6,80e6,5);
-filtered_signal3 = filter_bp(ch3,20e6,80e6,5);
-
-
+filtered_signal1 = filter_bp(ch1,30e6,80e6,5);
+filtered_signal2 = filter_bp(ch2,30e6,80e6,5);
+filtered_signal3 = filter_bp(ch3,30e6,80e6,5);
+% %引雷点阈值
+% noise = read_signal('..\\20240822165932.6610CH1.dat',1e8,1e8);
+% filtered_noise = filter_bp(noise,30e6,80e6,5);
+% threshold = mean(filtered_noise)+5*std(filtered_noise);
+%从化局阈值
+noise = read_signal('..\\2024 822 85933.651462CH1.dat',1e8,1e8);
+filtered_noise = filter_bp(noise,30e6,80e6,5);
+threshold = mean(filtered_noise)+5*std(filtered_noise);
 % 打开一个文本文件用于写入运行结果
-fileID = fopen('result_yld_window512_128_阈值_2n_4.65-4.75_new——40——70.txt', 'w');
+fileID = fopen('result_chj_window512_512_阈值_5std_3.95-4.35——30——80.txt', 'w');
 fprintf(fileID, '%-13s%-15s%-15s%-15s%-15s%-15s%-15s%-15s%-15s%-15s%-15s\n', ...
     'Start_loc','peak','t12', 't13', 't23', 'cos_alpha_opt', 'cos_beta_opt','Azimuth', 'Elevation', 'Rcorr', 't123');
 
-% 设置动态阈值
+% 设置阈值
 all_peaks = [];
 % all_thresholds = [];
 all_locs = [];
@@ -51,19 +57,19 @@ all_locs = [];
 % 寻找峰值
 % [peaks, locs] = findpeaks(filtered_signal1, 'MinPeakHeight', 20, 'MinPeakDistance', window_length);
 
-% 计算三个通道的包络
-env1 = abs(hilbert(filtered_signal1));
-env2 = abs(hilbert(filtered_signal2));
-env3 = abs(hilbert(filtered_signal3));
+% % 计算三个通道的包络
+% env1 = abs(hilbert(filtered_signal1));
+% env2 = abs(hilbert(filtered_signal2));
+% env3 = abs(hilbert(filtered_signal3));
+% % 合成信号
+% combined_signal = env1 + env2 + env3;
+% % 在合成信号上寻峰
+% noise_level = median(combined_signal) / 0.6745;%中位数绝对偏差MAD=0.6745×σ，标准差（σ）
+% dynamic_threshold = 5 * noise_level;%动态阈值
 
-% 合成信号
-combined_signal = env1 + env2 + env3;
 
-% 在合成信号上寻峰
-noise_level = median(combined_signal) / 0.6745;
-dynamic_threshold = 2 * noise_level;
 
-[peaks, locs] = findpeaks(combined_signal, 'MinPeakHeight', dynamic_threshold, 'MinPeakDistance', window_length/4);
+[peaks, locs] = findpeaks(filtered_signal1, 'MinPeakHeight',threshold , 'MinPeakDistance', 512);
 
 % 存储所有峰值和阈值
 all_peaks = peaks;
@@ -89,18 +95,6 @@ for pi = 1:num_peaks
         filtered_signal1(idx-(window_length/2-1):idx+(window_length/2)), ...
         filtered_signal2(idx-(window_length/2-1):idx+(window_length/2)), ...
         filtered_signal3(idx-(window_length/2-1):idx+(window_length/2)));
-
-%     corr_win_half = 64; 
-%     center_point = window_length / 2; 
-%     
-%     % 创建一个掩码 (mask)，只在中心区域为1，其余为0
-%     mask = zeros(window_length, 1);
-%     mask(center_point - corr_win_half : center_point + corr_win_half) = 1;
-%     
-%     % 应用掩码，得到“净化”后的信号
-%     signal1 = signal1_wide .* mask;
-%     signal2 = signal2_wide .* mask;
-%     signal3 = signal3_wide .* mask;
     % 去直流分量并应用窗函数
     [ch1_new, ch2_new, ch3_new] = deal(...
         real(windowsignal(detrend(signal1))), ...
@@ -129,16 +123,16 @@ for pi = 1:num_peaks
 
 
         %从化局
-%         t12 = t12_gcc *0.1;
-%         t13 = t13_gcc *0.1+1.600061;
-%         t23 = t23_gcc *0.1+1.600061;
-%         t13 = t13_gcc *0.1;
-%         t23 = t23_gcc *0.1;
+        t12 = t12_gcc *0.1;
+        t13 = t13_gcc *0.1+1.600061;
+        t23 = t23_gcc *0.1+1.600061;
+        t13 = t13_gcc *0.1;
+        t23 = t23_gcc *0.1;
 
 %     %引雷场
-    t12 = t12_gcc *0.1;
-    t13 = t13_gcc *0.1;
-    t23 = t23_gcc *0.1;
+%     t12 = t12_gcc *0.1;
+%     t13 = t13_gcc *0.1;
+%     t23 = t23_gcc *0.1;
 
     cos_beta_0 =((c*t13*d12*sind(angle12))-(c*t12*sind(angle13)*d13))/(d13*d12*sind(angle12-angle13)) ;
     cos_alpha_0 = ((c*t12)/d12-cos_beta_0*cosd(angle12))/sind(angle12);
@@ -148,7 +142,7 @@ for pi = 1:num_peaks
     x0 = [cos_alpha_0,cos_beta_0];
     % 调用lsqnonlin函数进行优化
     options = optimoptions('lsqnonlin', 'MaxIter', 1000, 'TolFun', 1e-6);
-    x = lsqnonlin(@(x) objective(x, t12, t13, t23,'yld'), x0, [-1 -1],[1 1], options);
+    x = lsqnonlin(@(x) objective(x, t12, t13, t23,'chj'), x0, [-1 -1],[1 1], options);
     % 输出最优的cos(α)和cos(β)值
     cos_alpha_opt = x(1);
     cos_beta_opt = x(2);
