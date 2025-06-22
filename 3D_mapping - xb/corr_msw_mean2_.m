@@ -6,42 +6,44 @@ upsampling_factor = 50;
 window_length = 512;
 window = window_length * upsampling_factor;
 % 从化局
-angle12 = -2.8381;
-angle13 = 50.3964;
-angle23 = 120.6568;
-d12 = 41.6496;
-d13 = 36.9015;
-d23 = 35.4481;
-signal_length = 4e7;
-r_loction = 3.95e8;
-ch1 = read_signal('..\\2024 822 85933.651462CH1.dat',signal_length,r_loction);
-ch2 = read_signal('..\\2024 822 85933.651462CH2.dat',signal_length,r_loction);
-ch3 = read_signal('..\\2024 822 85933.651462CH3.dat',signal_length,r_loction+215/5);
-% %引雷点
+% angle12 = -2.8381;
+% angle13 = 50.3964;
+% angle23 = 120.6568;
+% d12 = 41.6496;
+% d13 = 36.9015;
+% d23 = 35.4481;
 % signal_length = 4e7;
-% r_loction = 3.6e8;
-% d12 = 24.9586;
-% d13 = 34.9335;
-% d23 = 24.9675;
-% angle12 = -110.8477;
-% angle13 = -65.2405;
-% angle23 = -19.6541;
-% ch1 = read_signal('..\\20240822165932.6610CH1.dat',signal_length,r_loction);
-% ch2 = read_signal('..\\20240822165932.6610CH2.dat',signal_length,r_loction);
-% ch3 = read_signal('..\\20240822165932.6610CH3.dat',signal_length,r_loction);
+% r_loction = 3.95e8;
+% ch1 = read_signal('..\\2024 822 85933.651462CH1.dat',signal_length,r_loction);
+% ch2 = read_signal('..\\2024 822 85933.651462CH2.dat',signal_length,r_loction);
+% ch3 = read_signal('..\\2024 822 85933.651462CH3.dat',signal_length,r_loction+215/5);
+% %引雷点
+signal_length = 4e7;
+r_loction = 3.6e8;
+d12 = 24.9586;
+d13 = 34.9335;
+d23 = 24.9675;
+angle12 = -110.8477;
+angle13 = -65.2405;
+angle23 = -19.6541;
+ch1 = read_signal('..\\20240822165932.6610CH1.dat',signal_length,r_loction);
+ch2 = read_signal('..\\20240822165932.6610CH2.dat',signal_length,r_loction);
+ch3 = read_signal('..\\20240822165932.6610CH3.dat',signal_length,r_loction);
 
 
 filtered_signal1 = filter_bp(ch1,30e6,80e6,5);
 filtered_signal2 = filter_bp(ch2,30e6,80e6,5);
 filtered_signal3 = filter_bp(ch3,30e6,80e6,5);
-% %引雷点阈值
-% noise = read_signal('..\\20240822165932.6610CH1.dat',1e8,1e8);
-% filtered_noise = filter_bp(noise,30e6,80e6,5);
-% threshold = mean(filtered_noise)+5*std(filtered_noise);
-%从化局阈值
-noise = read_signal('..\\2024 822 85933.651462CH1.dat',1e8,1e8);
+%引雷点阈值
+noise = read_signal('..\\20240822165932.6610CH1.dat',1e8,1e8);
 filtered_noise = filter_bp(noise,30e6,80e6,5);
 threshold = mean(filtered_noise)+5*std(filtered_noise);
+% %从化局阈值
+% noise = read_signal('..\\2024 822 85933.651462CH1.dat',1e8,1e8);
+% filtered_noise = filter_bp(noise,30e6,80e6,5);
+% threshold = mean(filtered_noise)+5*std(filtered_noise);
+
+
 % 打开一个文本文件用于写入运行结果
 fileID = fopen('result_chj_window512_512_阈值_5std_3.95-4.35——30——80.txt', 'w');
 fprintf(fileID, '%-13s%-15s%-15s%-15s%-15s%-15s%-15s%-15s%-15s%-15s%-15s\n', ...
@@ -49,24 +51,7 @@ fprintf(fileID, '%-13s%-15s%-15s%-15s%-15s%-15s%-15s%-15s%-15s%-15s%-15s\n', ...
 
 % 设置阈值
 all_peaks = [];
-% all_thresholds = [];
 all_locs = [];
-% % 在合成信号上寻峰
-% noise_level = median(filtered_signal1) / 0.6745;
-% dynamic_threshold = 5 * noise_level;
-% 寻找峰值
-% [peaks, locs] = findpeaks(filtered_signal1, 'MinPeakHeight', 20, 'MinPeakDistance', window_length);
-
-% % 计算三个通道的包络
-% env1 = abs(hilbert(filtered_signal1));
-% env2 = abs(hilbert(filtered_signal2));
-% env3 = abs(hilbert(filtered_signal3));
-% % 合成信号
-% combined_signal = env1 + env2 + env3;
-% % 在合成信号上寻峰
-% noise_level = median(combined_signal) / 0.6745;%中位数绝对偏差MAD=0.6745×σ，标准差（σ）
-% dynamic_threshold = 5 * noise_level;%动态阈值
-
 
 
 [peaks, locs] = findpeaks(filtered_signal1, 'MinPeakHeight',threshold , 'MinPeakDistance', 512);
