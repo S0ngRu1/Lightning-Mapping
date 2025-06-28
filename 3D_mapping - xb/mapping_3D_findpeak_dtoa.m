@@ -1,11 +1,16 @@
 %% Step1 读取引雷点的二维定位结果（需要条件筛选出合格的）   
 % 引入变量：位置，方位角，仰角
-chj_signal_length = 4096;
+chj_signal_length = 512;
 match_signal_length = 6000;
-yld_result_path = 'result_yld_window4096_all.txt';
+yld_result_path = 'results_yld_win512_threshold_17.737252.txt';
+noise_analysis_length = 1e8;
+threshold_std_multiplier = 5;
+noise = read_signal('..\\2024 822 85933.651462CH1.dat', noise_analysis_length, noise_analysis_length);
+filtered_noise = filter_bp(noise, 30e6, 80e6, 5);
+threshold = mean(filtered_noise) + threshold_std_multiplier * std(filtered_noise);
 start_signal_loc = 3.6e8;
-mapping_start_signal_loc = 4.69e8;
-end_signal_loc = 4.703e8;
+mapping_start_signal_loc = 3.8e8;
+end_signal_loc = 4e8;
 step = 127200;
 % 引入两个站的位置关系
 yld_sit = [0, 0, 0];
@@ -42,8 +47,8 @@ baseline_ant_indices = [
     1, 3; % 基线13
     2, 3  % 基线23
     ];
-search_radius_xy = 100; 
-search_radius_z  = 100;  
+search_radius_xy = 10; 
+search_radius_z  = 10;  
 % --- 所有基线的天线全局坐标 (6条站内 + 1条站间) ---
 all_baseline_definitions = zeros(7, 6);
 all_baseline_definitions(1, :) = [yld_ant_global_coords(1,:), yld_ant_global_coords(2,:)];
@@ -59,7 +64,7 @@ all_residuals_history = [];
 sigmas_ns = [
     2; 2; 2; % YLD 站内基线 DTOA 不确定度 (ns)
     2; 2; 2; % CHJ 站内基线 DTOA 不确定度 (ns)
-    1000         % 站间基线 DTOA 不确定度 (ns)
+    5000         % 站间基线 DTOA 不确定度 (ns)
     ];
 
 
@@ -82,7 +87,7 @@ for j = 1:numel(all_start_signal_loc)-1
     filtered_chj_signal2 = filter_bp(chj_ch2,30e6,80e6,5);
     filtered_chj_signal3 = filter_bp(chj_ch3,30e6,80e6,5);
     S_results = [];
-    match_results = struct('yld_start_loc', {}, 'chj_loc', {}, 'r_gccs', {}, 'chj_azimuth',{},'chj_elevation',{},'dlta',{});
+    match_results = struct('yld_start_loc', {}, 'chj_loc', {}, 'r_gccs', {}, 'chj_azimuth',{},'chj_elevation',{},'dlta',{},'R3_value',{});
     h = waitbar(0, 'Processing...');
     %% Step2 根据引雷点的信号窗口得到匹配到的从化局的信号
     for i =1 :numel(yld_start_loc)
@@ -96,7 +101,7 @@ for j = 1:numel(all_start_signal_loc)-1
         yld_chj_dlta_ts = [];
         yld_chj_dlta_Ts = [];
         waitbar(i/numel(yld_start_loc), h, sprintf('位置：%d -- %d ；进度： %.2f%%', start_read_loc_yld, end_read_loc_yld, i/numel(yld_start_loc)*100));
-        if yld_Rcorr(i) < 0.3 && yld_t123(i) > 1
+        if yld_Rcorr(i) < 0.6 && yld_t123(i) > 1 && yld_elevation(i)  < 80 && yld_elevation(i)  > 10
             continue
         end
         % 转换绝对位置到相对位置
@@ -117,7 +122,7 @@ for j = 1:numel(all_start_signal_loc)-1
         chj_match_signal3 = filtered_chj_signal3(start_read_loc_chj-match_signal_length+1:start_read_loc_chj+match_signal_length+chj_signal_length);
 
         % 寻找峰值
-        [peaks, locs] = findpeaks(chj_match_signal1, 'MinPeakHeight', 5, 'MinPeakDistance', chj_signal_length/4);
+        [peaks, locs] = findpeaks(chj_match_signal1, 'MinPeakHeight', threshold, 'MinPeakDistance', chj_signal_length/4);
         all_locs = locs;
         % 遍历所有峰值
         num_peaks = numel(all_locs);
@@ -286,6 +291,7 @@ for j = 1:numel(all_start_signal_loc)-1
                 'chj_elevation', sub_chj_elevation(max_R_gcc_index), ...
                 'r_gccs', max_R_gcc, ...
                 'dlta', final_dlta_check_ns, ...
+                'R3_value', R3_value, ...
                 'S_initial_triangulation', S_initial ...
                 );
             all_match_results = [all_match_results; match_info_dtoa];
@@ -303,6 +309,7 @@ for j = 1:numel(all_start_signal_loc)-1
                     'chj_elevation', sub_chj_elevation(max_R_gcc_index), ...
                     'r_gccs', max_R_gcc, ...
                     'dlta', dltas(max_R_gcc_index), ...
+                    'R3_value', R3_value, ...
                     'S_initial_triangulation', S_initial ...
                     );
                 all_match_results = [all_match_results; match_info_dtoa];

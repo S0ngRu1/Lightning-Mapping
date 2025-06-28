@@ -1,21 +1,28 @@
 x_range = [-50000, 50000];
 y_range = [-50000, 50000];
-z_range = [0, 50000];
+z_range = [0, 8000];
+% 
+conditions = ([all_match_results.chi_square_red] < 500) & ...
+             ([all_match_results.yld_start_loc] > mapping_start_signal_loc) & ...
+             ([all_match_results.yld_start_loc] < end_signal_loc) & ...
+             ([all_match_results.r_gccs] > 0.1) & ...
+             (abs([all_match_results.R3_value]) < 1000);
 
-condition1 = [all_match_results.dlta] < 20000;
-condition2 = [all_match_results.yld_start_loc] > mapping_start_signal_loc;
-condition3 = [all_match_results.yld_start_loc] < end_signal_loc;
-condition4 = [all_match_results.r_gccs] > 0.1;
-filtered_match_indices1 = find(condition1(:)'); 
-filtered_match_indices2 = find(condition2(:)');
-filtered_match_indices3 = find(condition3(:)');
-filtered_match_indices4 = find(condition4(:)');
 
-% 取优化前的原始三维结果
-initial_S_matrix = vertcat(all_match_results.S_initial_triangulation);
+% conditions = ([all_match_results.dlta] < 20000) & ...
+%              ([all_match_results.yld_start_loc] > mapping_start_signal_loc) & ...
+%              ([all_match_results.yld_start_loc] < end_signal_loc) & ...
+%              ([all_match_results.r_gccs] > 0.1) ;
 
-filtered_match_indices = intersect(intersect(filtered_match_indices1,filtered_match_indices2),intersect(filtered_match_indices3,filtered_match_indices4)) ;
-filtered_S_temp = initial_S_matrix(filtered_match_indices, :);
+% 一次性获取满足所有条件的索引
+filtered_match_indices = find(conditions);
+filtered_S_temp = all_S_results(filtered_match_indices, :);
+
+% % 取优化前的原始三维结果
+% initial_S_matrix = vertcat(all_match_results.S_initial_triangulation);
+% 
+% filtered_S_temp = initial_S_matrix(filtered_match_indices, :);
+
 filtered_match_result_temp = all_match_results(filtered_match_indices); 
 range_condition_s = filtered_S_temp(:,1) >= x_range(1) & filtered_S_temp(:,1) <= x_range(2) & ...
     filtered_S_temp(:,2) >= y_range(1) & filtered_S_temp(:,2) <= y_range(2) & ...
@@ -30,7 +37,7 @@ else
     time_colors = (1:size(filtered_S,1))';
 end
 
-marker_size = 2;
+marker_size = 1;
 
 
 x = filtered_S(:, 1);
@@ -50,53 +57,53 @@ axis equal;
 colorbar; 
 colormap(gca, 'cool');
 daspect([1 1 1]); 
-
-% --- 4.2 二维投影图 (按时间着色) ---
-figure; 
-% XY 平面投影 (俯视图: 东-北)
-scatter(x, y, marker_size, time_colors, 'filled');
-xlabel('X (东)');
-ylabel('Y (北)');
-title('XY 平面投影 (东-北)');
-grid on;
-axis equal; 
-colorbar;
-colormap(gca, 'cool');
-
-% XZ 平面投影 (侧视图: 东-上)
-figure; 
-
-scatter(x, z, marker_size, time_colors, 'filled'); 
-xlabel('X (东)');
-ylabel('Z (上)');
-title('XZ 平面投影 (东-上)');
-grid on;
-axis equal;
-colorbar;
-colormap(gca, 'cool');
-
-% YZ 平面投影 (前/后视图: 北-上)
-figure; 
-
-scatter(y, z, marker_size, time_colors, 'filled'); 
-xlabel('Y (北)');
-ylabel('Z (上)');
-title('YZ 平面投影 (北-上)');
-grid on;
-axis equal;
-colorbar;
-colormap(gca, 'cool');
-
-% --- 4.3极坐标系下 ---
-theta = atan2(y, x); 
-rho = sqrt(x.^2 + y.^2); 
-
-figure;
-polarscatter(theta, rho, marker_size, time_colors, 'filled');
-title('极坐标系下');
-colorbar;
-colormap(gca, 'cool');
-
+% 
+% % --- 4.2 二维投影图 (按时间着色) ---
+% figure; 
+% % XY 平面投影 (俯视图: 东-北)
+% scatter(x, y, marker_size, time_colors, 'filled');
+% xlabel('X (东)');
+% ylabel('Y (北)');
+% title('XY 平面投影 (东-北)');
+% grid on;
+% axis equal; 
+% colorbar;
+% colormap(gca, 'cool');
+% 
+% % XZ 平面投影 (侧视图: 东-上)
+% figure; 
+% 
+% scatter(x, z, marker_size, time_colors, 'filled'); 
+% xlabel('X (东)');
+% ylabel('Z (上)');
+% title('XZ 平面投影 (东-上)');
+% grid on;
+% axis equal;
+% colorbar;
+% colormap(gca, 'cool');
+% 
+% % YZ 平面投影 (前/后视图: 北-上)
+% figure; 
+% 
+% scatter(y, z, marker_size, time_colors, 'filled'); 
+% xlabel('Y (北)');
+% ylabel('Z (上)');
+% title('YZ 平面投影 (北-上)');
+% grid on;
+% axis equal;
+% colorbar;
+% colormap(gca, 'cool');
+% 
+% % --- 4.3极坐标系下 ---
+% theta = atan2(y, x); 
+% rho = sqrt(x.^2 + y.^2); 
+% 
+% figure;
+% polarscatter(theta, rho, marker_size, time_colors, 'filled');
+% title('极坐标系下');
+% colorbar;
+% colormap(gca, 'cool');
+% 
 
 % --- 4.4 方位角 - 仰角 ---
 num_points = size(filtered_S, 1);

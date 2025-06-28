@@ -1,6 +1,6 @@
 %结果1
 % logicalIndex = abs(result1.t123) < 1 & abs(result1.Rcorr) > 0.3;
-logicalIndex = abs(result1.t123) <0.5 & abs(result1.Rcorr) > 0.4 &  result1.Start_loc < r_loction + signal_length & result1.Start_loc > r_loction;
+logicalIndex = abs(result1.t123) <1 & abs(result1.Rcorr) > 0.3 &  result1.Start_loc < 3.96e8+34151156 & result1.Start_loc > 3.92e8+34151156;
 filteredTable1 = result1(logicalIndex, :);
 Start_loc = filteredTable1.Start_loc;
 % colorValues = (Start_loc - 3e8) / 2e8;
@@ -8,7 +8,7 @@ colorValues = (Start_loc - min(Start_loc)) / (max(Start_loc) - min(Start_loc));
 % 转换 Azimuth 范围从 0-360 到 -180-180
 % filteredTable1.Azimuth = mod(filteredTable1.Azimuth - 180, 360) - 180;
 figure;
-scatter(filteredTable1.Azimuth,filteredTable1.Elevation, 2, colorValues, 'filled');
+scatter(filteredTable1.Azimuth,filteredTable1.Elevation, 1, 'filled');
 title('Azimuth vs Elevation');
 xlabel('Azimuth');
 xlim([0, 360]); % 修改 x 轴范围
@@ -23,11 +23,9 @@ grid on;
 
 
 % %结果2
-logicalIndex = abs(resultyldclustermethod.t123) <1 & abs(resultyldclustermethod.Rcorr) > 0.3 ;
-filteredTable1 = resultyldclustermethod(logicalIndex, :);
 figure;
-scatter(filteredTable1.Azimuth,filteredTable1.Elevation, 2, 'filled');
-title('Azimuth vs Elevation');
+scatter(result.intf_Az1,result.intf_El1, 1, 'filled');
+title('文件4 Azimuth vs Elevation');
 xlabel('Azimuth');
 xlim([0, 360]); % 修改 x 轴范围
 xticks(0:40:360);

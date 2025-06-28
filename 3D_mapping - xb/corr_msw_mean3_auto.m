@@ -10,11 +10,11 @@ N = 3;
 filter_band = [30e6, 80e6];
 filter_order = 5;
 noise_analysis_length = 1e8;
-threshold_std_multiplier = 5;
+threshold_std_multiplier = 7;
 % --- 分析参数 ---
 window_lengths_to_run = [4096, 2048, 1024, 512, 256, 128, 64];
-rcorr_thresholds_to_plot = [0.3, 0.4, 0.5, 0.6, 0.7];
-base_output_dir = '2d_results';
+rcorr_thresholds_to_plot = [0.3, 0.4, 0.5, 0.6, 0.7, 0.8];
+base_output_dir = '2d_results—std—7——step_0.25';
 % --- 信号段定义 ---
 % 将每个数据集定义为 'segments' 结构体数组的一个元素。
 % 脚本将自动遍历并处理这里定义的每一个数据段。
@@ -24,8 +24,8 @@ segments(1).name = 'yld';
 segments(1).data_path = '..\\'; % .dat 数据文件的相对路径
 segments(1).base_filename = '20240822165932.6610';
 % --- 在下方数组中定义所有需要分析的起始位置 ---
-segments(1).r_loctions = [3.6e8, 3.8e8, 4.6e8];
-segments(1).signal_length = 2e7;
+segments(1).r_loctions = 3.65e8;
+segments(1).signal_length = 0.5e7;
 segments(1).d12 = 24.9586;
 segments(1).d13 = 34.9335;
 segments(1).d23 = 24.9675;
@@ -99,7 +99,7 @@ for s_idx = 1:length(segments)
             window_length = window_lengths_to_run(w_idx);
 
             % --- 寻找波峰  ---
-            min_peak_dist = window_length;
+            min_peak_dist = window_length/4;
             [all_peaks, all_locs] = findpeaks(filtered_signal1, 'MinPeakHeight', threshold, 'MinPeakDistance', min_peak_dist);
             num_peaks_total = numel(all_peaks);
 
