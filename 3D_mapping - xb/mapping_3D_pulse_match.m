@@ -5,7 +5,6 @@
 clear; clc; close all;
 
 %% --- 0. 初始化和参数定义 ---
-% ... (引入您的所有基本变量: 站点位置, c, baseline_definitions等) ...
 yld_sit = [0, 0, 0];
 chj_sit = [2003.7972, -7844.7836, -27];
 % yld相对于chj的位置
@@ -14,12 +13,13 @@ dist = 8.0967e3; %单位：米
 c = 0.299792458;
 W = 50000; % 时间误差
 match_signal_length = 6000;
+% 两个站点的距离除以光速 
 rough_dtoa_samples = 6000;
 step = 127200;
 signal_length=step;
-start_signal_loc = 3.6e8;
-mapping_start_signal_loc = 3.8e8;
-end_signal_loc = 4.6e8;
+start_signal_loc = 3.65e8;
+mapping_start_signal_loc = 4.6e8;
+end_signal_loc = 5.5e8;
 
 % 所有信号的开始位置
 all_start_signal_loc = start_signal_loc:step:end_signal_loc;
@@ -47,7 +47,7 @@ baseline_ant_indices = [
     1, 3; % 基线13
     2, 3  % 基线23
     ];
-
+% dtoa优化时的搜索范围，只会在初始点的上下左右10范围内进行优化，需要调整
 search_radius_xy = 10;
 search_radius_z  = 10;
 % --- 所有基线的天线全局坐标 (6条站内 + 1条站间) ---
@@ -60,8 +60,9 @@ all_baseline_definitions(5, :) = [chj_ant_global_coords(1,:), chj_ant_global_coo
 all_baseline_definitions(6, :) = [chj_ant_global_coords(2,:), chj_ant_global_coords(3,:)];
 % 站间基线 (YLD参考天线 - CHJ参考天线)
 all_baseline_definitions(7, :) = [yld_sit, chj_sit];
+% 记录所有优化后的残差 = 理论DTOA - 测量DTOA
 all_residuals_history = [];
-% --- DTOA测量不确定度  ---
+% --- DTOA测量不确定度  ---  站间基线的不确定度需要尝试，如果设置成5000几乎与初始点一致
 sigmas_ns = [
     2; 2; 2; % YLD 站内基线 DTOA 不确定度 (ns)
     2; 2; 2; % CHJ 站内基线 DTOA 不确定度 (ns)
@@ -71,8 +72,8 @@ sigmas_ns = [
 
 
 % 信号和算法参数
-sampling_rate = 200e6;
-ts_ns = 1 / sampling_rate * 1e9;
+fs = 200e6;
+ts_ns = 1 / fs * 1e9;
 
 noise_analysis_length = 1e8;
 threshold_std_multiplier = 5;
@@ -83,15 +84,15 @@ noise_yld = read_signal('..\\20240822165932.6610CH1.dat', noise_analysis_length,
 filtered_noise_yld = filter_bp(noise_yld, 30e6, 80e6, 5);
 threshold_yld = mean(filtered_noise_yld) + threshold_std_multiplier * std(filtered_noise_yld);
 
-snippet_len = 512;     % 脉冲片段长度
+snippet_len = 2048;     % 脉冲片段长度
 % 代价函数权重
 weights.w1 = 0.8; % 波形相似度权重
-weights.w2 = 0.1; % FWHM 权重
+weights.w2 = 0.1; % FWHM 权重 脉冲宽度
 weights.w3 = 0.1; % 上升时间权重
-cost_threshold = 0.8; % 只有总代价小于此阈值的匹配才被接受
+cost_threshold = 5; % 只有总代价小于此阈值的匹配才被接受, 需要调整
 
 % DTOA时间搜索窗
-time_window_samples = 3000;
+time_window_samples = 6000;
 
 for j = 1:numel(all_start_signal_loc)-1
     start_read_loc_yld = all_start_signal_loc(j);
@@ -117,8 +118,8 @@ for j = 1:numel(all_start_signal_loc)-1
 
     %% --- 1. 独立脉冲编目  ---
     % 创建脉冲目录
-    yld_catalog = create_pulse_catalog(filtered_yld_signal1, filtered_yld_signal2, filtered_yld_signal3, sampling_rate, threshold_yld, snippet_len);
-    chj_catalog = create_pulse_catalog(filtered_chj_signal1, filtered_chj_signal2, filtered_chj_signal3, sampling_rate, threshold_chj, snippet_len);
+    yld_catalog = create_pulse_catalog(filtered_yld_signal1, filtered_yld_signal2, filtered_yld_signal3, fs, threshold_yld, snippet_len);
+    chj_catalog = create_pulse_catalog(filtered_chj_signal1, filtered_chj_signal2, filtered_chj_signal3, fs, threshold_chj, snippet_len);
     % 检查目录是否为空
     if isempty(yld_catalog) || isempty(chj_catalog)
         fprintf('一个或两个站的脉冲目录为空，无法继续。');
@@ -158,7 +159,7 @@ for j = 1:numel(all_start_signal_loc)-1
 
         [r_gcc, lags_gcc] = xcorr(chj_ch1, yld_ch1, 'normalized');
         max_Rgcc = max(r_gcc);
-        if yld_Rcorr < 0.6 || abs(yld_t123) > 1 || yld_el  > 80 || yld_el < 10 || chj_Rcorr < 0.2 || abs(chj_t123) > 1 || max_Rgcc < 0.1
+        if yld_Rcorr < 0.6 || abs(yld_t123) > 1 || yld_el  > 80 || yld_el < 10 || chj_Rcorr < 0.3 || abs(chj_t123) > 1 || max_Rgcc < 0.1
             continue
         end
 
@@ -266,6 +267,7 @@ for j = 1:numel(all_start_signal_loc)-1
                     end
 
                     all_S_results = [all_S_results; S_optimized];
+%                     我们还可以记录损失
                     match_info_dtoa = struct(...
                         'yld_start_loc', start_read_loc_yld + current_yld_pulse.loc - snippet_len/2 + 1, ...
                         'chj_loc', matched_chj_pulse.loc + start_read_loc_yld + 34236722-(j-1)*100 - snippet_len/2 +1, ...
@@ -275,7 +277,8 @@ for j = 1:numel(all_start_signal_loc)-1
                         'dlta', dlta, ...
                         'R3_value', R3_value, ...
                         'S_initial_triangulation', S_initial, ...
-                        'chi_square_red', chi_square_red  ...
+                        'chi_square_red', chi_square_red,  ...
+                        'cost', match_cost  ...
                         );
                     all_match_results = [all_match_results; match_info_dtoa];
                 else
@@ -294,7 +297,8 @@ for j = 1:numel(all_start_signal_loc)-1
                             'dlta', dlta, ...
                             'R3_value', R3_value, ...
                             'S_initial_triangulation', S_initial, ...
-                            'chi_square_red', 1.5  ...
+                            'chi_square_red', 1.5 , ...
+                            'cost', match_cost  ...
                             );
                         all_match_results = [all_match_results; match_info_dtoa];
                     end
@@ -328,12 +332,14 @@ end
 
 
 
-function pulse_catalog = create_pulse_catalog(waveform, waveform2,waveform3,sampling_rate_hz, threshold, snippet_len)
+function pulse_catalog = create_pulse_catalog(waveform, waveform2,waveform3,fs_hz, threshold, snippet_len)
 % create_pulse_catalog: 从波形中检测所有脉冲并提取其特征。
 %
 % 输入:
-%   waveform        - 单个通道的完整信号波形
-%   sampling_rate_hz - 采率 (Hz), 例如 200e6
+%   waveform        - ch1通道的完整信号波形
+%   waveform2        - ch2通道的完整信号波形
+%   waveform3       - ch3通道的完整信号波形
+%   fs_hz - 采率 (Hz), 例如 200e6
 %   threshold       - findpeaks的振幅阈值
 %   snippet_len     - 提取的波形片段长度 (点数), 例如 512
 %
@@ -360,7 +366,7 @@ fprintf('检测到 %d 个脉冲，正在提取特征...\n', num_pulses);
 % 初始化结构体数组
 pulse_catalog = repmat(struct('loc', 0, 'amp', 0, 'snippet', [], 'snippet2', [],'snippet3', [],'fwhm_ns', 0, 'risetime_ns', 0), num_pulses, 1);
 
-ts_ns = 1 / sampling_rate_hz * 1e9; % 每个采样点的时间 (ns)
+ts_ns = 1 / fs_hz * 1e9; % 每个采样点的时间 (ns)
 
 for k = 1:num_pulses
     pk_loc = locs(k);
@@ -418,9 +424,8 @@ min_cost = inf;
 
 % --- Step 3.1: 时间窗约束 ---
 % 计算CHJ脉冲应该出现的理论位置范围
-expected_loc = yld_pulse.loc + rough_dtoa_samples;
-search_min_loc = expected_loc - time_window_samples;
-search_max_loc = expected_loc + time_window_samples;
+search_min_loc = yld_pulse.loc - time_window_samples;
+search_max_loc = yld_pulse.loc + time_window_samples;
 
 % 筛选出落在时间窗内的候选CHJ脉冲
 all_chj_locs = [chj_catalog.loc];
@@ -445,6 +450,7 @@ for i = 1:numel(candidate_indices)
     else
         r_corr_max = max(xcorr(yld_pulse.snippet, chj_candidate.snippet, 'normalized'));
     end
+%     损失函数，损失，越小越好，而互相关是越大越好，可以通过1- 来转化为越小越好
     cost1 = 1 - r_corr_max;
 
     % Cost 2: 半峰全宽差异

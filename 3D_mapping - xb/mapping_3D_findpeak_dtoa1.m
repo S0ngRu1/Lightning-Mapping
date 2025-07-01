@@ -3,28 +3,28 @@
 chj_signal_length = 512;
 match_signal_length = 6000;
 yld_result_path = 'results_yld_win512_threshold_17.737252.txt';
-noise_analysis_length = 1e8;
-threshold_std_multiplier = 5;
-noise = read_signal('..\\2024 822 85933.651462CH1.dat', noise_analysis_length, noise_analysis_length);
-filtered_noise = filter_bp(noise, 30e6, 80e6, 5);
-threshold = mean(filtered_noise) + threshold_std_multiplier * std(filtered_noise);
-start_signal_loc = 3.6e8;
+start_signal_loc = 3.65e8;
 mapping_start_signal_loc = 3.8e8;
-end_signal_loc = 4e8;
+end_signal_loc = 5.5e8;
 step = 127200;
 % 引入两个站的位置关系
-yld_sit = [0, 0, 0];
-chj_sit = [2003.7972, -7844.7836, -27];
+yld_sit = [0, 0, 0];%引雷点天线1
+chj_sit = [2003.7972, -7844.7836, -27];%从化局天线1
 % yld相对于chj的位置
 p = chj_sit-yld_sit;
 dist = 8.0967e3; %单位：米
 c = 0.299792458;
-W = 30000; % 时间误差
+W = 50000; % 时间误差
 signal_length=step;
 % 所有信号的开始位置
 all_start_signal_loc = start_signal_loc:step:end_signal_loc;
 all_S_results = [];   % 存储DTOA优化后的结果
 all_match_results = []; % 存储DTOA优化后的匹配信息
+%阈值
+noise = read_signal('..\\2024 822 85933.651462CH1.dat',1e8,1e8);
+filtered_noise = filter_bp(noise,30e6,80e6,5);
+threshold = mean(filtered_noise)+7*std(filtered_noise);
+
 % YLD站内天线局部坐标
 yld_ant_local_coords = [
     0,   0,   0;  % 天线1
@@ -47,8 +47,10 @@ baseline_ant_indices = [
     1, 3; % 基线13
     2, 3  % 基线23
     ];
-search_radius_xy = 10; 
-search_radius_z  = 10;  
+
+search_radius_xy = 100; 
+search_radius_z  = 100;  
+
 % --- 所有基线的天线全局坐标 (6条站内 + 1条站间) ---
 all_baseline_definitions = zeros(7, 6);
 all_baseline_definitions(1, :) = [yld_ant_global_coords(1,:), yld_ant_global_coords(2,:)];
@@ -58,13 +60,13 @@ all_baseline_definitions(4, :) = [chj_ant_global_coords(1,:), chj_ant_global_coo
 all_baseline_definitions(5, :) = [chj_ant_global_coords(1,:), chj_ant_global_coords(3,:)];
 all_baseline_definitions(6, :) = [chj_ant_global_coords(2,:), chj_ant_global_coords(3,:)];
 % 站间基线 (YLD参考天线 - CHJ参考天线)
-all_baseline_definitions(7, :) = [yld_sit, chj_sit];
+all_baseline_definitions(7, :) = [yld_sit, chj_sit];%两站天线1作为参考位置
 all_residuals_history = []; 
 % --- DTOA测量不确定度  ---
 sigmas_ns = [
-    2; 2; 2; % YLD 站内基线 DTOA 不确定度 (ns)
-    2; 2; 2; % CHJ 站内基线 DTOA 不确定度 (ns)
-    5000         % 站间基线 DTOA 不确定度 (ns)
+    0.5; 0.5; 0.5; % YLD 站内基线 DTOA 不确定度 (ns)
+    0.5; 0.5; 0.5; % CHJ 站内基线 DTOA 不确定度 (ns)
+    400         % 站间基线 DTOA 不确定度 (ns)
     ];
 
 
@@ -87,7 +89,7 @@ for j = 1:numel(all_start_signal_loc)-1
     filtered_chj_signal2 = filter_bp(chj_ch2,30e6,80e6,5);
     filtered_chj_signal3 = filter_bp(chj_ch3,30e6,80e6,5);
     S_results = [];
-    match_results = struct('yld_start_loc', {}, 'chj_loc', {}, 'r_gccs', {}, 'chj_azimuth',{},'chj_elevation',{},'dlta',{},'R3_value',{});
+    match_results = struct('yld_start_loc', {}, 'chj_loc', {}, 'r_gccs', {}, 'chj_azimuth',{},'chj_elevation',{},'dlta',{});
     h = waitbar(0, 'Processing...');
     %% Step2 根据引雷点的信号窗口得到匹配到的从化局的信号
     for i =1 :numel(yld_start_loc)
@@ -101,7 +103,7 @@ for j = 1:numel(all_start_signal_loc)-1
         yld_chj_dlta_ts = [];
         yld_chj_dlta_Ts = [];
         waitbar(i/numel(yld_start_loc), h, sprintf('位置：%d -- %d ；进度： %.2f%%', start_read_loc_yld, end_read_loc_yld, i/numel(yld_start_loc)*100));
-        if yld_Rcorr(i) < 0.6 && yld_t123(i) > 1 && yld_elevation(i)  < 80 && yld_elevation(i)  > 10
+        if yld_Rcorr(i) < 0.6 && yld_t123(i) > 1 && yld_elevation(i)  > 80 && yld_elevation(i) < 10
             continue
         end
         % 转换绝对位置到相对位置
@@ -122,7 +124,7 @@ for j = 1:numel(all_start_signal_loc)-1
         chj_match_signal3 = filtered_chj_signal3(start_read_loc_chj-match_signal_length+1:start_read_loc_chj+match_signal_length+chj_signal_length);
 
         % 寻找峰值
-        [peaks, locs] = findpeaks(chj_match_signal1, 'MinPeakHeight', threshold, 'MinPeakDistance', chj_signal_length/4);
+        [peaks, locs] = findpeaks(chj_match_signal1, 'MinPeakHeight', 5, 'MinPeakDistance', chj_signal_length/4);
         all_locs = locs;
         % 遍历所有峰值
         num_peaks = numel(all_locs);
@@ -290,10 +292,10 @@ for j = 1:numel(all_start_signal_loc)-1
                 'chj_azimuth', sub_chj_azimuth(max_R_gcc_index), ...
                 'chj_elevation', sub_chj_elevation(max_R_gcc_index), ...
                 'r_gccs', max_R_gcc, ...
-                'dlta', final_dlta_check_ns, ...
                 'R3_value', R3_value, ...
-                'chi_square_red', chi_square_red,  ...
-                'S_initial_triangulation', S_initial ...
+                'dlta', final_dlta_check_ns, ...
+                'S_initial_triangulation', S_initial, ...
+                 'chi_square_red', chi_square_red  ...
                 );
             all_match_results = [all_match_results; match_info_dtoa];
         else
@@ -309,10 +311,10 @@ for j = 1:numel(all_start_signal_loc)-1
                     'chj_azimuth', sub_chj_azimuth(max_R_gcc_index), ...
                     'chj_elevation', sub_chj_elevation(max_R_gcc_index), ...
                     'r_gccs', max_R_gcc, ...
-                    'dlta', dltas(max_R_gcc_index), ...
                     'R3_value', R3_value, ...
-                    'chi_square_red', 1.5,  ...
-                    'S_initial_triangulation', S_initial ...
+                    'dlta', final_dlta_check_ns, ...
+                    'S_initial_triangulation', S_initial, ...
+                    'chi_square_red', 1.5  ...
                     );
                 all_match_results = [all_match_results; match_info_dtoa];
             end

@@ -1,11 +1,9 @@
 %% 修改的地方
-%  先匹配大窗口，然后再在小窗口计算
-%  添加归一化卡方统计量（Reduced Chi-Square, χ²_red） 来评估 DTOA 优化结果的拟合优劣
+%  直接使用最大相关系数对应的信号进行三维计算
 
 %% Step1 读取引雷点的二维定位结果（需要条件筛选出合格的）
 % 引入变量：位置，方位角，仰角
-chj_signal_length = 512;
-big_window_length = 4096;
+chj_signal_length = 4096;
 match_signal_length = 6000;
 yld_result_path = 'results_yld_win512_threshold_17.737252.txt';
 noise_analysis_length = 1e8;
@@ -113,19 +111,19 @@ for j = 1:numel(all_start_signal_loc)-1
         % 转换绝对位置到相对位置
         yld_signal_start_loc = yld_start_loc(i) - start_read_loc_yld;
         start_read_loc_chj = yld_signal_start_loc;
-        if yld_signal_start_loc+big_window_length > signal_length || yld_signal_start_loc + 1 < 0
+        if yld_signal_start_loc+chj_signal_length > signal_length || yld_signal_start_loc + 1 < 0
             continue
         end
-        processed_yld_signal = filtered_yld_signal1(yld_signal_start_loc+1 : yld_signal_start_loc+big_window_length);
+        processed_yld_signal = filtered_yld_signal1(yld_signal_start_loc+1 : yld_signal_start_loc+chj_signal_length);
         processed_yld_signal = real(windowsignal(detrend(processed_yld_signal)));
 
         % 读取从化局与引雷点同位置前后加6000点的信号
-        if start_read_loc_chj-match_signal_length+1 <= 0 || start_read_loc_chj+match_signal_length+big_window_length > signal_length
+        if start_read_loc_chj-match_signal_length+1 <= 0 || start_read_loc_chj+match_signal_length+chj_signal_length > signal_length
             continue;
         end
-        chj_match_signal1 = filtered_chj_signal1(start_read_loc_chj-match_signal_length+1:start_read_loc_chj+match_signal_length+big_window_length);
-        chj_match_signal2 = filtered_chj_signal2(start_read_loc_chj-match_signal_length+1:start_read_loc_chj+match_signal_length+big_window_length);
-        chj_match_signal3 = filtered_chj_signal3(start_read_loc_chj-match_signal_length+1:start_read_loc_chj+match_signal_length+big_window_length);
+        chj_match_signal1 = filtered_chj_signal1(start_read_loc_chj-match_signal_length+1:start_read_loc_chj+match_signal_length+chj_signal_length);
+        chj_match_signal2 = filtered_chj_signal2(start_read_loc_chj-match_signal_length+1:start_read_loc_chj+match_signal_length+chj_signal_length);
+        chj_match_signal3 = filtered_chj_signal3(start_read_loc_chj-match_signal_length+1:start_read_loc_chj+match_signal_length+chj_signal_length);
 
         % 寻找峰值
         [peaks, locs] = findpeaks(chj_match_signal1, 'MinPeakHeight', threshold, 'MinPeakDistance', chj_signal_length/4);
@@ -140,10 +138,10 @@ for j = 1:numel(all_start_signal_loc)-1
 
         for pi = 1:num_candidates
             idx = locs(pi);
-            if idx - (big_window_length / 2 - 1) <= 0 || idx + (big_window_length / 2) > match_signal_length*2+big_window_length
+            if idx - (chj_signal_length / 2 - 1) <= 0 || idx + (chj_signal_length / 2) > match_signal_length*2+chj_signal_length
                 continue;
             end
-            temp_chj_signal = chj_match_signal1(idx - (big_window_length / 2)+ 1:idx + (big_window_length / 2));
+            temp_chj_signal = chj_match_signal1(idx - (chj_signal_length / 2)+ 1:idx + (chj_signal_length / 2));
             temp_chj_signal = real(windowsignal(detrend(temp_chj_signal)));
             [r_gcc, lags_gcc] = xcorr(processed_yld_signal, temp_chj_signal, 'normalized');
 
