@@ -84,7 +84,7 @@ noise_yld = read_signal('..\\20240822165932.6610CH1.dat', noise_analysis_length,
 filtered_noise_yld = filter_bp(noise_yld, 30e6, 80e6, 5);
 threshold_yld = mean(filtered_noise_yld) + threshold_std_multiplier * std(filtered_noise_yld);
 
-snippet_len = 2048;     % 脉冲片段长度
+snippet_len = 512;     % 脉冲片段长度
 % 代价函数权重
 weights.w1 = 0.8; % 波形相似度权重
 weights.w2 = 0.1; % FWHM 权重 脉冲宽度
