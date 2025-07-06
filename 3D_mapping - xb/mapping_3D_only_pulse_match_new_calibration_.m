@@ -13,6 +13,7 @@ dist = 8.0967e3; %单位：米
 c = 0.299792458;
 W = 5e8; % 时间误差
 match_signal_length = 6000;
+upsampling_factor = 50;
 % 两个站点的距离除以光速 
 rough_dtoa_samples = 6000;
 step = 1e6;
@@ -20,6 +21,7 @@ signal_length=step;
 start_signal_loc = 3.8e8;
 mapping_start_signal_loc = 3.8e8;
 end_signal_loc = 5.5e8;
+msw_length = 1000;
 
 % 所有信号的开始位置
 all_start_signal_loc = start_signal_loc:step:end_signal_loc;
@@ -111,7 +113,7 @@ for j = 1:numel(all_start_signal_loc)-1
     filtered_yld_signal3 = filter_bp(yld_ch3,30e6,80e6,5);
     %% --- 1. 独立脉冲编目  ---
     % 创建脉冲目录
-    yld_catalog = create_pulse_catalog(filtered_yld_signal1, filtered_yld_signal2, filtered_yld_signal3, fs, threshold_yld, snippet_len);
+    yld_catalog = create_pulse_catalog(filtered_yld_signal1, filtered_yld_signal2, filtered_yld_signal3, fs, threshold_yld, snippet_len, upsampling_factor, msw_length);
     % 检查目录是否为空
     if isempty(yld_catalog)
         fprintf('yld站的脉冲目录为空，无法继续。');
@@ -131,7 +133,7 @@ for j = 1:numel(all_start_signal_loc)-1
         filtered_chj_signal2 = filter_bp(chj_ch2,30e6,80e6,5);
         filtered_chj_signal3 = filter_bp(chj_ch3,30e6,80e6,5);
          %% Step2 根据引雷点的信号窗口得到匹配到的从化局的信号
-        chj_catalog = create_pulse_catalog(filtered_chj_signal1, filtered_chj_signal2, filtered_chj_signal3, fs, threshold_chj, snippet_len);
+        chj_catalog = create_pulse_catalog(filtered_chj_signal1, filtered_chj_signal2, filtered_chj_signal3, fs, threshold_chj, snippet_len, upsampling_factor, msw_length);
         [matched_chj_pulse, match_cost] = find_best_match(current_yld_pulse, chj_catalog, weights);
         % --- 2.3 如果找到一个好的匹配，则进行精处理 ---
         if ~isempty(matched_chj_pulse) && match_cost < cost_threshold
@@ -326,7 +328,7 @@ end
 
 
 
-function pulse_catalog = create_pulse_catalog(waveform, waveform2,waveform3,fs_hz, threshold, snippet_len)
+function pulse_catalog = create_pulse_catalog(waveform, waveform2,waveform3,fs_hz, threshold, snippet_len, upsampling_factor, msw_length)
 % create_pulse_catalog: 从波形中检测所有脉冲并提取其特征。
 %
 % 输入:
@@ -345,6 +347,15 @@ function pulse_catalog = create_pulse_catalog(waveform, waveform2,waveform3,fs_h
 % 这里的MinPeakDistance需要根据您的密集程度仔细调整
 [pks, locs] = findpeaks(waveform, 'MinPeakHeight', threshold, 'MinPeakDistance', snippet_len/4);
 
+% 上采样
+[ch1_up, ch2_up, ch3_up] = deal(...
+    upsampling(waveform, upsampling_factor)', ...
+    upsampling(waveform2, upsampling_factor)', ...
+    upsampling(waveform3, upsampling_factor)');
+ch1_upsp = ch1_up(:,2);
+ch2_upsp = ch2_up(:,2);
+ch3_upsp = ch3_up(:,2);
+
 num_pulses = numel(locs);
 if num_pulses == 0
     pulse_catalog = [];
@@ -354,7 +365,7 @@ end
 % --- Step 2: 为每个脉冲提取特征 ---
 
 % 初始化结构体数组
-pulse_catalog = repmat(struct('loc', 0, 'amp', 0, 'snippet', [], 'snippet2', [],'snippet3', [],'fwhm_ns', 0, 'risetime_ns', 0), num_pulses, 1);
+pulse_catalog = repmat(struct('loc', 0, 'amp', 0, 'snippet', [], 'snippet2', [],'snippet3', [],'msw_signal', [], 'msw_signal2', [],'msw_signal3', [],'fwhm_ns', 0, 'risetime_ns', 0), num_pulses, 1);
 
 ts_ns = 1 / fs_hz * 1e9; % 每个采样点的时间 (ns)
 
@@ -364,13 +375,19 @@ for k = 1:num_pulses
 
     pulse_catalog(k).loc = pk_loc;
     pulse_catalog(k).amp = pk_amp;
-
+    
     % 2.1 提取波形片段 (Snippet)
+    msw_start = max(1, pk_loc*upsampling_factor - floor(msw_length/2));
+    msw__end   = min(length(ch1_upsp), pk_loc*upsampling_factor + floor(msw_length/2) - 1);
     s_start = max(1, pk_loc - floor(snippet_len/2));
     s_end   = min(length(waveform), pk_loc + floor(snippet_len/2) - 1);
     pulse_catalog(k).snippet = waveform(s_start:s_end);
     pulse_catalog(k).snippet2 = waveform2(s_start:s_end);
     pulse_catalog(k).snippet3 = waveform3(s_start:s_end);
+    pulse_catalog(k).msw_signal = ch1_upsp(msw_start:msw__end);
+    pulse_catalog(k).msw_signal2 = ch2_upsp(msw_start:msw__end);
+    pulse_catalog(k).msw_signal3 = ch3_upsp(msw_start:msw__end);
+
     % 2.2 提取半峰全宽 (FWHM - Full Width at Half Maximum)
     half_max = pk_amp / 2;
     % 向左寻找半高点
@@ -415,13 +432,13 @@ for i = 1:numel(chj_catalog)
     % 计算各项代价
     % Cost 1: 波形相似度 (1 - 归一化互相关系数)
     % 确保两个snippet等长
-    len1 = length(yld_pulse.snippet);
-    len2 = length(chj_candidate.snippet);
+    len1 = length(yld_pulse.msw_signal);
+    len2 = length(chj_candidate.msw_signal);
     if len1 ~= len2
         min_len = min(len1, len2);
-        r_corr_max = max(xcorr(yld_pulse.snippet(1:min_len), chj_candidate.snippet(1:min_len), 'normalized'));
+        r_corr_max = max(xcorr(yld_pulse.msw_signal(1:min_len), chj_candidate.msw_signal(1:min_len), 'normalized'));
     else
-        r_corr_max = max(xcorr(yld_pulse.snippet, chj_candidate.snippet, 'normalized'));
+        r_corr_max = max(xcorr(yld_pulse.msw_signal, chj_candidate.msw_signal, 'normalized'));
     end
 %     损失函数，损失，越小越好，而互相关是越大越好，可以通过1- 来转化为越小越好
     cost1 = 1 - r_corr_max;
