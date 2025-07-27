@@ -1,5 +1,5 @@
 %结果1
-logicalIndex = abs(result1.t123) < 1 & abs(result1.Rcorr) > 0.3&  result1.Start_loc < 4.6e8 & result1.Start_loc > 3.8e8;
+logicalIndex = abs(result1.t123) < 1 & abs(result1.Rcorr) > 0.7 &  result1.Start_loc < 4.0e8 & result1.Start_loc > 3.8e8;
 % logicalIndex = abs(result1.t123) <1 & abs(result1.Rcorr) > 0.3 &  result1.Start_loc < 3.96e8+34151156 & result1.Start_loc > 3.92e8+34151156;
 filteredTable1 = result1(logicalIndex, :);
 Start_loc = filteredTable1.Start_loc;
@@ -210,3 +210,30 @@ Q = 0.5;
 kalmanfiltered_chj1 = KalmanFilter(chj_ch1,Q,chj_R1);
 subplot(2,1,1);plot(chj_ch1);title('chj');xlabel('采样点数');ylabel('幅值');
 subplot(2,1,2);plot(kalmanfiltered_chj1);title('filtered_chj');xlabel('采样点数');ylabel('幅值');
+
+
+
+signal_length = 3e7;
+r_loction_yld = 3.8e8;
+ch1_yld = read_signal('..\\20240822165932.6610CH1.dat',signal_length,r_loction_yld);
+bp_filtered_yld = filter_bp(ch1_yld,30e6,80e6,5);
+plot_signal_spectrum(bp_filtered_yld);
+
+plot_signal_spectrum(ch1_yld);
+figure
+plot(bp_filtered_yld);
+
+signal_length = 8e6;
+r_loction_yld = 4.69e8;
+ch1_yld = read_signal('..\\20240822165932.6610CH1.dat',signal_length,r_loction_yld);
+bp_filtered_yld = filter_bp(ch1_yld,30e6,80e6,5);
+plot_signal_spectrum(bp_filtered_yld);
+
+plot_signal_spectrum(ch1_yld);
+
+figure
+plot(bp_filtered_yld);
+
+noise_analysis_length = 1e8;
+noise_chj = read_signal('..\\20240822165932.6610CH1.dat', noise_analysis_length, noise_analysis_length);
+plot_signal_spectrum(noise_chj);

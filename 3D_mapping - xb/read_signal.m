@@ -8,6 +8,6 @@ function signal = read_signal(signal_path, r_length,r_loction)
     %将读取到的数据分别保存到变量ch_1、ch_2和ch_3中。
     signal = fread(fid,r_length,'int16');
     %关闭所有文件
-    fclose('all');
+    fclose(fid);
 end
 
