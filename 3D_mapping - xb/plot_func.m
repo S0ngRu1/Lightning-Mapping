@@ -1,5 +1,5 @@
 %½á¹û1
-logicalIndex = abs(result1.t123) < 1 & abs(result1.Rcorr) > 0.7 &  result1.Start_loc < 4.0e8 & result1.Start_loc > 3.8e8;
+logicalIndex = abs(result1.t123) < 1 & abs(result1.Rcorr) > 0.6 &  result1.Start_loc < 4.0e8 & result1.Start_loc > 3.8e8;
 % logicalIndex = abs(result1.t123) <1 & abs(result1.Rcorr) > 0.3 &  result1.Start_loc < 3.96e8+34151156 & result1.Start_loc > 3.92e8+34151156;
 filteredTable1 = result1(logicalIndex, :);
 Start_loc = filteredTable1.Start_loc;

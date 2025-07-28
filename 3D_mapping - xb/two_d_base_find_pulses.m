@@ -18,16 +18,18 @@ filtered_noise = filter_bp(noise,30e6,80e6,5);
 noise_std = std(filtered_noise);
 threshold_factor = 3;      % find_pulses_advanced 的阈值因子
 merge_gap_samples = 10;   % 脉冲融合的间隙阈值
+pulses_per_group = 50; % 定义每组包含n个脉冲
 % %从化局阈值
 % noise = read_signal('..\\2024 822 85933.651462CH1.dat',1e8,1e8);
 % filtered_noise = filter_bp(noise,30e6,80e6,5);
 % threshold = mean(filtered_noise)+5*std(filtered_noise);
 % --- 文件写入准备 ---
-fileID = fopen('result_yld_PULSE_CENTRIC_FINAL.txt', 'w');
+filename = 'result_yld_PULSE_CENTRIC_FINAL_'  + string(pulses_per_group) + '.txt';
+fileID = fopen(filename, 'w');
 fprintf(fileID, '%-13s%-15s%-15s%-15s%-15s%-15s%-15s%-15s%-15s%-15s%-15s\n', ...
     'Start_loc','Pulse_Len','t12', 't13', 't23', 'cos_alpha_opt', 'cos_beta_opt','Azimuth', 'Elevation', 'Rcorr', 't123');
 num_total_blocks = numel(all_start_signal_loc)-1;
-pulses_per_group = 10; % 定义每组包含10个脉冲
+
 h_overall = waitbar(0, '正在初始化处理...', 'Name', '整体处理进度');
 for j = 1:num_total_blocks
 
