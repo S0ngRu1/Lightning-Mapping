@@ -1,6 +1,10 @@
 %结果1
-logicalIndex = abs(result1.t123) < 1 & abs(result1.Rcorr) > 0.6 &  result1.Start_loc < 3.9e8 & result1.Start_loc > 3.8e8;
-% logicalIndex = abs(result1.t123) <1 & abs(result1.Rcorr) > 0.3 &  result1.Start_loc < 3.96e8+34151156 & result1.Start_loc > 3.92e8+34151156;
+% logicalIndex =  abs(result1.t123) < 0.3  & abs(result1.Rcorr) > 0.5 &  result1.Start_loc < 4.0e8 & result1.Start_loc > 3.8e8;
+idx_adapt = adaptive_corr_filter(result1, 'Pulse_Len', 'Rcorr', 0.6);  % 或者用 adaptive_corr_filter_fit
+logicalIndex = abs(result1.t123) < 0.3 & ...
+               idx_adapt & ...
+               result1.Start_loc < 4.0e8 & result1.Start_loc > 3.8e8;
+
 filteredTable1 = result1(logicalIndex, :);
 Start_loc = filteredTable1.Start_loc;
 % colorValues = (Start_loc - 3e8) / 2e8;
@@ -213,8 +217,8 @@ subplot(2,1,2);plot(kalmanfiltered_chj1);title('filtered_chj');xlabel('采样点数'
 
 
 
-signal_length = 3e7;
-r_loction_yld = 3.8e8;
+signal_length = 1024;
+r_loction_yld = 3.8e8+3500+9000;
 ch1_yld = read_signal('..\\20240822165932.6610CH1.dat',signal_length,r_loction_yld);
 bp_filtered_yld = filter_bp(ch1_yld,30e6,80e6,5);
 plot_signal_spectrum(bp_filtered_yld);
@@ -223,8 +227,8 @@ plot_signal_spectrum(ch1_yld);
 figure
 plot(bp_filtered_yld);
 
-signal_length = 8e6;
-r_loction_yld = 4.69e8;
+signal_length = 1024;
+r_loction_yld = 4.698e8+23300;
 ch1_yld = read_signal('..\\20240822165932.6610CH1.dat',signal_length,r_loction_yld);
 bp_filtered_yld = filter_bp(ch1_yld,30e6,80e6,5);
 plot_signal_spectrum(bp_filtered_yld);

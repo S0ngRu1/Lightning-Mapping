@@ -1,5 +1,5 @@
 %% ========================================================================
-%  二维定位算法
+%  二维定位算法 [最终版：脉冲分组 + 频谱质心筛选器]
 % =========================================================================
 clear; clc; close all;
 
@@ -18,21 +18,26 @@ filtered_noise = filter_bp(noise,30e6,80e6,5);
 noise_std = std(filtered_noise);
 threshold_factor = 3;      % find_pulses_advanced 的阈值因子
 merge_gap_samples = 10;   % 脉冲融合的间隙阈值
-pulses_per_group = 50; % 定义每组包含n个脉冲
+pulses_per_group = 10; % 定义每组包含n个脉冲
 % %从化局阈值
 % noise = read_signal('..\\2024 822 85933.651462CH1.dat',1e8,1e8);
 % filtered_noise = filter_bp(noise,30e6,80e6,5);
 % threshold = mean(filtered_noise)+5*std(filtered_noise);
-% --- 文件写入准备 ---
-filename = 'result_yld_PULSE_CENTRIC_FINAL_'  + string(pulses_per_group) + '.txt';
+
+spectral_centroid_threshold_hz = 40e6; % 频谱质心阈值：低于nMHz的事件将被丢弃 
+
+% --- 文件写入准备 (增加一列用于记录频谱质心) ---
+filename = 'result_yld_PULSE_GROUP_10_SPECTRAL_FILTERED.txt';
 fileID = fopen(filename, 'w');
-fprintf(fileID, '%-13s%-15s%-15s%-15s%-15s%-15s%-15s%-15s%-15s%-15s%-15s\n', ...
-    'Start_loc','Pulse_Len','t12', 't13', 't23', 'cos_alpha_opt', 'cos_beta_opt','Azimuth', 'Elevation', 'Rcorr', 't123');
+fprintf(fileID, '%-13s%-15s%-18s%-15s%-15s%-15s%-15s%-15s%-15s%-15s%-15s%-15s\n', ...
+    'Start_loc','Pulse_Len','Centroid(MHz)','t12', 't13', 't23', 'cos_alpha_opt', 'cos_beta_opt','Azimuth', 'Elevation', 'Rcorr', 't123');
+
+% --- 主循环开始 ---
 num_total_blocks = numel(all_start_signal_loc)-1;
-
 h_overall = waitbar(0, '正在初始化处理...', 'Name', '整体处理进度');
-for j = 1:num_total_blocks
 
+for j = 1:num_total_blocks
+    
     progress = j / num_total_blocks;
     waitbar(progress, h_overall, sprintf('整体进度: 正在处理信号块 %d / %d', j, num_total_blocks));
     current_block_start = all_start_signal_loc(j);
@@ -58,28 +63,26 @@ for j = 1:num_total_blocks
     num_pulses_in_block = numel(pulse_catalog_in_block);
     fprintf('      在本块内找到 %d 个精确脉冲，开始处理...\n', num_pulses_in_block);
 
-    % --- 遍历当前块内找到的【脉冲目录】 ---
-    for pi = 1:pulses_per_group: num_pulses_in_block
+    % --- 内循环：遍历脉冲组 ---
+    for pi = 1:pulses_per_group:num_pulses_in_block
         start_group_idx = pi;
-        end_group_idx = min(pi + pulses_per_group - 1, num_pulses_in_block); % 防止末尾不足一组时越界
+        end_group_idx = min(pi + pulses_per_group - 1, num_pulses_in_block);
         pulse_group = pulse_catalog_in_block(start_group_idx:end_group_idx);
-        % 如果组内脉冲太少，可以跳过
-        if numel(pulse_group) < 2
-            continue;
-        end
-
-
-        % **  确定该组的总起点和总终点 **
+        if numel(pulse_group) < 2, continue; end
         group_start_idx = pulse_group(1).start_idx;
         group_end_idx   = pulse_group(end).end_idx;
-
-        % --- 3. 根据总起止点，截取包含整组脉冲的长信号片段 ---
         signal1 = filtered_signal1(group_start_idx : group_end_idx);
         signal2 = filtered_signal2(group_start_idx : group_end_idx);
         signal3 = filtered_signal3(group_start_idx : group_end_idx);
-
-        pulse_len = length(signal1); % 这是整个脉冲组的总长度
-
+        pulse_len = length(signal1);
+        
+        % 1. 计算当前脉冲组信号的频谱质心 
+        centroid_hz = calculate_spectral_centroid(signal1, fs);
+        % 2. 进行判断
+        if centroid_hz < spectral_centroid_threshold_hz
+            continue; 
+        end
+        
         % ** 长度对齐 (零填充)，以保证互相关等操作正常进行 **
         max_len = max([length(signal1), length(signal2), length(signal3)]);
         signal1_padded = [signal1; zeros(max_len - length(signal1), 1)];
@@ -157,10 +160,34 @@ for j = 1:num_total_blocks
         % --- 写入结果 ---
         ts_ns = 1/fs*1e9;
         absolute_sample_location = current_block_start + group_start_idx - 1;
-        fprintf(fileID, '%-13d%-15d%-15.6f%-15.6f%-15.6f%-15.6f%-15.6f%-15.6f%-15.6f%-15.6f%-15.6f\n', ...
-            absolute_sample_location, pulse_len, t12, t13, t23, cos_alpha_opt, cos_beta_opt, Az_deg, El_deg, Rcorr,t123);
+        
+        fprintf(fileID, '%-13d%-15d%-18.2f%-15.6f%-15.6f%-15.6f%-15.6f%-15.6f%-15.6f%-15.6f%-15.6f%-15.6f\n', ...
+            absolute_sample_location, pulse_len, centroid_hz/1e6, t12, t13, t23, cos_alpha_opt, cos_beta_opt, Az_deg, El_deg, Rcorr,t123);
     end
-
 end
 close(h_overall);
 fclose(fileID);
+
+%% --- 新增辅助函数：计算频谱质心 ---
+function centroid_hz = calculate_spectral_centroid(signal_segment, fs)
+    % signal_segment: 输入的信号片段
+    % fs: 采样率
+    
+    nfft = 2^nextpow2(length(signal_segment));
+    fft_result = fft(signal_segment, nfft);
+    
+    % 取正频率部分
+    fft_mag = abs(fft_result(1:nfft/2+1));
+    
+    % 创建频率轴
+    f_axis = fs*(0:(nfft/2))/nfft;
+    
+    % 计算质心公式: C = Σ(f * A(f)) / Σ(A(f))
+    sum_mag = sum(fft_mag);
+    if sum_mag < 1e-12 % 避免除以零
+        centroid_hz = 0;
+        return;
+    end
+    
+    centroid_hz = sum(f_axis' .* fft_mag) / sum_mag;
+end

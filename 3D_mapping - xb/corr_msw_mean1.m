@@ -18,8 +18,8 @@ window = window_length * upsampling_factor;
 % ch2 = read_signal('..\\2024 822 85933.651462CH2.dat',signal_length,r_loction);
 % ch3 = read_signal('..\\2024 822 85933.651462CH3.dat',signal_length,r_loction+215/5);
 %引雷点
-signal_length = 1e7;
-r_loction = 4.65e8;
+signal_length = 2e7;
+r_loction = 3.8e8;
 d12 = 24.9586;
 d13 = 34.9335;
 d23 = 24.9675;
@@ -31,13 +31,13 @@ ch2 = read_signal('..\\20240822165932.6610CH2.dat',signal_length,r_loction);
 ch3 = read_signal('..\\20240822165932.6610CH3.dat',signal_length,r_loction);
 
 
-filtered_signal1 = filter_bp(ch1,20e6,80e6,5);
-filtered_signal2 = filter_bp(ch2,20e6,80e6,5);
-filtered_signal3 = filter_bp(ch3,20e6,80e6,5);
+filtered_signal1 = filter_bp(ch1,55e6,80e6,5);
+filtered_signal2 = filter_bp(ch2,55e6,80e6,5);
+filtered_signal3 = filter_bp(ch3,55e6,80e6,5);
 
 
 % 打开一个文本文件用于写入运行结果
-fileID = fopen('result_yld_window512_128_阈值_2n_4.65-4.75_new——40——70.txt', 'w');
+fileID = fopen('result_yld_window512_128_阈值_25_55—— 80.txt', 'w');
 fprintf(fileID, '%-13s%-15s%-15s%-15s%-15s%-15s%-15s%-15s%-15s%-15s%-15s\n', ...
     'Start_loc','peak','t12', 't13', 't23', 'cos_alpha_opt', 'cos_beta_opt','Azimuth', 'Elevation', 'Rcorr', 't123');
 
@@ -63,7 +63,7 @@ combined_signal = env1 + env2 + env3;
 noise_level = median(combined_signal) / 0.6745;
 dynamic_threshold = 2 * noise_level;
 
-[peaks, locs] = findpeaks(combined_signal, 'MinPeakHeight', dynamic_threshold, 'MinPeakDistance', window_length/4);
+[peaks, locs] = findpeaks(combined_signal, 'MinPeakHeight', 15, 'MinPeakDistance', window_length/4);
 
 % 存储所有峰值和阈值
 all_peaks = peaks;

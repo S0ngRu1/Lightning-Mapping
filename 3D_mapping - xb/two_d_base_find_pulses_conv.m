@@ -18,13 +18,20 @@ filtered_noise = filter_bp(noise,30e6,80e6,5);
 noise_std = std(filtered_noise);
 threshold_factor = 3;      % find_pulses_advanced 的阈值因子
 merge_gap_samples = 10;   % 脉冲融合的间隙阈值
-pulses_per_group = 50; % 定义每组包含n个脉冲
+pulses_per_group = 10; % 定义每组包含n个脉冲
+
+% ========== 模板信号读取 ==========
+template_raw = read_signal('..\\20240822165932.6610CH1.dat', 100, 4.698e8+23300+700);
+template_filtered = filter_bp(template_raw, 30e6, 80e6, 5);
+template_norm = template_filtered / norm(template_filtered);  % 单位化
+
+
 % %从化局阈值
 % noise = read_signal('..\\2024 822 85933.651462CH1.dat',1e8,1e8);
 % filtered_noise = filter_bp(noise,30e6,80e6,5);
 % threshold = mean(filtered_noise)+5*std(filtered_noise);
 % --- 文件写入准备 ---
-filename = 'result_yld_PULSE_CENTRIC_FINAL_'  + string(pulses_per_group) + '.txt';
+filename = 'result_yld_PULSE_group_'  + string(pulses_per_group) + '_conv' +'.txt';
 fileID = fopen(filename, 'w');
 fprintf(fileID, '%-13s%-15s%-15s%-15s%-15s%-15s%-15s%-15s%-15s%-15s%-15s\n', ...
     'Start_loc','Pulse_Len','t12', 't13', 't23', 'cos_alpha_opt', 'cos_beta_opt','Azimuth', 'Elevation', 'Rcorr', 't123');
@@ -77,6 +84,16 @@ for j = 1:num_total_blocks
         signal1 = filtered_signal1(group_start_idx : group_end_idx);
         signal2 = filtered_signal2(group_start_idx : group_end_idx);
         signal3 = filtered_signal3(group_start_idx : group_end_idx);
+        % ========== 匹配滤波器增强 ==========
+% 将模板反转后与每个信号做卷积（对应匹配滤波器）
+matched1 = conv(signal1, flipud(template_norm), 'same');
+matched2 = conv(signal2, flipud(template_norm), 'same');
+matched3 = conv(signal3, flipud(template_norm), 'same');
+
+% 用增强后的信号替换原始信号
+signal1 = matched1;
+signal2 = matched2;
+signal3 = matched3;
 
         pulse_len = length(signal1); % 这是整个脉冲组的总长度
 
