@@ -26,7 +26,7 @@ caxis([0, 1.5]);
 grid on;
 
 %结果1
-logicalIndex = abs(result1.t123) < 1 & abs(result1.Rcorr) > 0.5 & result1.Start_loc < 4e8 & result1.Start_loc > 3.985e8 & result1.Elevation <80;
+logicalIndex = abs(result1.t123) < 1 & abs(result1.Rcorr) > 0.6 & result1.Start_loc < 4e8 & result1.Start_loc > 3.985e8 & result1.Elevation <80;
 filteredTable1 = result1(logicalIndex, :);
 % 使用 Start_loc 作为时间变化的指标
 Start_loc = filteredTable1.Start_loc;
@@ -216,7 +216,10 @@ figure
 plot(bp_filtered_yld);
 figure
 plot(ch1_yld);
-
+% 绘制原始信号功率谱
+plot_power_spectrum(ch1_yld);
+% 绘制滤波后信号功率谱
+plot_power_spectrum(bp_filtered_yld);
 
 
 signal_length = 1.5e6;
@@ -230,7 +233,10 @@ figure
 plot(bp_filtered_yld);
 figure
 plot(ch1_yld);
-
+% 绘制原始信号功率谱
+plot_power_spectrum(ch1_yld);
+% 绘制滤波后信号功率谱
+plot_power_spectrum(bp_filtered_yld);
 
 
 signal_length = 1.5e6;
@@ -244,11 +250,14 @@ figure
 plot(bp_filtered_yld);
 figure
 plot(ch1_yld);
-
+% 绘制原始信号功率谱
+plot_power_spectrum(ch1_yld);
+% 绘制滤波后信号功率谱
+plot_power_spectrum(bp_filtered_yld);
 
 
 signal_length = 1.5e6;
-r_loction_yld = 3.85e8;
+r_loction_yld = 3.985e8;
 ch1_yld = read_signal('..\\20240822165932.6610CH1.dat',signal_length,r_loction_yld);
 bp_filtered_yld = filter_bp(ch1_yld,30e6,80e6,5);
 plot_signal_spectrum(bp_filtered_yld);
@@ -258,8 +267,27 @@ figure
 plot(bp_filtered_yld);
 figure
 plot(ch1_yld);
+% 绘制原始信号功率谱
+plot_power_spectrum(ch1_yld);
+% 绘制滤波后信号功率谱
+plot_power_spectrum(bp_filtered_yld);
 
 
+signal_length = 1e6;
+r_loction_yld = 4.74e8;
+ch1_yld = read_signal('..\\20240822165932.6610CH1.dat',signal_length,r_loction_yld);
+bp_filtered_yld = filter_bp(ch1_yld,30e6,80e6,5);
+plot_signal_spectrum(bp_filtered_yld);
+
+plot_signal_spectrum(ch1_yld);
+figure
+plot(bp_filtered_yld);
+figure
+plot(ch1_yld);
+% 绘制原始信号功率谱
+plot_power_spectrum(ch1_yld);
+% 绘制滤波后信号功率谱
+plot_power_spectrum(bp_filtered_yld);
 
 
 

@@ -31,20 +31,18 @@ ch2 = read_signal('..\\20240822165932.6610CH2.dat',signal_length,r_loction);
 ch3 = read_signal('..\\20240822165932.6610CH3.dat',signal_length,r_loction);
 
 
-filtered_signal1 = filter_bp(ch1,20e6,60e6,5);
-filtered_signal2 = filter_bp(ch2,20e6,60e6,5);
-filtered_signal3 = filter_bp(ch3,20e6,60e6,5);
+filtered_signal1 = filter_bp(ch1-mean(ch1),30e6,80e6,5);
+filtered_signal2 = filter_bp(ch2-mean(ch2),30e6,80e6,5);
+filtered_signal3 = filter_bp(ch3-mean(ch3),30e6,80e6,5);
 
 
 % 打开一个文本文件用于写入运行结果
-fileID = fopen('result_yld_window512_128_阈值_20_60.txt', 'w');
+fileID = fopen('result_yld_window512_128_去零飘——阈值15_30_80.txt', 'w');
 fprintf(fileID, '%-13s%-15s%-15s%-15s%-15s%-15s%-15s%-15s%-15s%-15s%-15s\n', ...
     'Start_loc','peak','t12', 't13', 't23', 'cos_alpha_opt', 'cos_beta_opt','Azimuth', 'Elevation', 'Rcorr', 't123');
 
 % 设置动态阈值
-all_peaks = [];
 % all_thresholds = [];
-all_locs = [];
 % % 在合成信号上寻峰
 % noise_level = median(filtered_signal1) / 0.6745;
 % dynamic_threshold = 5 * noise_level;
