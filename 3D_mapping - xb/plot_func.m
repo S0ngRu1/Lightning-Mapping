@@ -1,5 +1,5 @@
 %结果1
-logicalIndex =  abs(result1.t123) < 2  & abs(result1.Rcorr) > 0.1 &  result1.Start_loc < 4.0e8 & result1.Start_loc > 3.8e8;
+logicalIndex =  abs(result1.t123) < 0.5  & abs(result1.Rcorr) > 0.6 &  result1.Start_loc < 4.0e8 & result1.Start_loc > 3.985e8;
 % idx_adapt = adaptive_corr_filter(result1, 'Pulse_Len', 'Rcorr', 0.5);  % 或者用 adaptive_corr_filter_fit
 % logicalIndex = abs(result1.t123) < 1 & ...
 %                idx_adapt & ...
@@ -20,34 +20,21 @@ xticks(0:40:360);
 ylabel('Elevation');
 ylim([0,90]);
 yticks(0:10:90);
-colormap('cool');
+colormap('hsv');
 colorbar;
 caxis([0, 1.5]);
 grid on;
 
-
-% %结果2
+%结果1
+logicalIndex = abs(result1.t123) < 1 & abs(result1.Rcorr) > 0.5 & result1.Start_loc < 4e8 & result1.Start_loc > 3.985e8 & result1.Elevation <80;
+filteredTable1 = result1(logicalIndex, :);
+% 使用 Start_loc 作为时间变化的指标
+Start_loc = filteredTable1.Start_loc;
+Start_loc_min = min(Start_loc);
+Start_loc_max = max(Start_loc);
+colorValues = (Start_loc - Start_loc_min) / (Start_loc_max - Start_loc_min); % 归一化 Start_loc 值到 [0, 1]
 figure;
-scatter(result.intf_Az1,result.intf_El1, 1, 'filled');
-title('文件4 Azimuth vs Elevation');
-xlabel('Azimuth');
-xlim([0, 360]); % 修改 x 轴范围
-xticks(0:40:360);
-ylabel('Elevation');
-ylim([0,90]);
-yticks(0:10:90);
-grid on;
-% 
-% %结果2
-% figure;
-% logicalIndex = abs(result2.t123) <1 & abs(result2.Rcorr) > 0.3 &  result2.Start_loc <4e8 & result2.Start_loc > 3.6e8;
-logicalIndex = abs(result2.t123) < 1 & abs(result2.Rcorr) > 0.5;
-filteredTable2 = result2(logicalIndex, :);
-index = 1:256:size(filteredTable2, 1);
-Start_loc = filteredTable2.Start_loc;
-colorValues = (Start_loc - 3e8) / 2e8;
-figure;
-scatter(filteredTable2.Azimuth,filteredTable2.Elevation, 1, colorValues, 'filled');
+scatter(filteredTable1.Azimuth, filteredTable1.Elevation, 1, colorValues, 'filled');
 title('Azimuth vs Elevation');
 xlabel('Azimuth');
 xlim([0, 360]);
@@ -55,10 +42,11 @@ xticks(0:40:360);
 ylabel('Elevation');
 ylim([0, 90]);
 yticks(0:10:90);
-colormap('hot');
+colormap('cool'); % 使用热图颜色映射
 colorbar;
-caxis([0, 1.5]);
+caxis([0, 1]); % 设置颜色范围
 grid on;
+
 
 % %结果3
 logicalIndex = abs(result3.t123) < 1 & abs(result3.Rcorr) > 0.3;
@@ -217,8 +205,8 @@ subplot(2,1,2);plot(kalmanfiltered_chj1);title('filtered_chj');xlabel('采样点数'
 
 
 
-signal_length = 1e6;
-r_loction_yld = 4.69e8;
+signal_length = 1.5e6;
+r_loction_yld = 4.7e8;
 ch1_yld = read_signal('..\\20240822165932.6610CH1.dat',signal_length,r_loction_yld);
 bp_filtered_yld = filter_bp(ch1_yld,30e6,80e6,5);
 plot_signal_spectrum(bp_filtered_yld);
@@ -230,20 +218,48 @@ figure
 plot(ch1_yld);
 
 
-signal_length = 1024;
-r_loction_yld = 4.698e8+23300;
+
+signal_length = 1.5e6;
+r_loction_yld = 4.94e8;
 ch1_yld = read_signal('..\\20240822165932.6610CH1.dat',signal_length,r_loction_yld);
 bp_filtered_yld = filter_bp(ch1_yld,30e6,80e6,5);
 plot_signal_spectrum(bp_filtered_yld);
 
 plot_signal_spectrum(ch1_yld);
-
 figure
 plot(bp_filtered_yld);
+figure
+plot(ch1_yld);
 
-noise_analysis_length = 1e8;
-noise_chj = read_signal('..\\20240822165932.6610CH1.dat', noise_analysis_length, noise_analysis_length);
-plot_signal_spectrum(noise_chj);
+
+
+signal_length = 1.5e6;
+r_loction_yld = 5.18e8;
+ch1_yld = read_signal('..\\20240822165932.6610CH1.dat',signal_length,r_loction_yld);
+bp_filtered_yld = filter_bp(ch1_yld,30e6,80e6,5);
+plot_signal_spectrum(bp_filtered_yld);
+
+plot_signal_spectrum(ch1_yld);
+figure
+plot(bp_filtered_yld);
+figure
+plot(ch1_yld);
+
+
+
+signal_length = 1.5e6;
+r_loction_yld = 3.85e8;
+ch1_yld = read_signal('..\\20240822165932.6610CH1.dat',signal_length,r_loction_yld);
+bp_filtered_yld = filter_bp(ch1_yld,30e6,80e6,5);
+plot_signal_spectrum(bp_filtered_yld);
+
+plot_signal_spectrum(ch1_yld);
+figure
+plot(bp_filtered_yld);
+figure
+plot(ch1_yld);
+
+
 
 
 
