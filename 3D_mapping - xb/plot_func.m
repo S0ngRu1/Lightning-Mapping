@@ -26,7 +26,7 @@ caxis([0, 1.5]);
 grid on;
 
 %结果1
-logicalIndex = abs(result1.t123) < 1 & abs(result1.Rcorr) > 0.6 & result1.Start_loc < 4e8 & result1.Start_loc > 3.985e8 & result1.Elevation <80;
+logicalIndex = abs(result1.t123) < 1 & abs(result1.Rcorr) > 0.65 & result1.Start_loc < 4e8 & result1.Start_loc > 3.985e8 & result1.Elevation <80;
 filteredTable1 = result1(logicalIndex, :);
 % 使用 Start_loc 作为时间变化的指标
 Start_loc = filteredTable1.Start_loc;

@@ -31,13 +31,13 @@ ch2 = read_signal('..\\20240822165932.6610CH2.dat',signal_length,r_loction);
 ch3 = read_signal('..\\20240822165932.6610CH3.dat',signal_length,r_loction);
 
 
-filtered_signal1 = filter_bp(ch1-mean(ch1),30e6,80e6,5);
-filtered_signal2 = filter_bp(ch2-mean(ch2),30e6,80e6,5);
-filtered_signal3 = filter_bp(ch3-mean(ch3),30e6,80e6,5);
+filtered_signal1 = filter_bp(real(windowsignal(detrend(ch1))),30e6,80e6,5);
+filtered_signal2 = filter_bp(real(windowsignal(detrend(ch2))),30e6,80e6,5);
+filtered_signal3 = filter_bp(real(windowsignal(detrend(ch3))),30e6,80e6,5);
 
 
 % 打开一个文本文件用于写入运行结果
-fileID = fopen('result_yld_window512_128_去零飘——阈值15_30_80.txt', 'w');
+fileID = fopen('result_yld_3.985e8_4e8_window_512_128_去零飘——阈值15_30_80.txt', 'w');
 fprintf(fileID, '%-13s%-15s%-15s%-15s%-15s%-15s%-15s%-15s%-15s%-15s%-15s\n', ...
     'Start_loc','peak','t12', 't13', 't23', 'cos_alpha_opt', 'cos_beta_opt','Azimuth', 'Elevation', 'Rcorr', 't123');
 
@@ -99,17 +99,12 @@ for pi = 1:num_peaks
 %     signal1 = signal1_wide .* mask;
 %     signal2 = signal2_wide .* mask;
 %     signal3 = signal3_wide .* mask;
-    % 去直流分量并应用窗函数
-    [ch1_new, ch2_new, ch3_new] = deal(...
-        real(windowsignal(detrend(signal1))), ...
-        real(windowsignal(detrend(signal2))), ...
-        real(windowsignal(detrend(signal3))));
 
     % 上采样
     [ch1_up, ch2_up, ch3_up] = deal(...
-        upsampling(ch1_new, upsampling_factor)', ...
-        upsampling(ch2_new, upsampling_factor)', ...
-        upsampling(ch3_new, upsampling_factor)');
+        upsampling(signal1, upsampling_factor)', ...
+        upsampling(signal2, upsampling_factor)', ...
+        upsampling(signal3, upsampling_factor)');
     ch1_upsp = ch1_up(:,2);
     ch2_upsp = ch2_up(:,2);
     ch3_upsp = ch3_up(:,2);

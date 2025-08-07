@@ -89,7 +89,7 @@ fprintf('信号重构完成。\n');
 %% 6. 结果可视化
 % ---- 可视化 1: 时域信号对比 ----
 figure('Name', '时域信号对比 ', 'NumberTitle', 'off');
-plot(t*1e6, ch1_yld, 'k-', 'DisplayName', '原始信号');
+plot(t*1e6, detrend(ch1_yld), 'k-', 'DisplayName', '原始信号');
 hold on;
 plot(t*1e6, filtered_signal, 'r-', 'LineWidth', 1.5, 'DisplayName', 'CEEMDAN重构信号');
 hold off;
