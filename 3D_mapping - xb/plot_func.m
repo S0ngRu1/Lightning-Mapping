@@ -256,17 +256,21 @@ plot_power_spectrum(ch1_yld);
 plot_power_spectrum(bp_filtered_yld);
 
 
-signal_length = 1.5e6;
-r_loction_yld = 3.985e8;
+signal_length = 1024;
+r_loction_yld = 4.698e8+20000;
 ch1_yld = read_signal('..\\20240822165932.6610CH1.dat',signal_length,r_loction_yld);
 bp_filtered_yld = filter_bp(ch1_yld,30e6,80e6,5);
 plot_signal_spectrum(bp_filtered_yld);
-
-plot_signal_spectrum(ch1_yld);
 figure
 plot(bp_filtered_yld);
+
+
 figure
 plot(ch1_yld);
+
+plot_signal_spectrum(ch1_yld);
+
+
 % 绘制原始信号功率谱
 plot_power_spectrum(ch1_yld);
 % 绘制滤波后信号功率谱

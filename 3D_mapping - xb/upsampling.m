@@ -1,44 +1,44 @@
-%º¯Êı£º¶ÔÖ÷´°¿Ú½øĞĞÉÏ²ÉÑù
+%å‡½æ•°ï¼šå¯¹ä¸»çª—å£è¿›è¡Œä¸Šé‡‡æ ·
 function new_signal = upsampling(original_signal,upsampling_factor)
 
-    % Ô­ĞÅºÅ
+    % åŸä¿¡å·
     original_x = (1:numel(original_signal))';
     original_y = original_signal;
-    % ÉÏ²ÉÑùºóµÄ²ÉÑùµãÊı
+    % ä¸Šé‡‡æ ·åçš„é‡‡æ ·ç‚¹æ•°
     upsampled_length = length(original_x) * upsampling_factor;
-    % ÉÏ²ÉÑùºóµÄ²ÉÑùµãµÄ x ×ø±ê
+    % ä¸Šé‡‡æ ·åçš„é‡‡æ ·ç‚¹çš„ x åæ ‡
     upsampled_x = linspace(1, length(original_x), upsampled_length);
-    % Ê¹ÓÃ¶àÏîÊ½²åÖµ¶ÔÔ­ĞÅºÅ½øĞĞÉÏ²ÉÑù
+    % ä½¿ç”¨å¤šé¡¹å¼æ’å€¼å¯¹åŸä¿¡å·è¿›è¡Œä¸Šé‡‡æ ·
     interpolated_signal = interp1(original_x, original_y, upsampled_x, 'spline');
     new_signal = [upsampled_x; interpolated_signal];
 end
 
 % function new_signal = upsampling(original_signal, upsampling_factor, method)
-    % ÊäÈë²ÎÊı£º
-    % original_signal - Ô­Ê¼ĞÅºÅ
-    % upsampling_factor - ÉÏ²ÉÑùÒò×Ó
-    % method - ²åÖµ·½·¨£¬¿ÉÑ¡Öµ£º'linear', 'spline', 'polyfit'
+    % è¾“å…¥å‚æ•°ï¼š
+    % original_signal - åŸå§‹ä¿¡å·
+    % upsampling_factor - ä¸Šé‡‡æ ·å› å­
+    % method - æ’å€¼æ–¹æ³•ï¼Œå¯é€‰å€¼ï¼š'linear', 'spline', 'polyfit'
     
-%     % Ô­ĞÅºÅµÄ²ÉÑùµãÎ»ÖÃ
+%     % åŸä¿¡å·çš„é‡‡æ ·ç‚¹ä½ç½®
 %     original_x = (1:numel(original_signal))';
 %     original_y = original_signal;
 % 
-%     % ¼ÆËãÉÏ²ÉÑùºóµÄĞÅºÅ³¤¶ÈºÍÎ»ÖÃ
+%     % è®¡ç®—ä¸Šé‡‡æ ·åçš„ä¿¡å·é•¿åº¦å’Œä½ç½®
 %     upsampled_length = length(original_x) * upsampling_factor;
 %     upsampled_x = linspace(1, length(original_x), upsampled_length)';
 % 
 %     switch method
 %         case 'linear'
-%             % ÏßĞÔ²åÖµ
+%             % çº¿æ€§æ’å€¼
 %             interpolated_signal = interp1(original_x, original_y, upsampled_x, 'linear');
 %             
 %         case 'spline'
-%             % ÑùÌõ²åÖµ
+%             % æ ·æ¡æ’å€¼
 %             interpolated_signal = interp1(original_x, original_y, upsampled_x, 'spline');
 %             
 %         case 'polyfit'
-%             % ¶àÏîÊ½ÄâºÏ²åÖµ
-%             poly_order = 1; % Éè¶¨¶àÏîÊ½µÄ½×Êı
+%             % å¤šé¡¹å¼æ‹Ÿåˆæ’å€¼
+%             poly_order = 1; % è®¾å®šå¤šé¡¹å¼çš„é˜¶æ•°
 %             p = polyfit(original_x, original_y, poly_order);
 %             interpolated_signal = polyval(p, upsampled_x);
 %             
@@ -46,7 +46,7 @@ end
 %             error('Unsupported interpolation method. Use ''linear'', ''spline'', or ''polyfit''.');
 %     end
 % 
-%     % ·µ»ØÉÏ²ÉÑùºóµÄĞÅºÅ
+%     % è¿”å›ä¸Šé‡‡æ ·åçš„ä¿¡å·
 %     new_signal = [upsampled_x, interpolated_signal];
 % end
 % 

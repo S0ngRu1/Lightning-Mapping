@@ -1,17 +1,17 @@
-% ¶¨Òå¼ÆËã¦ÓijµÄÀíÏëÖµ¦Ó_ij^obsµÄº¯Êı
+% å®šä¹‰è®¡ç®—Ï„ijçš„ç†æƒ³å€¼Ï„_ij^obsçš„å‡½æ•°
 function tau_ij_obs = calculate_tau_obs(cos_alpha, cos_beta, type)
-    % ³õÊ¼»¯Êä³ö±äÁ¿
+    % åˆå§‹åŒ–è¾“å‡ºå˜é‡
     tau_ij_obs = zeros(1, 3);
 
-    % ¸ù¾İ type ²ÎÊıÑ¡Ôñ²»Í¬µÄ²ÎÊı¼¯
-    if strcmp(type, 'chj') % ´Ó»¯¾Ö
+    % æ ¹æ® type å‚æ•°é€‰æ‹©ä¸åŒçš„å‚æ•°é›†
+    if strcmp(type, 'chj') % ä»åŒ–å±€
         angle12 = -2.8381;
         angle13 = 50.3964;
         angle23 = 120.6568;
         d12 = 41.6496;
         d13 = 36.9015;
         d23 = 35.4481;
-    elseif strcmp(type, 'yld') % ÒıÀ×³¡
+    elseif strcmp(type, 'yld') % å¼•é›·åœº
         angle12 = -110.8477;
         angle13 = -65.2405;
         angle23 = -19.6541;
@@ -19,10 +19,10 @@ function tau_ij_obs = calculate_tau_obs(cos_alpha, cos_beta, type)
         d13 = 34.9335;
         d23 = 24.9675;
     else
-        error('Î´ÖªµÄÀàĞÍ£º%s', type);
+        error('æœªçŸ¥çš„ç±»å‹ï¼š%s', type);
     end
 
-    % Ê¹ÓÃÊ½(3)¼ÆËã¦ÓijµÄÀíÏëÖµ¦Ó_ij^obs
+    % ä½¿ç”¨å¼(3)è®¡ç®—Ï„ijçš„ç†æƒ³å€¼Ï„_ij^obs
     tau_ij_obs(1) = (cos_alpha * sind(angle12) + cos_beta * cosd(angle12)) * d12 / 0.299792458;
     tau_ij_obs(2) = (cos_alpha * sind(angle13) + cos_beta * cosd(angle13)) * d13 / 0.299792458;
     tau_ij_obs(3) = (cos_alpha * sind(angle23) + cos_beta * cosd(angle23)) * d23 / 0.299792458;

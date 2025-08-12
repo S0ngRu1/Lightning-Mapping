@@ -1,38 +1,38 @@
-% % ¶¨ÒåÄ¿±êº¯Êı
+% % å®šä¹‰ç›®æ ‡å‡½æ•°
 % function F = objective(x,t12,t13,t23,type)
-%     % ÌáÈ¡´ıÓÅ»¯µÄ±äÁ¿
+%     % æå–å¾…ä¼˜åŒ–çš„å˜é‡
 %     cos_alpha = x(1);
 %     cos_beta = x(2);
 % 
-%     % ¼ÆËã¦ÓijµÄÀíÏëÖµ¦Ó_ij^obs
+%     % è®¡ç®—Ï„ijçš„ç†æƒ³å€¼Ï„_ij^obs
 %     tau_ij_obs = calculate_tau_obs(cos_alpha, cos_beta,type);
-%     % ¼ÆËã¦¤t12, ¦¤t13, ¦¤t23
+%     % è®¡ç®—Î”t12, Î”t13, Î”t23
 %     delta_t12 = delta_t(t12,tau_ij_obs(1));
 %     delta_t13 = delta_t(t13,tau_ij_obs(2));
 %     delta_t23 = delta_t(t23,tau_ij_obs(3));
 % 
-%     % ¼ÆËãÄ¿±êº¯Êı£¬¼´Ê½(4)
+%     % è®¡ç®—ç›®æ ‡å‡½æ•°ï¼Œå³å¼(4)
 %     F = (delta_t12^2 + delta_t13^2 + delta_t23^2) / 75;
 % end
 
-% ¶¨ÒåÄ¿±êº¯Êı (ÕıÈ·°æ±¾)
+% å®šä¹‰ç›®æ ‡å‡½æ•° (æ­£ç¡®ç‰ˆæœ¬)
 function F = objective(x, t12_meas, t13_meas, t23_meas, type)
-    % ÌáÈ¡´ıÓÅ»¯µÄ±äÁ¿
+    % æå–å¾…ä¼˜åŒ–çš„å˜é‡
     cos_alpha = x(1);
     cos_beta = x(2);
 
-    % ¼ÆËã¦ÓijµÄÀíÂÛÖµ ¦Ó_model (ÎÒ½« obs ¸ÄÎª model£¬ÓïÒå¸üÇåÎú)
+    % è®¡ç®—Ï„ijçš„ç†è®ºå€¼ Ï„_model (æˆ‘å°† obs æ”¹ä¸º modelï¼Œè¯­ä¹‰æ›´æ¸…æ™°)
     tau_model = calculate_tau_obs(cos_alpha, cos_beta, type);
     
-    % t12, t13, t23 ÊÇ²âÁ¿µÄÊ±ÑÓ (measurement)
-    % tau_model(1), tau_model(2), tau_model(3) ÊÇ¸ù¾İµ±Ç° x ¼ÆËã³öµÄÀíÂÛÊ±ÑÓ
+    % t12, t13, t23 æ˜¯æµ‹é‡çš„æ—¶å»¶ (measurement)
+    % tau_model(1), tau_model(2), tau_model(3) æ˜¯æ ¹æ®å½“å‰ x è®¡ç®—å‡ºçš„ç†è®ºæ—¶å»¶
     
-    % ¼ÆËã²Ğ²îÏòÁ¿
+    % è®¡ç®—æ®‹å·®å‘é‡
     residual12 = t12_meas - tau_model(1);
     residual13 = t13_meas - tau_model(2);
     residual23 = t23_meas - tau_model(3);
 
-    % ·µ»Ø²Ğ²îÏòÁ¿ F
-    % lsqnonlin »á×Ô¶¯×îĞ¡»¯ sum(F.^2)
+    % è¿”å›æ®‹å·®å‘é‡ F
+    % lsqnonlin ä¼šè‡ªåŠ¨æœ€å°åŒ– sum(F.^2)
     F = [residual12; residual13; residual23];
 end
