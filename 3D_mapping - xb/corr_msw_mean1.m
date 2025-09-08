@@ -18,8 +18,8 @@ window = window_length * upsampling_factor;
 % ch2 = read_signal('..\\2024 822 85933.651462CH2.dat',signal_length,r_loction);
 % ch3 = read_signal('..\\2024 822 85933.651462CH3.dat',signal_length,r_loction+215/5);
 %引雷点
-signal_length = 1.5e6;
-r_loction = 3.985e8;
+signal_length = 2e7;
+r_loction = 3.8e8;
 d12 = 24.9586;
 d13 = 34.9335;
 d23 = 24.9675;
@@ -37,7 +37,7 @@ filtered_signal3 = filter_bp(real(windowsignal(detrend(ch3))),30e6,80e6,5);
 
 
 % 打开一个文本文件用于写入运行结果
-fileID = fopen('result_yld_3.985e8_4e8_window_512_128_去零飘——阈值15_30_80.txt', 'w');
+fileID = fopen('result_yld_3.8e8_4e8_window_512_128_去零飘加窗—阈值15_30_80.txt', 'w');
 fprintf(fileID, '%-13s%-15s%-15s%-15s%-15s%-15s%-15s%-15s%-15s%-15s%-15s\n', ...
     'Start_loc','peak','t12', 't13', 't23', 'cos_alpha_opt', 'cos_beta_opt','Azimuth', 'Elevation', 'Rcorr', 't123');
 

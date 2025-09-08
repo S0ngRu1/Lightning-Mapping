@@ -1,10 +1,10 @@
 
 noise_std = 3.545;
-signal_length = 1e3;
-r_loction = 3.69e8;
+signal_length = 200;
+r_loction = 3.8e8+3500+9000+500;
 ch1 = read_signal('..\\20240822165932.6610CH1.dat',signal_length,r_loction);
 filtered_signal1 = filter_bp(ch1,30e6,80e6,5);
-result = find_pulses_advanced(filtered_signal1,noise_std,200e6,3,10);
+result = find_pulses_advanced(filtered_signal1,noise_std,200e6,3,5);
 
 %% ========================================================================
 %  可视化 find_pulses_advanced 算法的结果
@@ -25,18 +25,18 @@ detection_threshold = noise_std * 3; % 与您调用函数时使用的因子保�
 sample_indices = 1:length(waveform);  % 原始采样点索引（1-based）
 
 % --- 2. 创建图形并绘制基础信号 ---
-figure('Name', '先进脉冲发现算法可视化结果（原始坐标）', 'Position', [50, 50, 1400, 700]);
+figure;
 hold on;
 
 % 绘制滤波后的原始信号（使用采样点索引作为横轴）
-plot(sample_indices, waveform, 'Color', [0.3, 0.7, 1.0], 'DisplayName', '滤波后信号');
+plot(sample_indices, waveform, 'Color', [0.3, 0.7, 1.0], 'DisplayName', '预处理后信号');
 
 % 绘制希尔伯特包络（原始坐标）
-plot(sample_indices, envelope, 'r-', 'LineWidth', 2, 'DisplayName', '希尔伯特包络');
+plot(sample_indices, envelope, 'r-', 'LineWidth', 1, 'DisplayName', '希尔伯特包络');
 
 % 绘制检测阈值线（原始坐标）
 plot(sample_indices, ones(size(sample_indices)) * detection_threshold, ...
-    '--', 'Color', [1, 0.5, 0], 'LineWidth', 2, 'DisplayName', '检测阈值');
+    '--', 'Color', [1, 0.5, 0], 'LineWidth', 1, 'DisplayName', '检测阈值');
 
 % --- 3. 在图上标记算法找到的脉冲 ---
 if ~isempty(pulse_catalog)
@@ -64,12 +64,12 @@ if ~isempty(pulse_catalog)
         
         plot(precise_loc_samples, precise_amplitude, ...
              'p', 'MarkerFaceColor', 'yellow', 'MarkerEdgeColor', 'k', ...
-             'MarkerSize', 15, 'HandleVisibility', 'off');
+             'MarkerSize', 5, 'HandleVisibility', 'off');
     end
     
     % 图例保持一致
     h_boundary = patch(NaN, NaN, [0.5, 0.5, 0.5], 'FaceAlpha', 0.2, 'EdgeColor', 'none');
-    h_timing = plot(NaN, NaN, 'p', 'MarkerFaceColor', 'yellow', 'MarkerEdgeColor', 'k', 'MarkerSize', 15);
+    h_timing = plot(NaN, NaN, 'p', 'MarkerFaceColor', 'yellow', 'MarkerEdgeColor', 'k', 'MarkerSize', 5);
     legend('滤波后信号', '希尔伯特包络', '检测阈值', '脉冲边界', '精确正时');
     
 else
@@ -79,10 +79,8 @@ end
 
 % --- 4. 美化图形（更新坐标轴标签为原始坐标）---
 hold off;
-title('脉冲发现算法可视化诊断图（原始采样点坐标）', 'FontSize', 14);
-xlabel('采样点索引', 'FontSize', 12);  % 横轴改为采样点索引
-ylabel('幅度 (任意单位)', 'FontSize', 12);
-grid on;
+xlabel('采样点');  % 横轴改为采样点索引
+ylabel('幅值');
 set(gca, 'FontSize', 10);
 xlim([min(sample_indices), max(sample_indices)]);  % 用原始索引限制x轴范围
 

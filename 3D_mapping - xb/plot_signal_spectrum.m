@@ -7,8 +7,8 @@ x = (0:n/2-1) * (fs/n);
 figure
 plot(x, 2.0 / n * abs(fft_signal(1:n/2)))
 
-xlabel('Frequency (MHz)')
-ylabel('Amplitude')
+xlabel('频率(MHz)')
+ylabel('幅值')
 grid on
 end
 

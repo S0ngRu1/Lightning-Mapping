@@ -2,13 +2,13 @@ clear;
 N = 3;
 c = 0.299792458;
 fs = 200e6;
-fp_start = 50e6; % 通带起始
+fp_start = 30e6; % 通带起始
 fp_end = 80e6;   % 通带结束
 upsampling_factor = 50;
-% window = 'hann';
+window = 'hann';
+% window = 'exp_hann';
 % window = 'blackman';
 % window = 'gausswin';
-window = 'conv';
 % 从化局
 % angle12 = -2.8381;
 % angle13 = 50.3964;
@@ -46,22 +46,21 @@ processed_ch1_yld = filter_bp(detrend(ch1),fp_start,fp_end,5);
 processed_ch2_yld = filter_bp(detrend(ch2),fp_start,fp_end,5);
 processed_ch3_yld = filter_bp(detrend(ch3),fp_start,fp_end,5);
 
-% ========== 模板信号读取 ==========
-template_raw = read_signal('..\\20240822165932.6610CH1.dat', 50, 4.698e8+23300+720);
-% template_filtered = filtfilt(b, a, template_raw);
-template_filtered = filter_bp(detrend(template_raw),fp_start,fp_end,5);
-template_norm = template_filtered / norm(template_filtered);  % 单位化
 
-file_name = 'result_yld_3.8e8_4e8_window_512_128_去零飘——阈值_15_'+string(fp_start)+'_'+string(fp_end)+'_'+ window +'.txt';
+file_name = 'result_yld_3.8e8_4e8_window_512_128_阈值60_去零飘1_'+string(fp_start/1e6)+'_'+string(fp_end/1e6)+'_'+ window +'.txt';
 % 打开一个文本文件用于写入运行结果
 fileID = fopen(file_name, 'w');
 fprintf(fileID, '%-13s%-15s%-15s%-15s%-15s%-15s%-15s%-15s%-15s%-15s%-15s\n', ...
     'Start_loc','peak','t12', 't13', 't23', 'cos_alpha_opt', 'cos_beta_opt','Azimuth', 'Elevation', 'Rcorr', 't123');
 
-min_peak_height = 15; % 峰值最小高度，
+% %引雷点阈值
+% noise = read_signal('..\\20240822165932.6610CH1.dat',1e8,1e8);
+% filtered_noise = filter_bp(noise,fp_start,fp_end,5);
+% min_peak_height = mean(filtered_noise)+5*std(filtered_noise);
+min_peak_height = 60;
 min_peak_distance = 128;
 % 以峰值为中心，进行处理的信号片段的总长度
-processing_window_len = 512;
+processing_window_len =1024;
 
 % 寻找能量峰值的位置
 [pks, locs] = findpeaks(processed_ch1_yld, ...
@@ -71,13 +70,17 @@ if strcmp(window,'hann')
     % 创建一个汉宁窗
     win = hann(processing_window_len);
     win = win(:); % 确保是列向量
+elseif strcmp(window,'exp_hann')
+    % 创建一个指数汉宁窗
+    win = exp_hanning(processing_window_len);
+    win = win(:); % 确保是列向量
 elseif strcmp(window,'blackman')
     % 创建一个布莱克曼窗
     win = blackman(processing_window_len);
     win = win(:); % 确保是列向量
 elseif strcmp(window,'gausswin')
     % 创建一个高斯窗
-    win = gausswin(processing_window_len, 4);
+    win = gausswin(processing_window_len, 8);
     win = win(:); % 确保是列向量
 else
     win = [];
@@ -291,28 +294,6 @@ tau_ij_obs(2) = (cos_alpha * sind(angle13) + cos_beta * cosd(angle13)) * d13 / 0
 tau_ij_obs(3) = (cos_alpha * sind(angle23) + cos_beta * cosd(angle23)) * d23 / 0.299792458;
 end
 
-function windowed_signal = conv_window(signal, template)
-    k_std = 1.5; % 默认将阈值设在高于中位数1.5个标准差的位置
-    c_slope = 1; % 默认斜率系数为1
-
-    % 1. 模板处理与基础卷积（匹配滤波）
-    % flipud(template)是为了进行匹配滤波，'same'确保输出和输入signal长度一致
-    conv_result = conv(signal, flipud(template), 'same');  
-    noise_std = std(conv_result);
-    noise_median = median(conv_result);
-    
-    % b: 阈值中心。设置为略高于噪声的平均水平
-    % 使用中位数比均值更鲁棒，因为它不受少数极端强脉冲的影响
-    sigmoid_center_b = noise_median + k_std * noise_std;
-    
-    % a: 曲线陡峭度。与噪声标准差成反比
-    sigmoid_slope_a = c_slope / noise_std;
-    % 2. Sigmoid变换（将卷积结果映射到[0,1]区间）
-    confidence_map = 1 ./ (1 + exp(-sigmoid_slope_a .* (abs(conv_result) - sigmoid_center_b)));
-    
-    % 3. 加权增强与抑制
-    windowed_signal = conv_result .* confidence_map;
-end
 
 
 %% 设计巴特沃斯带通滤波器
@@ -325,5 +306,23 @@ function filtered_signal = filter_bp(signal,f1,f2,order)
 
 end
 
-
+function w = exp_hanning(n, alpha)
+    % 指数加权汉宁窗：通过指数因子强化边缘衰减
+    % 输入：n - 窗长；alpha - 陡峭度参数（>0，值越大边缘越陡）
+    % 输出：w - 指数加权汉宁窗（归一化至最大值为1）
+    
+    if nargin < 2
+        alpha = 3;  % 默认陡峭度参数
+    end
+    
+    % 生成0到1的归一化索引
+    k = 0:n-1;
+    % 标准汉宁窗
+    hann_win = 0.5 - 0.5 * cos(2*pi*k/(n-1));
+    % 指数因子：中心权重为1，向边缘快速衰减
+    exp_factor = exp(-alpha * (abs(k - (n-1)/2) ./ ((n-1)/2)).^2);
+    % 组合并归一化
+    w = hann_win .* exp_factor;
+    w = w / max(w);
+end
     
