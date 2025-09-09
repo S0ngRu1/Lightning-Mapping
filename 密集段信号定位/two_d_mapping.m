@@ -30,9 +30,11 @@ d23 = 24.9675;
 angle12 = -110.8477;
 angle13 = -65.2405;
 angle23 = -19.6541;
-ch1 = read_signal('..\\20240822165932.6610CH1.dat',signal_length,r_loction);
-ch2 = read_signal('..\\20240822165932.6610CH2.dat',signal_length,r_loction);
-ch3 = read_signal('..\\20240822165932.6610CH3.dat',signal_length,r_loction);
+
+ch1 = read_signal('..\\2023\\20230718175104.9180CH1.dat',signal_length,r_loction);
+ch2 = read_signal('..\\2023\\20230718175104.9180CH2.dat',signal_length,r_loction);
+ch3 = read_signal('..\\2023\\20230718175104.9180CH3.dat',signal_length,r_loction);
+
 
 % 设计一个8阶巴特沃斯带通滤波器
 % order = 8;
