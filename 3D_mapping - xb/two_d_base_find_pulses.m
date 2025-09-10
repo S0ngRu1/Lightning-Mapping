@@ -4,16 +4,16 @@
 clear; clc; close all;
 
 N = 3; c = 0.299792458; fs = 200e6; step = 1e4; upsampling_factor = 50;
-start_signal_loc = 3.985e8; end_signal_loc = 4e8;
+start_signal_loc = 3e8; end_signal_loc = 6e8;
 all_start_signal_loc = start_signal_loc:step:end_signal_loc;
 % 从化局
-% angle12 = -2.8381; angle13 = 50.3964; angle23 = 120.6568;
+% angle12 = -2.8381; angle13 = 5 0.3964; angle23 = 120.6568;
 % d12 = 41.6496; d13 = 36.9015; d23 = 35.4481;
 %引雷点
 d12 = 24.9586; d13 = 34.9335; d23 = 24.9675;
 angle12 = -110.8477; angle13 = -65.2405; angle23 = -19.6541;
 %引雷点阈值
-noise = read_signal('..\\20240822165932.6610CH1.dat',1e8,1e8);
+noise = read_signal('..\\2023\\20230718175104.9180CH1.dat',1e5,1e8);
 filtered_noise = filter_bp(noise,30e6,80e6,5);
 noise_std = std(filtered_noise);
 threshold_factor = 3;      % find_pulses_advanced 的阈值因子
@@ -24,7 +24,7 @@ pulses_per_group = 4; % 定义每组包含n个脉冲
 % filtered_noise = filter_bp(noise,30e6,80e6,5);
 % threshold = mean(filtered_noise)+5*std(filtered_noise);
 % --- 文件写入准备 ---
-filename = 'result_yld_find_pulse_先去零飘加窗函数带通滤波_'  + string(pulses_per_group) + '.txt';
+filename = '20230718175104_result_yld_find_pulse_先去零飘带通滤波_加窗函数_'  + string(pulses_per_group) + '.txt';
 fileID = fopen(filename, 'w');
 fprintf(fileID, '%-13s%-15s%-15s%-15s%-15s%-15s%-15s%-15s%-15s%-15s%-15s\n', ...
     'Start_loc','Pulse_Len','t12', 't13', 't23', 'cos_alpha_opt', 'cos_beta_opt','Azimuth', 'Elevation', 'Rcorr', 't123');
@@ -38,16 +38,16 @@ for j = 1:num_total_blocks
     current_block_start = all_start_signal_loc(j);
     % --- 1. 读取当前处理块的完整信号 ---
     %     引雷点
-    ch1 = read_signal('..\\20240822165932.6610CH1.dat', step, current_block_start);
-    ch2 = read_signal('..\\20240822165932.6610CH2.dat', step, current_block_start);
-    ch3 = read_signal('..\\20240822165932.6610CH3.dat', step, current_block_start);
+    ch1 = read_signal('..\\2023\\20230718175104.9180CH1.dat', step, current_block_start);
+    ch2 = read_signal('..\\2023\\20230718175104.9180CH2.dat', step, current_block_start);
+    ch3 = read_signal('..\\2023\\20230718175104.9180CH3.dat', step, current_block_start);
     %     从化局
     % ch1 = read_signal('..\\2024 822 85933.651462CH1.dat',step,current_block_start);
     % ch2 = read_signal('..\\2024 822 85933.651462CH2.dat',step,current_block_start);
     % ch3 = read_signal('..\\2024 822 85933.651462CH3.dat',step,current_block_start+215/5);
-    filtered_signal1 = filter_bp(real(windowsignal(detrend(ch1))),30e6,80e6,5);
-    filtered_signal2 = filter_bp(real(windowsignal(detrend(ch2))),30e6,80e6,5);
-    filtered_signal3 = filter_bp(real(windowsignal(detrend(ch3))),30e6,80e6,5);
+    filtered_signal1 = filter_bp(detrend(ch1),30e6,80e6,5);
+    filtered_signal2 = filter_bp(detrend(ch2),30e6,80e6,5);
+    filtered_signal3 = filter_bp(detrend(ch3),30e6,80e6,5);
     pulse_catalog_in_block = find_pulses_advanced(filtered_signal1, noise_std, fs, threshold_factor, merge_gap_samples);
 
     if isempty(pulse_catalog_in_block)
@@ -88,9 +88,9 @@ for j = 1:num_total_blocks
 
         % --- 后续的所有处理都使用填充对齐后的信号 ---
         [ch1_new, ch2_new, ch3_new] = deal(...
-            real(windowsignal(detrend(signal1_padded))), ...
-            real(windowsignal(detrend(signal2_padded))), ...
-            real(windowsignal(detrend(signal3_padded))));
+            real(windowsignal(signal1_padded)), ...
+            real(windowsignal(signal2_padded)), ...
+            real(windowsignal(signal3_padded)));
 
 
         % 上采样

@@ -1,6 +1,6 @@
 %自己的结果
 % logicalIndex = abs(result1.t123) < 1 & abs(result1.Rcorr) > 0.5;
-logicalIndex = abs(result1.t123) < 1 & abs(result1.Rcorr) > 0.3 &  result1.Start_loc < 403e6 & result1.Start_loc > 401e6;
+logicalIndex = abs(result1.t123) < 1 & abs(result1.Rcorr) > 0.3 &  result1.Start_loc < 5.4e8 & result1.Start_loc > 5.2e8;
 filteredTable1 = result1(logicalIndex, :);
 Start_loc = filteredTable1.Start_loc;
 colorValues = (Start_loc - 3e8) / 2e8;
@@ -11,9 +11,9 @@ xlabel('Azimuth');
 xlim([0, 360]);
 xticks(0:40:360);
 ylabel('Elevation');
-ylim([-40, 100]);
-yticks(-40:20:100);
-colormap('hot');
+ylim([0, 90]);
+yticks(0:10:90);
+colormap('cool');
 colorbar;
 caxis([0, 1.5]);
 grid on;

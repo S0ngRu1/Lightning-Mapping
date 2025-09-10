@@ -22,8 +22,8 @@ window = 'hann';
 % ch2 = read_signal('..\\2024 822 85933.651462CH2.dat',signal_length,r_loction);
 % ch3 = read_signal('..\\2024 822 85933.651462CH3.dat',signal_length,r_loction+215/5);
 %引雷点
-signal_length = 2e7;
-r_loction = 3.8e8;
+signal_length = 3e8;
+r_loction = 3e8;
 d12 = 24.9586;
 d13 = 34.9335;
 d23 = 24.9675;
@@ -45,24 +45,25 @@ ch3 = read_signal('..\\2023\\20230718175104.9180CH3.dat',signal_length,r_loction
 % processed_ch3_yld = filtfilt(b, a, ch3);
 
 processed_ch1_yld = filter_bp(detrend(ch1),fp_start,fp_end,5);
+clear ch1
 processed_ch2_yld = filter_bp(detrend(ch2),fp_start,fp_end,5);
+clear ch2
 processed_ch3_yld = filter_bp(detrend(ch3),fp_start,fp_end,5);
+clear ch3
 
-
-file_name = 'result_yld_3.8e8_4e8_window_512_128_阈值60_去零飘1_'+string(fp_start/1e6)+'_'+string(fp_end/1e6)+'_'+ window +'.txt';
+file_name = '20230718175104_result_yld_3e8_6e8_window_4096_1024_阈值4倍标准差_去零飘1_'+string(fp_start/1e6)+'_'+string(fp_end/1e6)+'_'+ window +'.txt';
 % 打开一个文本文件用于写入运行结果
 fileID = fopen(file_name, 'w');
 fprintf(fileID, '%-13s%-15s%-15s%-15s%-15s%-15s%-15s%-15s%-15s%-15s%-15s\n', ...
     'Start_loc','peak','t12', 't13', 't23', 'cos_alpha_opt', 'cos_beta_opt','Azimuth', 'Elevation', 'Rcorr', 't123');
 
 % %引雷点阈值
-% noise = read_signal('..\\20240822165932.6610CH1.dat',1e8,1e8);
-% filtered_noise = filter_bp(noise,fp_start,fp_end,5);
-% min_peak_height = mean(filtered_noise)+5*std(filtered_noise);
-min_peak_height = 60;
-min_peak_distance = 128;
+noise = read_signal('..\\2023\\20230718175104.9180CH1.dat',1e5,1e8);
+filtered_noise = filter_bp(noise,fp_start,fp_end,5);
+min_peak_height = mean(filtered_noise)+4*std(filtered_noise);
+min_peak_distance = 1024;
 % 以峰值为中心，进行处理的信号片段的总长度
-processing_window_len =1024;
+processing_window_len =4096;
 
 % 寻找能量峰值的位置
 [pks, locs] = findpeaks(processed_ch1_yld, ...

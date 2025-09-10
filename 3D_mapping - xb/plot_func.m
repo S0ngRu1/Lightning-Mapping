@@ -26,7 +26,7 @@ caxis([0, 1.5]);
 grid on;
 
 %结果1
-logicalIndex = abs(result1.t123) < 1 & abs(result1.Rcorr) > 0.6 & result1.Start_loc < 4e8 & result1.Start_loc > 3.8e8 & result1.Elevation <80;
+logicalIndex = abs(result1.t123) < 1 & abs(result1.Rcorr) > 0.6 & result1.Start_loc < 5.4e8 & result1.Start_loc > 5e8 & result1.Elevation <80;
 filteredTable1 = result1(logicalIndex, :);
 % 使用 Start_loc 作为时间变化的指标
 Start_loc = filteredTable1.Start_loc;
@@ -34,17 +34,22 @@ Start_loc_min = min(Start_loc);
 Start_loc_max = max(Start_loc);
 colorValues = (Start_loc - Start_loc_min) / (Start_loc_max - Start_loc_min); % 归一化 Start_loc 值到 [0, 1]
 figure;
-scatter(filteredTable1.Azimuth, filteredTable1.Elevation, 2, colorValues, 'filled');
+scatter(filteredTable1.Azimuth, filteredTable1.Elevation, 1, colorValues, 'filled');
 xlabel('方位角');
 xlim([0, 360]);
 xticks(0:40:360);
 ylabel('仰角');
 ylim([0, 90]);
 yticks(0:10:90);
-colormap('cool'); % 使用热图颜色映射
+colormap('hsv'); % 使用热图颜色映射
 colorbar;
 caxis([0, 1]); % 设置颜色范围
 grid on;
+cb = colorbar;
+cb.YDir = 'reverse';  % 把 colorbar 的刻度反过来
+cb.TickLength = 0;     % 无刻度线
+cb.YTick = [];         % 无数字标签
+
 
 
 % %结果3
@@ -138,6 +143,19 @@ grid on; % 添加网格
 hold off;
 
 
+
+signal_length = 1024;
+r_loction_yld = 5.2e8+91404+1830620+703260+7049500;
+ch1_yld = read_signal('..\\2023\\20230718175104.9180CH1.dat',signal_length,r_loction_yld);
+bp_filtered_yld = filter_bp(ch1_yld,30e6,80e6,5);
+figure
+plot(bp_filtered_yld);
+ylim([-80, 80]);
+yticks(-80:20:80); 
+xlim([0, 1024]);
+xticks(0:100:1024);
+xlabel('采样点');ylabel('幅值');
+plot_signal_spectrum(bp_filtered_yld);
 
 
 
@@ -274,6 +292,61 @@ plot_signal_spectrum(ch1_yld);
 plot_power_spectrum(ch1_yld);
 % 绘制滤波后信号功率谱
 plot_power_spectrum(bp_filtered_yld);
+
+
+
+
+logicalIndex = abs(result1.t123) < 1 & abs(result1.Rcorr) > 0.3 &  result1.Start_loc < 6e8 & result1.Start_loc > 5e8;
+filteredTable1 = result1(logicalIndex, :);
+Start_loc = filteredTable1.Start_loc;
+%动态图
+% 归一化颜色值
+Start_loc_min = min(Start_loc);
+Start_loc_max = max(Start_loc);
+colorValues = (Start_loc - Start_loc_min) / (Start_loc_max - Start_loc_min);
+
+% 创建图形
+figure;
+hold on;
+grid on;
+xlabel('方位角');
+xlim([0, 360]);
+xticks(0:40:360);
+ylabel('仰角');
+ylim([0, 90]);
+yticks(0:10:90);
+title('目标点动态呈现');
+colormap('hsv');
+h_bar = colorbar;
+ylabel(h_bar, '归一化起始位置');
+caxis([0, 1]);
+
+% 将颜色值划分为若干个区间（批次）
+numBatches = 5000;  % 控制动态速度，越小越快
+bins = linspace(0, 1, numBatches + 1);
+
+for b = 1:numBatches
+    % 找到当前批次中的点
+    idx = colorValues >= bins(b) & colorValues < bins(b+1);
+    if any(idx)
+        az = filteredTable1.Azimuth(idx);
+        el = filteredTable1.Elevation(idx);
+        colors = colorValues(idx);
+
+        % 一次性绘制当前批次所有点
+        scatter(az, el, 1, colors, 'filled');
+        drawnow;  % 每批次刷新一次
+    end
+end
+
+hold off;
+disp('快速动态绘制完成。');
+
+
+
+
+
+
 
 
 signal_length = 1024;
