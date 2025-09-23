@@ -140,17 +140,17 @@ for i = 1:num_peaks
     t23_gcc = cal_tau(r23_gcc,lags23_gcc');
 
 
-    %从化局
-    %         t12 = t12_gcc *0.1;
-    %         t13 = t13_gcc *0.1+1.600061;
-    %         t23 = t23_gcc *0.1+1.600061;
-    %         t13 = t13_gcc *0.1;
-    %         t23 = t23_gcc *0.1;
+    %
+    %         %从化局
+    %         t12 = t12_gcc *5/upsampling_factor;
+    %         t13 = t13_gcc *5/upsampling_factor+1.600061;
+    %         t23 = t23_gcc *5/upsampling_factor+1.600061;
 
-    %     %引雷场
-    t12 = t12_gcc *0.1;
-    t13 = t13_gcc *0.1;
-    t23 = t23_gcc *0.1;
+
+    %引雷场
+    t12 = t12_gcc *5/upsampling_factor;
+    t13 = t13_gcc *5/upsampling_factor;
+    t23 = t23_gcc *5/upsampling_factor;
 
     cos_beta_0 =((c*t13*d12*sind(angle12))-(c*t12*sind(angle13)*d13))/(d13*d12*sind(angle12-angle13)) ;
     cos_alpha_0 = ((c*t12)/d12-cos_beta_0*cosd(angle12))/sind(angle12);
@@ -301,31 +301,30 @@ end
 
 %% 设计巴特沃斯带通滤波器
 function filtered_signal = filter_bp(signal,f1,f2,order)
-    Fs = 200e6;
-    fn = Fs/2;
-    Wn = [f1 f2]/fn;
-    [b,a] = butter(order,Wn); 
-    filtered_signal = filtfilt(b,a,signal);
+Fs = 200e6;
+fn = Fs/2;
+Wn = [f1 f2]/fn;
+[b,a] = butter(order,Wn);
+filtered_signal = filtfilt(b,a,signal);
 
 end
 
 function w = exp_hanning(n, alpha)
-    % 指数加权汉宁窗：通过指数因子强化边缘衰减
-    % 输入：n - 窗长；alpha - 陡峭度参数（>0，值越大边缘越陡）
-    % 输出：w - 指数加权汉宁窗（归一化至最大值为1）
-    
-    if nargin < 2
-        alpha = 3;  % 默认陡峭度参数
-    end
-    
-    % 生成0到1的归一化索引
-    k = 0:n-1;
-    % 标准汉宁窗
-    hann_win = 0.5 - 0.5 * cos(2*pi*k/(n-1));
-    % 指数因子：中心权重为1，向边缘快速衰减
-    exp_factor = exp(-alpha * (abs(k - (n-1)/2) ./ ((n-1)/2)).^2);
-    % 组合并归一化
-    w = hann_win .* exp_factor;
-    w = w / max(w);
+% 指数加权汉宁窗：通过指数因子强化边缘衰减
+% 输入：n - 窗长；alpha - 陡峭度参数（>0，值越大边缘越陡）
+% 输出：w - 指数加权汉宁窗（归一化至最大值为1）
+
+if nargin < 2
+    alpha = 3;  % 默认陡峭度参数
 end
-    
+
+% 生成0到1的归一化索引
+k = 0:n-1;
+% 标准汉宁窗
+hann_win = 0.5 - 0.5 * cos(2*pi*k/(n-1));
+% 指数因子：中心权重为1，向边缘快速衰减
+exp_factor = exp(-alpha * (abs(k - (n-1)/2) ./ ((n-1)/2)).^2);
+% 组合并归一化
+w = hann_win .* exp_factor;
+w = w / max(w);
+end

@@ -3,9 +3,9 @@ close all;
 clc;
 %% ==================== 1. 参数设置与数据加载 ====================
 % --- 用户需根据实际情况修改的参数 ---
-DATA_FILE = '20230718175104_result_yld_3e8_6e8_window_512_128_阈值4倍标准差_去零飘1_30_80_hann.txt';
+DATA_FILE = '20240822165932_result_yld_window512_128_去零飘——阈值15_30_80_最优结果.txt';
 SAMPLING_RATE = 200e6;            % 数据采集卡采样率 (Hz), 200 MS/s
-ASSUMED_HEIGHT = 2500;            % 假设的放电平均高度 (米), 用于将角度转换成距离
+ASSUMED_HEIGHT = 3000;            % 假设的放电平均高度 (米), 用于将角度转换成距离
 
 % --- 列定义  ---
 COL_START_LOC = 1;
@@ -15,8 +15,8 @@ COL_RCORR     = 10;
 COL_T123      = 11;
 
 % --- 定义两个事件的时间窗口 (单位: 采样点) ---
-event1_range = [4.0e8, 4.2e8];
-event2_range = [5.2e8, 5.4e8];
+event1_range = [3.8e8, 3.9e8];
+event2_range = [3.9e8, 4e8];
 
 % --- 加载原始数据 ---
 fprintf('正在加载原始数据: %s\n', DATA_FILE);
@@ -118,7 +118,7 @@ if exist('x_coords1', 'var') && ~isempty(x_coords1)
     % 【修改】更新坐标轴标签和标题
     xlabel('东西方向 / m (East-West)');
     ylabel('南北方向 / m (North-South)');
-    title(sprintf('负先导分形维数 (D = %.2f)', fractal_dim1));
+    title(sprintf('正先导分形维数 (D = %.2f)', fractal_dim1));
     set(gca, 'FontSize', 12);
 else
     title(sprintf('事件 1 (%.2e - %.2e)\n无足够数据点', event1_range(1), event1_range(2)));
@@ -133,7 +133,7 @@ if exist('x_coords2', 'var') && ~isempty(x_coords2)
     % 【修改】更新坐标轴标签和标题
     xlabel('东西方向 / m (East-West)');
     ylabel('南北方向 / m (North-South)');
-    title(sprintf('正先导分形维数 (D = %.2f)', fractal_dim2));
+    title(sprintf('负先导分形维数 (D = %.2f)', fractal_dim2));
     set(gca, 'FontSize', 12);
 else
     title(sprintf('事件 2 (%.2e - %.2e)\n无足够数据点', event2_range(1), event2_range(2)));

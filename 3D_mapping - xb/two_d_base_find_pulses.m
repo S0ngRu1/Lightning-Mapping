@@ -3,7 +3,7 @@
 % =========================================================================
 clear; clc; close all;
 
-N = 3; c = 0.299792458; fs = 200e6; step = 1e4; upsampling_factor = 50;
+N = 3; c = 0.299792458; fs = 200e6; step = 1e4; upsampling_factor = 1;
 start_signal_loc = 3e8; end_signal_loc = 6e8;
 all_start_signal_loc = start_signal_loc:step:end_signal_loc;
 % 从化局
@@ -24,7 +24,7 @@ pulses_per_group = 4; % 定义每组包含n个脉冲
 % filtered_noise = filter_bp(noise,30e6,80e6,5);
 % threshold = mean(filtered_noise)+5*std(filtered_noise);
 % --- 文件写入准备 ---
-filename = '20230718175104_result_yld_find_pulse_先去零飘带通滤波_加窗函数_'  + string(pulses_per_group) + '.txt';
+filename = '20230718175104_result_yld_find_pulse_先去零飘带通滤波_加窗函数_上采样_1'  + string(pulses_per_group) + '.txt';
 fileID = fopen(filename, 'w');
 fprintf(fileID, '%-13s%-15s%-15s%-15s%-15s%-15s%-15s%-15s%-15s%-15s%-15s\n', ...
     'Start_loc','Pulse_Len','t12', 't13', 't23', 'cos_alpha_opt', 'cos_beta_opt','Azimuth', 'Elevation', 'Rcorr', 't123');
@@ -115,15 +115,15 @@ for j = 1:num_total_blocks
 
         %
         %         %从化局
-        %         t12 = t12_gcc *0.1;
-        %         t13 = t13_gcc *0.1+1.600061;
-        %         t23 = t23_gcc *0.1+1.600061;
+        %         t12 = t12_gcc *5/upsampling_factor;
+        %         t13 = t13_gcc *5/upsampling_factor+1.600061;
+        %         t23 = t23_gcc *5/upsampling_factor+1.600061;
 
 
         %引雷场
-        t12 = t12_gcc *0.1;
-        t13 = t13_gcc *0.1;
-        t23 = t23_gcc *0.1;
+        t12 = t12_gcc *5/upsampling_factor;
+        t13 = t13_gcc *5/upsampling_factor;
+        t23 = t23_gcc *5/upsampling_factor;
 
         cos_beta_0 =((c*t13*d12*sind(angle12))-(c*t12*sind(angle13)*d13))/(d13*d12*sind(angle12-angle13)) ;
         cos_alpha_0 = ((c*t12)/d12-cos_beta_0*cosd(angle12))/sind(angle12);

@@ -1,29 +1,56 @@
-%结果1
-logicalIndex =  abs(result1.t123) < 0.5  & abs(result1.Rcorr) > 0.6 &  result1.Start_loc < 4.0e8 & result1.Start_loc > 3.985e8;
-% idx_adapt = adaptive_corr_filter(result1, 'Pulse_Len', 'Rcorr', 0.5);  % 或者用 adaptive_corr_filter_fit
-% logicalIndex = abs(result1.t123) < 1 & ...
-%                idx_adapt & ...
-%                result1.Start_loc < 4.0e8 & result1.Start_loc > 3.8e8;
-
+% --- 1. 数据准备  ---
+logicalIndex =  abs(result1.t123) < 1  & abs(result1.Rcorr) > 0.65 &  result1.Start_loc < 4e8 & result1.Start_loc > 3.8e8;
 filteredTable1 = result1(logicalIndex, :);
 Start_loc = filteredTable1.Start_loc;
-% colorValues = (Start_loc - 3e8) / 2e8;
-colorValues = (Start_loc - min(Start_loc)) / (max(Start_loc) - min(Start_loc));
-% 转换 Azimuth 范围从 0-360 到 -180-180
-% filteredTable1.Azimuth = mod(filteredTable1.Azimuth - 180, 360) - 180;
-figure;
-scatter(filteredTable1.Azimuth,filteredTable1.Elevation, 1, colorValues,'filled');
-title('Azimuth vs Elevation');
-xlabel('Azimuth');
-xlim([0, 360]); % 修改 x 轴范围
-xticks(0:40:360);
-ylabel('Elevation');
-ylim([0,90]);
-yticks(0:10:90);
-colormap('hsv');
-colorbar;
-caxis([0, 1.5]);
+colorValues = (Start_loc - min(Start_loc)) / (max(Start_loc) - min(Start_loc)); % 归一化到 [0, 1]
+
+% --- 2. 绘图 (应用所有改进) ---
+% 直接在这里设置figure的深色背景
+figure('Color', [0.1 0.1 0.2]); % figure背景设置为深色
+
+% 使用 scatter 绘图，并应用尺寸和透明度优化
+scatter(filteredTable1.Azimuth, filteredTable1.Elevation, ...
+        2, ... % 尺寸
+        colorValues, ...
+        'filled', ...
+        'MarkerFaceAlpha', 0.6); % 建议加上透明度，深色背景下透明度效果更好
+
+% --- 3. 标签和标题优化 ---
+% 设置标题和轴标签的颜色为白色
+title('闪电VHF辐射源二维定位图', 'FontSize', 16, 'FontWeight', 'bold', 'Color', 'w');
+xlabel('方位角 (Azimuth / °)', 'FontSize', 12, 'Color', 'w');
+ylabel('仰角 (Elevation / °)', 'FontSize', 12, 'Color', 'w');
+
+% --- 4. 坐标轴和范围设置 ---
+xlim([120, 360]);
+xticks(120:40:360);
+ylim([15, 85]);
+yticks(15:10:85);
+
+% 设置坐标轴的颜色和刻度字体颜色为白色
+set(gca, ...
+    'FontSize', 11, ...
+    'LineWidth', 1.2, ...
+    'Color', [0.1 0.1 0.2], ... % Axes背景色和figure背景色保持一致
+    'XColor', 'w', ...          % X轴颜色
+    'YColor', 'w');             % Y轴颜色
+
+% --- 5. 颜色映射和颜色条优化 ---
+colormap('parula'); % 更换为更专业的 colormap
+h = colorbar;
+
+% 颜色条标签和刻度颜色为白色
+ylabel(h, '归一化发展时间', 'FontSize', 11, 'Color', 'w');
+set(h, 'Color', 'w'); % 颜色条的刻度字体颜色
+
+caxis([0, 1]); % 修正颜色范围
+
+% --- 6. 网格和整体风格 ---
 grid on;
+set(gca, 'GridLineStyle', '--', 'GridAlpha', 0.4, 'Box', 'on'); % 稍微调高GridAlpha，深色背景下看得更清
+
+
+
 
 %结果1
 logicalIndex = abs(result1.t123) < 1 & abs(result1.Rcorr) > 0.6 & result1.Start_loc < 5.4e8 & result1.Start_loc > 5e8 & result1.Elevation <80;
@@ -296,7 +323,7 @@ plot_power_spectrum(bp_filtered_yld);
 
 
 
-logicalIndex = abs(result1.t123) < 1 & abs(result1.Rcorr) > 0.3 &  result1.Start_loc < 6e8 & result1.Start_loc > 5e8;
+logicalIndex =  abs(result1.t123) < 1  & abs(result1.Rcorr) > 0.65 &  result1.Start_loc < 4e8 & result1.Start_loc > 3.8e8;
 filteredTable1 = result1(logicalIndex, :);
 Start_loc = filteredTable1.Start_loc;
 %动态图
@@ -322,7 +349,7 @@ ylabel(h_bar, '归一化起始位置');
 caxis([0, 1]);
 
 % 将颜色值划分为若干个区间（批次）
-numBatches = 5000;  % 控制动态速度，越小越快
+numBatches = 500;  % 控制动态速度，越小越快
 bins = linspace(0, 1, numBatches + 1);
 
 for b = 1:numBatches
