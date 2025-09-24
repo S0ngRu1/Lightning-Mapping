@@ -2,17 +2,17 @@ clear;
 N = 3;
 c = 0.299792458;
 fs = 200e6;
-fp_start = 60e6; % 通带起始
+fp_start = 30e6; % 通带起始
 fp_end = 80e6;   % 通带结束
 upsampling_factor = 50;
-% window = 'hann';
-window = 'exp_hann';
+window = 'hann';
+% window = 'exp_hann';
 % window = 'blackman';
 % window = 'gausswin';
 %引雷点
 
 r_loction = 3.65e8;
-signal_length = 3.7e8-r_loction;
+signal_length = 3.85e8-r_loction;
 d12 = 24.9586;
 d13 = 34.9335;
 d23 = 24.9675;
@@ -34,7 +34,7 @@ min_peak_distance = 1024;
 % 以峰值为中心，进行处理的信号片段的总长度
 processing_window_len =4096;
 
-file_name = '20240613171023_result_yld_3.65e8_3.7e8_window_'+string(processing_window_len)+'_'+string(min_peak_distance)+'_阈值4倍标准差_去零飘_'+string(fp_start/1e6)+'_'+string(fp_end/1e6)+'_'+ window +'.txt';
+file_name = '20240613171023_result_yld_3.65e8_3.85e8_window_'+string(processing_window_len)+'_'+string(min_peak_distance)+'_阈值4倍标准差_去零飘_'+string(fp_start/1e6)+'_'+string(fp_end/1e6)+'_'+ window +'.txt';
 % 打开一个文本文件用于写入运行结果
 fileID = fopen(file_name, 'w');
 fprintf(fileID, '%-13s%-15s%-15s%-15s%-15s%-15s%-15s%-15s%-15s%-15s%-15s\n', ...

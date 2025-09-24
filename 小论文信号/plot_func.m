@@ -1,5 +1,5 @@
 % --- 1. 数据准备  ---
-logicalIndex =  abs(result1.t123) < 1  & abs(result1.Rcorr) > 0.65 &  result1.Start_loc < 3.9e8 & result1.Start_loc > 3.8e8;
+logicalIndex =  abs(result1.t123) < 1  & abs(result1.Rcorr) > 0.3 &  result1.Start_loc < 3.81e8 & result1.Start_loc > 3.775e8;
 filteredTable1 = result1(logicalIndex, :);
 Start_loc = filteredTable1.Start_loc;
 colorValues = (Start_loc - min(Start_loc)) / (max(Start_loc) - min(Start_loc)); % 归一化到 [0, 1]
@@ -169,9 +169,8 @@ grid on; % 添加网格
 hold off;
 
 
-
-signal_length = 4096;
-r_loction_yld = 3.675e8+1000+787-4096+189560;
+signal_length = 1024;
+r_loction_yld = 3.775e8+254882-512;
 ch1_yld = read_signal('20240613171023.1120CH1.dat',signal_length,r_loction_yld);
 bp_filtered_yld = filter_bp(ch1_yld,30e6,80e6,5);
 figure
@@ -300,7 +299,7 @@ plot_power_spectrum(bp_filtered_yld);
 
 
 signal_length = 1024;
-r_loction_yld = 4.698e8+20000;
+r_loction_yld = 3.9e8+954778-512;
 ch1_yld = read_signal('..\\20240822165932.6610CH1.dat',signal_length,r_loction_yld);
 bp_filtered_yld = filter_bp(ch1_yld,30e6,80e6,5);
 plot_signal_spectrum(bp_filtered_yld);

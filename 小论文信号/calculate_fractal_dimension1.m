@@ -3,7 +3,7 @@ close all;
 clc;
 %% ==================== 1. 参数设置与数据加载 ====================
 % --- 用户需根据实际情况修改的参数 ---
-DATA_FILE = '20240822165932_result_yld_window512_128_去零飘——阈值15_30_80_最优结果.txt';
+DATA_FILE = '20240613171023_result_yld_3.65e8_3.85e8_window_4096_1024_阈值4倍标准差_去零飘_30_80_hann.txt';
 SAMPLING_RATE = 200e6;            % 数据采集卡采样率 (Hz), 200 MS/s
 ASSUMED_HEIGHT = 3000;            % 假设的放电平均高度 (米), 用于将角度转换成距离
 
@@ -15,8 +15,8 @@ COL_RCORR     = 10;
 COL_T123      = 11;
 
 % --- 定义两个事件的时间窗口 (单位: 采样点) ---
-event1_range = [3.8e8, 3.9e8];
-event2_range = [3.9e8, 4e8];
+event1_range = [3.65e8, 3.7e8]; % 用于左子图
+event2_range = [3.775e8, 3.81e8]; % 用于右子图
 
 % --- 加载原始数据 ---
 fprintf('正在加载原始数据: %s\n', DATA_FILE);
@@ -36,7 +36,7 @@ fractal_dim1 = NaN; % 初始化结果
 try
     % 筛选事件1数据
     logicalIndex1 = ...
-        abs(data_raw(:, COL_RCORR)) > 0.6 & ...
+        abs(data_raw(:, COL_RCORR)) > 0.3 & ...
         data_raw(:, COL_START_LOC) > event1_range(1) & ...
         data_raw(:, COL_START_LOC) < event1_range(2) & ...
         data_raw(:, COL_ELEVATION) < 80 & ...
@@ -74,7 +74,7 @@ fractal_dim2 = NaN; % 初始化结果
 try
     % 筛选事件2数据
     logicalIndex2 = ...
-        abs(data_raw(:, COL_RCORR)) > 0.6 & ...
+        abs(data_raw(:, COL_RCORR)) > 0.3 & ...
         data_raw(:, COL_START_LOC) > event2_range(1) & ...
         data_raw(:, COL_START_LOC) < event2_range(2) & ...
         data_raw(:, COL_ELEVATION) < 80 & ...
@@ -118,7 +118,7 @@ if exist('x_coords1', 'var') && ~isempty(x_coords1)
     % 【修改】更新坐标轴标签和标题
     xlabel('东西方向 / m (East-West)');
     ylabel('南北方向 / m (North-South)');
-    title(sprintf('正先导分形维数 (D = %.2f)', fractal_dim1));
+    title(sprintf('双向先导分形维数 (D = %.2f)', fractal_dim1));
     set(gca, 'FontSize', 12);
 else
     title(sprintf('事件 1 (%.2e - %.2e)\n无足够数据点', event1_range(1), event1_range(2)));
