@@ -54,7 +54,7 @@ set(gca, 'GridLineStyle', '--', 'GridAlpha', 0.4, 'Box', 'on'); % 稍微调高Gr
 
 
 
-logicalIndex =  abs(result1.t123) < 1  & abs(result1.Rcorr) > 0.65 &  result1.Start_loc < 5.4e8 & result1.Start_loc > 3.8e8;
+logicalIndex =  abs(result1.t123) < 1  & abs(result1.Rcorr) > 0.3 &  result1.Start_loc < 4e8 & result1.Start_loc > 3.6e8;
 filteredTable1 = result1(logicalIndex, :);
 Start_loc = filteredTable1.Start_loc;
 %动态图
@@ -67,11 +67,11 @@ figure;
 hold on;
 grid on;
 xlabel('方位角');
-xlim([0, 360]);
-xticks(0:40:360);
+xlim([80, 160]);
+xticks(80:10:160);
 ylabel('仰角');
-ylim([0, 90]);
-yticks(0:10:90);
+ylim([0, 60]);
+yticks(0:10:60);
 title('目标点动态呈现');
 colormap('hsv');
 h_bar = colorbar;
@@ -91,7 +91,7 @@ for b = 1:numBatches
         colors = colorValues(idx);
 
         % 一次性绘制当前批次所有点
-        scatter(az, el, 1, colors, 'filled');
+        scatter(az, el, 3, colors, 'filled');
         drawnow;  % 每批次刷新一次
     end
 end
