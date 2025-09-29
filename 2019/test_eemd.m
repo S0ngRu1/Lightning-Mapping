@@ -1,53 +1,53 @@
-%¶ÁÈ¡Êı¾İ
+%è¯»å–æ•°æ®
 signal_length = 2e3;
 sig = read_signal('../cross-correlation/20190604164852.7960CH3.dat',signal_length);
 fs = 200e6;
-t = (0:signal_length-1) * 1e6/fs; % ½«Ê±¼äµ¥Î»´ÓÃë¸ÄÎªÎ¢Ãë
+t = (0:signal_length-1) * 1e6/fs; % å°†æ—¶é—´å•ä½ä»ç§’æ”¹ä¸ºå¾®ç§’
 figure('color','white')
-plot(t, sig, 'k') % »æÖÆÔ­Ê¼ĞÅºÅ
-xlabel('Time (\mu s)') % ÉèÖÃ x Öá±êÇ©µ¥Î»ÎªÎ¢Ãë
+plot(t, sig, 'k') % ç»˜åˆ¶åŸå§‹ä¿¡å·
+xlabel('Time (\mu s)') % è®¾ç½® x è½´æ ‡ç­¾å•ä½ä¸ºå¾®ç§’
 ylabel('Amplitude')
 title('Original Signal')
-%EEMD·Ö½â
-Nstd = 0.2; %NstdÎª¸½¼ÓÔëÉù±ê×¼²îÓëY±ê×¼²îÖ®±È
-NE = 20;   %NEÎª¶ÔĞÅºÅµÄÆ½¾ù´ÎÊı
+%EEMDåˆ†è§£
+Nstd = 0.2; %Nstdä¸ºé™„åŠ å™ªå£°æ ‡å‡†å·®ä¸Yæ ‡å‡†å·®ä¹‹æ¯”
+NE = 20;   %NEä¸ºå¯¹ä¿¡å·çš„å¹³å‡æ¬¡æ•°
 imf = eemd(sig,Nstd,NE);
 
-%»æÖÆEEMDµÄ¸÷¸öIMFÍ¼ºÍÆä¶ÔÓ¦µÄÆµÆ×Í¼
+%ç»˜åˆ¶EEMDçš„å„ä¸ªIMFå›¾å’Œå…¶å¯¹åº”çš„é¢‘è°±å›¾
 i = size(imf, 2);
 figure;
 for j = 1:i
-    % »­³öIMFĞÅºÅÍ¼
+    % ç”»å‡ºIMFä¿¡å·å›¾
     subplot(i, 1, j);
     plot(imf(:,j));
-    title(['IMF' num2str(j) ' ĞÅºÅ']);
+    title(['IMF' num2str(j) ' ä¿¡å·']);
     
 end
 
 figure;
 for j = 1:i
-% ¼ÆËã²¢»æÖÆIMFĞÅºÅµÄÆµÆ×Í¼
+% è®¡ç®—å¹¶ç»˜åˆ¶IMFä¿¡å·çš„é¢‘è°±å›¾
     subplot(i, 1, j);
     fs = 200e6;
     fft_signal = fft(imf(:,j));
     n = length(fft_signal);
     x = (0:n/2-1) * (fs/n);
     plot(x, 2.0 / n * abs(fft_signal(1:n/2)));
-    title(['IMF' num2str(j) ' ÆµÆ×']);
+    title(['IMF' num2str(j) ' é¢‘è°±']);
 end
 
 
-%ĞÅºÅÖØ¹¹
+%ä¿¡å·é‡æ„
 indices = [2,5,6,7,8,9,10,11];  
 filtered_imfs = imf(:,indices);
 filtered_signal1 = sum(filtered_imfs, 2);
-ori = sig;  %ÎŞÔëÉùĞÅºÅ
-fil = filtered_signal1;  %ÂË²¨ºóĞÅºÅ
+ori = sig;  %æ— å™ªå£°ä¿¡å·
+fil = filtered_signal1;  %æ»¤æ³¢åä¿¡å·
 figure('color','w')
-subplot(211);plot(sig,'k');title('Ô­Ê¼ĞÅºÅ')
-subplot(212);plot(fil,'k');title('ÂË²¨ºóĞÅºÅ')
+subplot(211);plot(sig,'k');title('åŸå§‹ä¿¡å·')
+subplot(212);plot(fil,'k');title('æ»¤æ³¢åä¿¡å·')
 
-%´øÍ¨ÂË²¨
+%å¸¦é€šæ»¤æ³¢
 filtered_bandpass = bandpass(fil, [40e6 80e6],200e6);
 
 
@@ -58,8 +58,8 @@ plot_signal_spectrum(sig);
 plot_signal_spectrum(filtered_bandpass);
 
 figure('color','w')
-subplot(211);plot(fil,'k');title('Ô­Ê¼ĞÅºÅ')
-subplot(212);plot(filtered_bandpass,'k');title('ÂË²¨ºóĞÅºÅ')
+subplot(211);plot(fil,'k');title('åŸå§‹ä¿¡å·')
+subplot(212);plot(filtered_bandpass,'k');title('æ»¤æ³¢åä¿¡å·')
 
 [r12,lags12] = xcorr(sig,filtered_bandpass,'normalized');
 

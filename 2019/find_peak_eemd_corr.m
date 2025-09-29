@@ -1,4 +1,4 @@
-%¶ÁÈ¡Êı¾İ
+%è¯»å–æ•°æ®
 signal_length = 5e7;
 ch1 = read_signal('../cross-correlation/20190604164852.7960CH1.dat',signal_length);
 % x = downsample(ch1,50);
@@ -20,28 +20,28 @@ angle13 = -90;
 angle23 = -30;
 
 
-% ´ò¿ªÒ»¸öÎÄ±¾ÎÄ¼şÓÃÓÚĞ´ÈëÔËĞĞ½á¹û
+% æ‰“å¼€ä¸€ä¸ªæ–‡æœ¬æ–‡ä»¶ç”¨äºå†™å…¥è¿è¡Œç»“æœ
 fileID = fopen('result1.txt', 'w');
-% Ğ´ÈëµÚÒ»ĞĞµÄÊı¾İ½éÉÜ
+% å†™å…¥ç¬¬ä¸€è¡Œçš„æ•°æ®ä»‹ç»
 fprintf(fileID, '%-13s%-15s%-15s%-15s%-15s%-15s%-15s%-15s%-15s%-15s%-15s\n', ...
-     'Start_loc','Peak_loc','t12', 't13', 't23', 'cos¦Á', 'cos¦Â', 'Azimuth', 'Elevation', 'Rcorr', 't123');
+     'Start_loc','Peak_loc','t12', 't13', 't23', 'cosÎ±', 'cosÎ²', 'Azimuth', 'Elevation', 'Rcorr', 't123');
 
-%Ñ°ÕÒĞÅºÅ1µÄËùÓĞÂú×ãÌõ¼şµÄ·åÖµ
+%å¯»æ‰¾ä¿¡å·1çš„æ‰€æœ‰æ»¡è¶³æ¡ä»¶çš„å³°å€¼
 peaks = find_peaks(ch1,50);
-%±éÀúËùÓĞ·åÖµ
+%éå†æ‰€æœ‰å³°å€¼
 for  pi = 1:numel(peaks)
     idx = peaks(pi);
     if idx-(window_length*1/2-1) <= 0 
-        continue;  % ³¬³ö·¶Î§£¬Ö´ĞĞÏÂÒ»¸öÇø¼ä
+        continue;  % è¶…å‡ºèŒƒå›´ï¼Œæ‰§è¡Œä¸‹ä¸€ä¸ªåŒºé—´
     end
     if  idx+(window_length*1/2) > length(ch1)
-        break;  % ³¬³ö·¶Î§£¬Ö´ĞĞÏÂÒ»¸öÇø¼ä
+        break;  % è¶…å‡ºèŒƒå›´ï¼Œæ‰§è¡Œä¸‹ä¸€ä¸ªåŒºé—´
     end
-%     È¡·åÖµÁ½¶ËÒ»¶¨³¤¶ÈµÄĞÅºÅ
+%     å–å³°å€¼ä¸¤ç«¯ä¸€å®šé•¿åº¦çš„ä¿¡å·
     signal1 = ch1(idx-(window_length*1/2-1):idx+(window_length*1/2));
     signal2 = ch2(idx-(window_length*1/2-1):idx+(window_length*1/2));
     signal3 = ch3(idx-(window_length*1/2-1):idx+(window_length*1/2));
-%     ´°¿Ú´¦Àí
+%     çª—å£å¤„ç†
     windows =1:256:length(signal1)-window_length+1;
     for  wi = 1:numel(windows)
         win_signal1 = signal1(windows(wi):windows(wi)+window_length-1);
@@ -49,22 +49,22 @@ for  pi = 1:numel(peaks)
         win_signal3 = signal3(windows(wi):windows(wi)+window_length-1);
         
 
-        %ÂË²¨
+        %æ»¤æ³¢
         filtered_signal1 = filter_eemd(win_signal1);
         filtered_signal2 = filter_eemd(win_signal2);
         filtered_signal3 = filter_eemd(win_signal3);
 
-        %È¥Ö±Á÷·ÖÁ¿
+        %å»ç›´æµåˆ†é‡
         signal1_removed = detrend(filtered_signal1);
         signal2_removed = detrend(filtered_signal2);
         signal3_removed = detrend(filtered_signal3);
 
-        % ¶ÔÂË²¨ºóµÄĞÅºÅÓ¦ÓÃ´°º¯Êı
+        % å¯¹æ»¤æ³¢åçš„ä¿¡å·åº”ç”¨çª—å‡½æ•°
         windowed_signal1 = real(windowsignal(signal1_removed));
         windowed_signal2 = real(windowsignal(signal2_removed));
         windowed_signal3 = real(windowsignal(signal3_removed));
 
-        %´¦ÀíºóµÄĞÅºÅ
+        %å¤„ç†åçš„ä¿¡å·
         ch1_new = windowed_signal1;
         ch2_new = windowed_signal2;
         ch3_new = windowed_signal3;
@@ -77,7 +77,7 @@ for  pi = 1:numel(peaks)
         R12 = max(r12);
         R13 = max(r13);
         R23 = max(r23);
-        %¶ÔÏà¹ØÏµÊıº¯Êı½øĞĞÉÏ²ÉÑù
+        %å¯¹ç›¸å…³ç³»æ•°å‡½æ•°è¿›è¡Œä¸Šé‡‡æ ·
         r12_upsp = upsampling_gc(r12,lags12,8);
         r13_upsp = upsampling_gc(r13,lags13,8);
         r23_upsp = upsampling_gc(r23,lags23,8);
@@ -92,10 +92,10 @@ for  pi = 1:numel(peaks)
                continue;
             end
             x0 = [cos_alpha_0,cos_beta_0];
-            % µ÷ÓÃlsqnonlinº¯Êı½øĞĞÓÅ»¯
+            % è°ƒç”¨lsqnonlinå‡½æ•°è¿›è¡Œä¼˜åŒ–
             options = optimoptions('lsqnonlin', 'MaxIter', 1000, 'TolFun', 1e-6);
             x = lsqnonlin(@objective, x0, [-1 -1],[1 1], options);
-            % Êä³ö×îÓÅµÄcos(¦Á)ºÍcos(¦Â)Öµ
+            % è¾“å‡ºæœ€ä¼˜çš„cos(Î±)å’Œcos(Î²)å€¼
             cos_alpha_opt = x(1);
             cos_beta_opt = x(2);
              if abs(cos_alpha_opt)>1 || abs(cos_beta_opt)>1
@@ -106,7 +106,7 @@ for  pi = 1:numel(peaks)
                 continue;
              end
              El = acos( cos_beta_opt/cos(Az) );
-             % ½«»¡¶È×ª»»Îª½Ç¶È
+             % å°†å¼§åº¦è½¬æ¢ä¸ºè§’åº¦
              Az_deg = rad2deg(Az);
              El_deg = rad2deg(El);
              if Az_deg < 0
@@ -121,22 +121,22 @@ for  pi = 1:numel(peaks)
         if abs(t123) > 1
            continue;
         end
-        % Ğ´Èë¼ÆËãºóµÄÊı¾İ
+        % å†™å…¥è®¡ç®—åçš„æ•°æ®
         fprintf(fileID, '%-13d%-15d%-15.6f%-15.6f%-15.6f%-15.6f%-15.6f%-15.6f%-15.6f%-15.6f%-15.6f\n', ...
              350000000+idx+windows(wi),peak_loc, t12, t13, t23, cos_alpha_opt, cos_beta_opt, Az_deg, El_deg, Rcorr,t123);
     end
 end
-% ¹Ø±ÕÎÄ¼ş
+% å…³é—­æ–‡ä»¶
 fclose(fileID);
 
 
-%% Ê¹ÓÃEEMD¶ÔĞÅºÅ½øĞĞ½µÔëºÍÂË²¨
+%% ä½¿ç”¨EEMDå¯¹ä¿¡å·è¿›è¡Œé™å™ªå’Œæ»¤æ³¢
 function filtered_signal = filter_eemd(sig)
-    %EEMD·Ö½â
-    Nstd = 0.2; %NstdÎª¸½¼ÓÔëÉù±ê×¼²îÓëY±ê×¼²îÖ®±È
-    NE = 20;   %NEÎª¶ÔĞÅºÅµÄÆ½¾ù´ÎÊı
+    %EEMDåˆ†è§£
+    Nstd = 0.2; %Nstdä¸ºé™„åŠ å™ªå£°æ ‡å‡†å·®ä¸Yæ ‡å‡†å·®ä¹‹æ¯”
+    NE = 20;   %NEä¸ºå¯¹ä¿¡å·çš„å¹³å‡æ¬¡æ•°
     imf = eemd(sig,Nstd,NE);
-    %ĞÅºÅÖØ¹¹
+    %ä¿¡å·é‡æ„
     indices = 3;  
     filtered_imfs = imf(:,indices);
     filtered_signal = sum(filtered_imfs, 2);
@@ -150,12 +150,12 @@ end
 
 
 
-% ¶¨Òå¼ÆËã¦ÓijµÄÀíÏëÖµ¦Ó_ij^obsµÄº¯Êı
+% å®šä¹‰è®¡ç®—Ï„ijçš„ç†æƒ³å€¼Ï„_ij^obsçš„å‡½æ•°
 function tau_ij_obs = calculate_tau_obs(cos_alpha, cos_beta)
     angle12 = -150;
     angle13 = -90;
     angle23 = -30;
-    % Ê¹ÓÃÊ½(3)¼ÆËã¦ÓijµÄÀíÏëÖµ¦Ó_ij^obs
+    % ä½¿ç”¨å¼(3)è®¡ç®—Ï„ijçš„ç†æƒ³å€¼Ï„_ij^obs
     tau_ij_obs(1) = (cos_alpha * sind(angle12) + cos_beta * cosd(angle12)) * 20 / 0.299792458;
     tau_ij_obs(2) = (cos_alpha * sind(angle13) + cos_beta * cosd(angle13)) * 20 / 0.299792458;
     tau_ij_obs(3) = (cos_alpha * sind(angle23) + cos_beta * cosd(angle23)) * 20 / 0.299792458;
@@ -163,13 +163,13 @@ end
 
 
 function tau = cal_tau(R, lag)
-    % ´ÓÊı¾İÖĞÕÒµ½yµÄ×î´óÖµ¼°ÆäË÷Òı
+    % ä»æ•°æ®ä¸­æ‰¾åˆ°yçš„æœ€å¤§å€¼åŠå…¶ç´¢å¼•
     [~, max_index] = max(R);
     tau = lag(max_index,1);
 end
 
 
-%% Éè¼Æ°ÍÌØÎÖË¹´øÍ¨ÂË²¨Æ÷
+%% è®¾è®¡å·´ç‰¹æ²ƒæ–¯å¸¦é€šæ»¤æ³¢å™¨
 function filtered_signal = filter_bp(signal,f1,f2,order)
     Fs = 200e6;
     fn = Fs/2;
@@ -182,30 +182,30 @@ end
 
 
 function filtered_signal = filter_fft(sig,f1,f2)
-    y=fft(sig);%¸µÀïÒ¶±ä»»µÃµ½Ò»¸ö¸´Êı
+    y=fft(sig);%å‚…é‡Œå¶å˜æ¢å¾—åˆ°ä¸€ä¸ªå¤æ•°
     fs = 200e6;
     n = length(y);
-    %´´½¨Ò»¸ö³¤¶ÈÓëÊäÈëĞÅºÅ y ÏàÍ¬µÄÁãÏòÁ¿ yy£»
+    %åˆ›å»ºä¸€ä¸ªé•¿åº¦ä¸è¾“å…¥ä¿¡å· y ç›¸åŒçš„é›¶å‘é‡ yyï¼›
     yy=zeros(1,length(y));
-    % Ê¹ÓÃ for Ñ­»·±éÀúĞÅºÅ y µÄÃ¿¸ö²ÉÑùµã£¨m ±íÊ¾µ±Ç°µÄ²ÉÑùµãË÷Òı£¬´Ó0µ½ N-1£©£»
+    % ä½¿ç”¨ for å¾ªç¯éå†ä¿¡å· y çš„æ¯ä¸ªé‡‡æ ·ç‚¹ï¼ˆm è¡¨ç¤ºå½“å‰çš„é‡‡æ ·ç‚¹ç´¢å¼•ï¼Œä»0åˆ° N-1ï¼‰ï¼›
     for m=1:n-1
-    %     ÅĞ¶Ïµ±Ç°²ÉÑùµã¶ÔÓ¦µÄÆµÂÊÊÇ·ñÔÚ 8Hz µ½ 15Hz ·¶Î§ÄÚ£¬Èç¹ûÔÚ¸Ã·¶Î§ÄÚ£¬Ôò½«¶ÔÓ¦µÄ yy ÖµÖÃÎª0£¬±íÊ¾¸ÃÆµÂÊµÄĞÅºÅ±»ÂË³ı£»
-        if m*(fs/n)<f1 || m*(fs/n)>f2 %½«ÄÎ¿üË¹ÌØÖ®ºóµÄÆµÂÊÒ²ÂË³ıµãµô
+    %     åˆ¤æ–­å½“å‰é‡‡æ ·ç‚¹å¯¹åº”çš„é¢‘ç‡æ˜¯å¦åœ¨ 8Hz åˆ° 15Hz èŒƒå›´å†…ï¼Œå¦‚æœåœ¨è¯¥èŒƒå›´å†…ï¼Œåˆ™å°†å¯¹åº”çš„ yy å€¼ç½®ä¸º0ï¼Œè¡¨ç¤ºè¯¥é¢‘ç‡çš„ä¿¡å·è¢«æ»¤é™¤ï¼›
+        if m*(fs/n)<f1 || m*(fs/n)>f2 %å°†å¥ˆå¥æ–¯ç‰¹ä¹‹åçš„é¢‘ç‡ä¹Ÿæ»¤é™¤ç‚¹æ‰
             yy(m+1)=0;
         else
-    %         Èç¹ûµ±Ç°²ÉÑùµã¶ÔÓ¦µÄÆµÂÊ²»ÔÚ 8Hz µ½ 15Hz ·¶Î§ÄÚ£¬Ôò½« yy µÄÖµ±£³ÖÎªÔ­Ê¼ĞÅºÅ y µÄÖµ¡£
+    %         å¦‚æœå½“å‰é‡‡æ ·ç‚¹å¯¹åº”çš„é¢‘ç‡ä¸åœ¨ 8Hz åˆ° 15Hz èŒƒå›´å†…ï¼Œåˆ™å°† yy çš„å€¼ä¿æŒä¸ºåŸå§‹ä¿¡å· y çš„å€¼ã€‚
             yy(m+1)=y(m+1);
         end
-    end %½«ÆµÂÊÎª8Hz-15HzµÄĞÅºÅµÄ·ùÖµÖÃ0
+    end %å°†é¢‘ç‡ä¸º8Hz-15Hzçš„ä¿¡å·çš„å¹…å€¼ç½®0
     filtered_signal=ifft(yy)';
     
 end
 
 
-% Éè¼Æ°ÍÌØÎÖË¹´øÍ¨ÂË²¨Æ÷
+% è®¾è®¡å·´ç‰¹æ²ƒæ–¯å¸¦é€šæ»¤æ³¢å™¨
 function filtered_signal = filtersignal(signal,f1,f2,order,fs)
-     % ÂË²¨Æ÷Í¨´øÏÂ±ß½çÆµÂÊf1 ÂË²¨Æ÷Í¨´øÉÏ±ß½çÆµÂÊf2  ÂË²¨Æ÷½×Êıorder
-     % ´´½¨ÂË²¨Æ÷¶ÔÏó
+     % æ»¤æ³¢å™¨é€šå¸¦ä¸‹è¾¹ç•Œé¢‘ç‡f1 æ»¤æ³¢å™¨é€šå¸¦ä¸Šè¾¹ç•Œé¢‘ç‡f2  æ»¤æ³¢å™¨é˜¶æ•°order
+     % åˆ›å»ºæ»¤æ³¢å™¨å¯¹è±¡
      filter = designfilt('bandpassiir', 'FilterOrder', order, 'HalfPowerFrequency1', f1, 'HalfPowerFrequency2', f2, 'SampleRate', fs);
      filtered_signal = filtfilt(filter,signal);
 end
@@ -214,14 +214,14 @@ end
 
 
 
-%º¯Êı£º±éÀúÕû¸öĞÅºÅ£¬ÕÒµ½Î¢³ß¶È´°¿ÚÏÂÏà¹ØÏµÊı´óÓÚ0.8µÄ´°¿Ú
+%å‡½æ•°ï¼šéå†æ•´ä¸ªä¿¡å·ï¼Œæ‰¾åˆ°å¾®å°ºåº¦çª—å£ä¸‹ç›¸å…³ç³»æ•°å¤§äº0.8çš„çª—å£
 function correlated_windows = find_correlated_windows(signal1, signal2, signal3, window_size, threshold, Fs, N)
-    % ´°¿ÚÊıÁ¿
+    % çª—å£æ•°é‡
     num_windows = N - window_size + 1;  
-    % ´æ´¢Ïà¹ØÏµÊı´óÓÚãĞÖµµÄ´°¿Ú
+    % å­˜å‚¨ç›¸å…³ç³»æ•°å¤§äºé˜ˆå€¼çš„çª—å£
     correlated_windows = [];
     for i = 1:num_windows
-        % ÌáÈ¡µ±Ç°´°¿ÚµÄÊı¾İ
+        % æå–å½“å‰çª—å£çš„æ•°æ®
         window1 = signal1(i:i+window_size-1);
         window2 = signal2(i:i+window_size-1);
         window3 = signal3(i:i+window_size-1);
@@ -232,7 +232,7 @@ function correlated_windows = find_correlated_windows(signal1, signal2, signal3,
         max_R13 = maxvalue(R13);
         max_R23 = maxvalue(R23);
         
-        % Èç¹ûÏà¹ØÏµÊı´óÓÚãĞÖµ£¬½«´°¿ÚÌí¼Óµ½½á¹ûÁĞ±íÖĞ
+        % å¦‚æœç›¸å…³ç³»æ•°å¤§äºé˜ˆå€¼ï¼Œå°†çª—å£æ·»åŠ åˆ°ç»“æœåˆ—è¡¨ä¸­
         if max_R12 > threshold && max_R13 > threshold && max_R23 > threshold
             correlated_windows = [correlated_windows; i];
         end
@@ -241,85 +241,85 @@ end
 
 
 
-%º¯Êı£ºÑ°ÕÒĞÅºÅµÄ×î´ó·åÖµ
+%å‡½æ•°ï¼šå¯»æ‰¾ä¿¡å·çš„æœ€å¤§å³°å€¼
 function peaks = find_max_peaks(signal,threshold)
-    % ÕÒµ½ĞÅºÅÖĞµÄ·åÖµ
+    % æ‰¾åˆ°ä¿¡å·ä¸­çš„å³°å€¼
     [pks,locs] = findpeaks(signal);
-    % ¸ù¾İãĞÖµÉ¸Ñ¡·åÖµ
+    % æ ¹æ®é˜ˆå€¼ç­›é€‰å³°å€¼
     selectedLocs = locs(pks > threshold);
-    % »ñÈ¡¹ıÂËºóµÄÃ¿¸ö·åÖµµÄxÖµ
+    % è·å–è¿‡æ»¤åçš„æ¯ä¸ªå³°å€¼çš„xå€¼
     
     peaks =selectedLocs;
 end
 
 
-%º¯Êı£ºÑ°ÕÒĞÅºÅµÄ·åÖµ
+%å‡½æ•°ï¼šå¯»æ‰¾ä¿¡å·çš„å³°å€¼
 function peaks = find_peaks(signal,threshold)
-    % ÕÒµ½ĞÅºÅÖĞµÄ·åÖµ
+    % æ‰¾åˆ°ä¿¡å·ä¸­çš„å³°å€¼
     [pks,locs] = findpeaks(signal);
-    % ¸ù¾İãĞÖµÉ¸Ñ¡·åÖµ
+    % æ ¹æ®é˜ˆå€¼ç­›é€‰å³°å€¼
     peaks = locs(pks > threshold);
 end
 
 
 function matched_peaks_x = match_peaks(peaks1,peaks2,peaks3)
-    matched_peaks_x = []; % ´æ´¢Æ¥Åä·åÖµµÄxÖµ¾ØÕó
+    matched_peaks_x = []; % å­˜å‚¨åŒ¹é…å³°å€¼çš„xå€¼çŸ©é˜µ
     for i = 1:numel(peaks1)
         curr_peak1 = peaks1(i);
-        % ¼ì²épeaks2ºÍpeaks3ÖĞÊÇ·ñ´æÔÚÓëpeaks1¶ÔÓ¦µÄ·åÖµÇÒxÖµµÄ²î²»´óÓÚ4
-        idx_peak2 = find(abs(peaks2 - curr_peak1) <= 10);  % »ñÈ¡peaks2ÖĞÆ¥Åä·åÖµµÄË÷Òı
-        idx_peak3 = find(abs(peaks3 - curr_peak1) <= 10);  % »ñÈ¡peaks3ÖĞÆ¥Åä·åÖµµÄË÷Òı
-        % ¼ì²éÊÇ·ñÕÒµ½ÁËÆ¥ÅäµÄ·åÖµ
+        % æ£€æŸ¥peaks2å’Œpeaks3ä¸­æ˜¯å¦å­˜åœ¨ä¸peaks1å¯¹åº”çš„å³°å€¼ä¸”xå€¼çš„å·®ä¸å¤§äº4
+        idx_peak2 = find(abs(peaks2 - curr_peak1) <= 10);  % è·å–peaks2ä¸­åŒ¹é…å³°å€¼çš„ç´¢å¼•
+        idx_peak3 = find(abs(peaks3 - curr_peak1) <= 10);  % è·å–peaks3ä¸­åŒ¹é…å³°å€¼çš„ç´¢å¼•
+        % æ£€æŸ¥æ˜¯å¦æ‰¾åˆ°äº†åŒ¹é…çš„å³°å€¼
         if ~isempty(idx_peak2) && ~isempty(idx_peak3)
-            matched_peaks_x = [matched_peaks_x; [curr_peak1, peaks2(idx_peak2(1)), peaks3(idx_peak3(1))]];% Ìí¼ÓÆ¥Åä·åÖµµÄxÖµ¾ØÕó
+            matched_peaks_x = [matched_peaks_x; [curr_peak1, peaks2(idx_peak2(1)), peaks3(idx_peak3(1))]];% æ·»åŠ åŒ¹é…å³°å€¼çš„xå€¼çŸ©é˜µ
         end
     end
 end
 
 
 function max_index = maxindex(vector)
-    % ÌáÈ¡Êµ²¿²¿·Ö
+    % æå–å®éƒ¨éƒ¨åˆ†
     
     max_value = max(vector);
-    % ÕÒµ½×î´óÖµ¶ÔÓ¦µÄË÷Òı
+    % æ‰¾åˆ°æœ€å¤§å€¼å¯¹åº”çš„ç´¢å¼•
     max_index = find(vector == max_value);
 end
 
 
 function mswed_signal = msw_signal(signal , peak_x ,length)
-      % ÕÒµ½·åÖµµÄ x ÖµÔÚĞÅºÅÖĞµÄË÷Òı
-    left_idx = max(peak_x - length+1, 1);  % È·¶¨×ó±ß½çµÄË÷Òı
-    right_idx = min(peak_x + length, 10240);  % È·¶¨ÓÒ±ß½çµÄË÷Òı
-    mswed_signal = signal(left_idx:right_idx);  % ÌáÈ¡ÒÔÖĞĞÄ x ÖµÎªÖĞĞÄµÄ×óÓÒ40¸ö²ÉÑùµã
+      % æ‰¾åˆ°å³°å€¼çš„ x å€¼åœ¨ä¿¡å·ä¸­çš„ç´¢å¼•
+    left_idx = max(peak_x - length+1, 1);  % ç¡®å®šå·¦è¾¹ç•Œçš„ç´¢å¼•
+    right_idx = min(peak_x + length, 10240);  % ç¡®å®šå³è¾¹ç•Œçš„ç´¢å¼•
+    mswed_signal = signal(left_idx:right_idx);  % æå–ä»¥ä¸­å¿ƒ x å€¼ä¸ºä¸­å¿ƒçš„å·¦å³40ä¸ªé‡‡æ ·ç‚¹
 
 end
 
-% ¶¨ÒåÄ¿±êº¯Êı
+% å®šä¹‰ç›®æ ‡å‡½æ•°
 function F = objective(x)
-    % ÌáÈ¡´ıÓÅ»¯µÄ±äÁ¿
+    % æå–å¾…ä¼˜åŒ–çš„å˜é‡
     cos_alpha = x(1);
     cos_beta = x(2);
 
-    % ¼ÆËã¦ÓijµÄÀíÏëÖµ¦Ó_ij^obs
+    % è®¡ç®—Ï„ijçš„ç†æƒ³å€¼Ï„_ij^obs
     tau_ij_obs = calculate_tau_obs(cos_alpha, cos_beta);
     t12 = evalin('base', 't12');
     t13 = evalin('base', 't13');
     t23 = evalin('base', 't23');
-    % ¼ÆËã¦¤t12, ¦¤t13, ¦¤t23
+    % è®¡ç®—Î”t12, Î”t13, Î”t23
     delta_t12 = delta_t(t12,tau_ij_obs(1));
     delta_t13 = delta_t(t13,tau_ij_obs(2));
     delta_t23 = delta_t(t23,tau_ij_obs(3));
 
-    % ¼ÆËãÄ¿±êº¯Êı£¬¼´Ê½(4)
+    % è®¡ç®—ç›®æ ‡å‡½æ•°ï¼Œå³å¼(4)
     F = (delta_t12^2 + delta_t13^2 + delta_t23^2) / 75;
 end
 
 
 function shifted_signal = shift_signal(signal, shift_amount)
 
-    % Ê¹ÓÃ circshift ½øĞĞÆ½ÒÆ
+    % ä½¿ç”¨ circshift è¿›è¡Œå¹³ç§»
     shifted_signal = circshift(signal, shift_amount);
-    % Èç¹ûÊÇÏò×óÆ½ÒÆ£¬ÓÒ²à²¹Áã£»Èç¹ûÊÇÏòÓÒÆ½ÒÆ£¬×ó²à²¹Áã
+    % å¦‚æœæ˜¯å‘å·¦å¹³ç§»ï¼Œå³ä¾§è¡¥é›¶ï¼›å¦‚æœæ˜¯å‘å³å¹³ç§»ï¼Œå·¦ä¾§è¡¥é›¶
     if shift_amount < 0
         shifted_signal(end+shift_amount+1:end) = 0;
     else
@@ -330,28 +330,28 @@ end
 
 
 function tau = showfitted(data)
-    % ´ÓÊı¾İÖĞÕÒµ½yµÄ×î´óÖµ¼°ÆäË÷Òı
+    % ä»æ•°æ®ä¸­æ‰¾åˆ°yçš„æœ€å¤§å€¼åŠå…¶ç´¢å¼•
     [max_value, max_index] = max(data(:, 2));
-    % »ñÈ¡×î´óÖµÖÜÎ§µÄ3¸öµãµÄË÷Òı
+    % è·å–æœ€å¤§å€¼å‘¨å›´çš„3ä¸ªç‚¹çš„ç´¢å¼•
     if max_index > length(data(:,2))-3 || max_index <3
         tau = 20/0.299552816 + 1;
     else
         fit_range = [ -3,-2,-1, 0, 1, 2, 3] + max_index;
-        % »ñÈ¡10¸öµãµÄË÷ÒıºÍ¶ÔÓ¦µÄÖµ
+        % è·å–10ä¸ªç‚¹çš„ç´¢å¼•å’Œå¯¹åº”çš„å€¼
         fit_indices = data(fit_range, 1);
         fit_values = data(fit_range, 2);
-        % ½øĞĞÅ×ÎïÏßÄâºÏ
+        % è¿›è¡ŒæŠ›ç‰©çº¿æ‹Ÿåˆ
         coefficients = polyfit(fit_indices, fit_values, 2);
-        % ¸ù¾İÄâºÏ½á¹û¼ÆËãÄâºÏÇúÏßÉÏµÄµã
+        % æ ¹æ®æ‹Ÿåˆç»“æœè®¡ç®—æ‹Ÿåˆæ›²çº¿ä¸Šçš„ç‚¹
         fit_indices_curve = linspace(min(fit_indices), max(fit_indices), 1000);
         fit_values_curve = polyval(coefficients, fit_indices_curve);
-        % »æÖÆÔ­Ê¼Êı¾İºÍÄâºÏÇúÏß
+        % ç»˜åˆ¶åŸå§‹æ•°æ®å’Œæ‹Ÿåˆæ›²çº¿
 %         figure;
 %         plot(data(:, 1), data(:, 2))
 %         plot(data(:, 1), data(:, 2), 'b', fit_indices_curve, fit_values_curve, 'r--');
-%         legend('Ô­Ê¼Êı¾İ', 'ÄâºÏÇúÏß');
-%         xlabel('yµÄË÷Òı');
-%         ylabel('yµÄÖµ');
+%         legend('åŸå§‹æ•°æ®', 'æ‹Ÿåˆæ›²çº¿');
+%         xlabel('yçš„ç´¢å¼•');
+%         ylabel('yçš„å€¼');
         [max_value_fit, max_index_fit] = max(fit_values_curve);
         tau = fit_indices_curve(1,max_index_fit);
     end
@@ -359,30 +359,30 @@ function tau = showfitted(data)
 end
 
 
-%º¯Êı£º¶ÔÖ÷´°¿Ú½øĞĞÉÏ²ÉÑù
+%å‡½æ•°ï¼šå¯¹ä¸»çª—å£è¿›è¡Œä¸Šé‡‡æ ·
 function new_signal = upsampling(original_signal,upsampling_factor)
 
-    % Ô­ĞÅºÅ
+    % åŸä¿¡å·
     original_x = (1:numel(original_signal))';
     original_y = original_signal;
-    % ÉÏ²ÉÑùºóµÄ²ÉÑùµãÊı
+    % ä¸Šé‡‡æ ·åçš„é‡‡æ ·ç‚¹æ•°
     upsampled_length = length(original_x) * upsampling_factor;
-    % ÉÏ²ÉÑùºóµÄ²ÉÑùµãµÄ x ×ø±ê
+    % ä¸Šé‡‡æ ·åçš„é‡‡æ ·ç‚¹çš„ x åæ ‡
     upsampled_x = linspace(1, length(original_x), upsampled_length);
-    % Ê¹ÓÃ¶àÏîÊ½²åÖµ¶ÔÔ­ĞÅºÅ½øĞĞÉÏ²ÉÑù
+    % ä½¿ç”¨å¤šé¡¹å¼æ’å€¼å¯¹åŸä¿¡å·è¿›è¡Œä¸Šé‡‡æ ·
     interpolated_signal = interp1(original_x, original_y, upsampled_x, 'spline');
     new_signal = [upsampled_x; interpolated_signal];
 end
 
 
-%¶Ô»¥Ïà¹Øº¯Êı½øĞĞÉÏ²ÉÑù
+%å¯¹äº’ç›¸å…³å‡½æ•°è¿›è¡Œä¸Šé‡‡æ ·
 function upsampling_gcc = upsampling_gc(r,lag,upsampling_factor)
 
-    % ÉÏ²ÉÑùºóµÄ²ÉÑùµãÊı
+    % ä¸Šé‡‡æ ·åçš„é‡‡æ ·ç‚¹æ•°
     upsampled_length = length(lag) * upsampling_factor;
-    % ÉÏ²ÉÑùºóµÄ²ÉÑùµãµÄ x ×ø±ê
+    % ä¸Šé‡‡æ ·åçš„é‡‡æ ·ç‚¹çš„ x åæ ‡
     upsampled_x = linspace(-numel(r)/2, numel(r)/2, upsampled_length);
-    % Ê¹ÓÃ¶àÏîÊ½²åÖµ¶ÔÔ­ĞÅºÅ½øĞĞÉÏ²ÉÑù
+    % ä½¿ç”¨å¤šé¡¹å¼æ’å€¼å¯¹åŸä¿¡å·è¿›è¡Œä¸Šé‡‡æ ·
     interpolated_signal = interp1(lag, r, upsampled_x, 'spline');
     upsampling_gcc = [upsampled_x; interpolated_signal]';
 
@@ -391,18 +391,18 @@ end
 
 function windowed_signal = windowsignal(signal)
 %     r_length = length(signal);
-%    % Ê¹ÓÃººÃ÷´°
+%    % ä½¿ç”¨æ±‰æ˜çª—
 %    window = hamming(r_length);
-%    % ¶ÔÂË²¨ºóµÄĞÅºÅÓ¦ÓÃ´°º¯Êı
-%    windowed_signal = signal .* window; % ĞÅºÅÓë´°º¯ÊıÏà³Ë
+%    % å¯¹æ»¤æ³¢åçš„ä¿¡å·åº”ç”¨çª—å‡½æ•°
+%    windowed_signal = signal .* window; % ä¿¡å·ä¸çª—å‡½æ•°ç›¸ä¹˜
 % 
-    X = fft(signal);      %±ä»»µ½ÆµÓò¼Ó´°
+    X = fft(signal);      %å˜æ¢åˆ°é¢‘åŸŸåŠ çª—
     r_length = length(X);
     window = hamming(r_length);
-%     µÃµ½µÄÊÇÆµÓòĞÅºÅ
+%     å¾—åˆ°çš„æ˜¯é¢‘åŸŸä¿¡å·
     X_windowed = X .* window;
 
-% %     % ½øĞĞÄæ¸µÀïÒ¶±ä»»µÃµ½Ê±ÓòĞÅºÅ
+% %     % è¿›è¡Œé€†å‚…é‡Œå¶å˜æ¢å¾—åˆ°æ—¶åŸŸä¿¡å·
       windowed_signal = ifft(X_windowed);
 
 end

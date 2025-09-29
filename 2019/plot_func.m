@@ -1,35 +1,35 @@
 
-%¼ÆËãt123
+%è®¡ç®—t123
 result1.t123 = result1.t12 + result1.t23-result1.t13;
-%½«½á¹ûÖĞµÄÏà¹ØÏµÊıÉèÖÃÎª´óÓÚ0.½øĞĞÉ¸Ñ¡
+%å°†ç»“æœä¸­çš„ç›¸å…³ç³»æ•°è®¾ç½®ä¸ºå¤§äº0.è¿›è¡Œç­›é€‰
 % logicalIndex = abs(result1.corr12) > 0.3 & abs(result1.corr13) > 0.3 & abs(result1.corr23) > 0.3 & abs(result1.t123) < 1;
 logicalIndex = abs(result1.t123) < 1 & abs(result1.Rcorr) > 0.3;
 filteredTable1 = result1(logicalIndex, :);
-% %»­Í¼
+% %ç”»å›¾
 scatter(filteredTable1.Azimuth,filteredTable1.Elevation,1);
 % scatter(result1.Azimuth,result1.Elevation,1);
 xlim([0, 360]);
 xticks(0:40:360);
-% Ö¸¶¨yÖá·¶Î§ºÍ¿Ì¶È±ê¼Ç
+% æŒ‡å®šyè½´èŒƒå›´å’Œåˆ»åº¦æ ‡è®°
 ylim([-40, 100]);
 yticks(-40:20:100);
 
 figure;
 logicalIndex = abs(result2.t123) < 1 & abs(result2.Rcorr) > 0.3;
 filteredTable2 = result2(logicalIndex, :);
-% %»­Í¼
+% %ç”»å›¾
 scatter(filteredTable2.Azimuth,filteredTable2.Elevation,1);
 % scatter(result1.Azimuth,result1.Elevation,1);
 xlim([0, 360]);
 xticks(0:40:360);
-% Ö¸¶¨yÖá·¶Î§ºÍ¿Ì¶È±ê¼Ç
+% æŒ‡å®šyè½´èŒƒå›´å’Œåˆ»åº¦æ ‡è®°
 ylim([-40, 100]);
 yticks(-40:20:100);
 
 
 scatter(filteredTable1.cos,filteredTable1.cos1,2);
 xlim([-1, 1]);
-% Ö¸¶¨yÖá·¶Î§ºÍ¿Ì¶È±ê¼Ç
+% æŒ‡å®šyè½´èŒƒå›´å’Œåˆ»åº¦æ ‡è®°
 ylim([-1, 1]);
 
 figure;
@@ -38,7 +38,7 @@ filteredTable2 = Untitled(logicalIndex, :);
 scatter(filteredTable2.VarName5,filteredTable2.VarName6,1);
 xlim([0, 360]);
 xticks(0:40:360);
-% Ö¸¶¨yÖá·¶Î§ºÍ¿Ì¶È±ê¼Ç
+% æŒ‡å®šyè½´èŒƒå›´å’Œåˆ»åº¦æ ‡è®°
 ylim([-40, 100]);
 yticks(-40:20:100);
 
@@ -47,56 +47,56 @@ scatter(result1.cos,result1.cos1);
 histogram(result.VarName11);
 histogram(Untitled.VarName6);
 
-subplot(3,1,1);plot(ch1_gcc);title('ch1');xlabel('²ÉÑùµãÊı');ylabel('·ùÖµ');
-%ÉèÖÃºá×ø±ê¼ä¸ôÎª32
+subplot(3,1,1);plot(ch1_gcc);title('ch1');xlabel('é‡‡æ ·ç‚¹æ•°');ylabel('å¹…å€¼');
+%è®¾ç½®æ¨ªåæ ‡é—´éš”ä¸º32
 xticks(0:1024:3072);
-subplot(3,1,2);plot(ch2_gcc);title('ch2');xlabel('²ÉÑùµãÊı');ylabel('·ùÖµ');
+subplot(3,1,2);plot(ch2_gcc);title('ch2');xlabel('é‡‡æ ·ç‚¹æ•°');ylabel('å¹…å€¼');
 xticks(0:1024:3072);
-subplot(3,1,3);plot(ch3_gcc);title('ch3');xlabel('²ÉÑùµãÊı');ylabel('·ùÖµ');
+subplot(3,1,3);plot(ch3_gcc);title('ch3');xlabel('é‡‡æ ·ç‚¹æ•°');ylabel('å¹…å€¼');
 xticks(0:1024:3072);
 
 plot(lag12_msw,R12_msw);
 plot(ch1);
- %»æÖÆÉÏ²ÉÑù¶Ô±ÈÍ¼
+ %ç»˜åˆ¶ä¸Šé‡‡æ ·å¯¹æ¯”å›¾
 plot(ch3_gcc_new, 'b');
 hold on;
 plot(ch3_upsp(:,1), ch3_upsp(:,2), 'r--');
-legend('ch3²¨ĞÎ', 'ÉÏ²ÉÑùch3²¨ĞÎ');
-xlabel('²ÉÑùµãÊı');
-ylabel('·ùÖµ');
+legend('ch3æ³¢å½¢', 'ä¸Šé‡‡æ ·ch3æ³¢å½¢');
+xlabel('é‡‡æ ·ç‚¹æ•°');
+ylabel('å¹…å€¼');
 plot(lag12_gcc,R12_gcc);
 
- %»æÖÆÉÏ²ÉÑù¶Ô±ÈÍ¼
+ %ç»˜åˆ¶ä¸Šé‡‡æ ·å¯¹æ¯”å›¾
 plot(filtered_signal1, 'b');
 hold on;
 plot(ch1, 'r--');
-legend('ch2²¨ĞÎ', 'ÉÏ²ÉÑùch2²¨ĞÎ');
-xlabel('²ÉÑùµãÊı');
-ylabel('·ùÖµ');
+legend('ch2æ³¢å½¢', 'ä¸Šé‡‡æ ·ch2æ³¢å½¢');
+xlabel('é‡‡æ ·ç‚¹æ•°');
+ylabel('å¹…å€¼');
 axis auto
 
-% »æÖÆÁ½¸ö²¨ĞÎ
+% ç»˜åˆ¶ä¸¤ä¸ªæ³¢å½¢
 plot(ch1, 'b');
 hold on;
 plot(IMF(:,3), 'r--');
-legend('ch1²¨ĞÎ', '¹ıÂËºóµÄch1²¨ĞÎ');
-xlabel('²ÉÑùµãÊı');
-ylabel('·ùÖµ');
-title('¸ù¾İ»¥Ïà¹ØÇúÏßµÄ×î´óÖµ½øĞĞÊı¾İÆ½ÒÆµÄ½á¹û');
+legend('ch1æ³¢å½¢', 'è¿‡æ»¤åçš„ch1æ³¢å½¢');
+xlabel('é‡‡æ ·ç‚¹æ•°');
+ylabel('å¹…å€¼');
+title('æ ¹æ®äº’ç›¸å…³æ›²çº¿çš„æœ€å¤§å€¼è¿›è¡Œæ•°æ®å¹³ç§»çš„ç»“æœ');
 
-% »æÖÆÁ½¸ö²¨ĞÎ
+% ç»˜åˆ¶ä¸¤ä¸ªæ³¢å½¢
 plot(ch1_gcc, 'b');
 hold on;
 plot(ch3_new(idx-98:idx+91), 'r--');
-legend('ch1²¨ĞÎ', 'Æ½ÒÆºóch3²¨ĞÎ');
-xlabel('²ÉÑùµãÊı');
-ylabel('·ùÖµ');
-title('¸ù¾İ»¥Ïà¹ØÇúÏßµÄ×î´óÖµ½øĞĞÊı¾İÆ½ÒÆµÄ½á¹û');
+legend('ch1æ³¢å½¢', 'å¹³ç§»åch3æ³¢å½¢');
+xlabel('é‡‡æ ·ç‚¹æ•°');
+ylabel('å¹…å€¼');
+title('æ ¹æ®äº’ç›¸å…³æ›²çº¿çš„æœ€å¤§å€¼è¿›è¡Œæ•°æ®å¹³ç§»çš„ç»“æœ');
 
 
 
 function plot_signal_spectrum(signal)
-% Plotting the signal spectrumÊ±ÓòĞÅºÅµÄÆµÆ×Í¼
+% Plotting the signal spectrumæ—¶åŸŸä¿¡å·çš„é¢‘è°±å›¾
 fs = 200;
 fft_signal = fft(signal);
 n = length(fft_signal);

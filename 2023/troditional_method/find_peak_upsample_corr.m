@@ -1,212 +1,147 @@
-%读取数据
+% 参数设置
+r_loction = 4e8;
 signal_length = 2e8;
-ch1 = read_signal('../cross-correlation/20190604164852.7960CH1.dat',signal_length);
-% x = downsample(ch1,50);
-% filtered_signalx = preprocess(x);
-% plot_signal_spectrum(filtered_signalx);
-
-ch2 = read_signal('../cross-correlation/20190604164852.7960CH2.dat',signal_length);
-ch3 = read_signal('../cross-correlation/20190604164852.7960CH3.dat',signal_length);
-
+windows_length = 1024;
+upsampling_factor = 50;
 N = 3;
-d = 20;
-c = 0.299792458;
-window_length = 1024;
+d12 = 24.96;
+d13 = 34.93;
+d23 = 24.98;
+c = 0.299552816;
+fs = 200e6;
+angle12 = -110.85;
+angle13 = -65.24;
+angle23 = -19.65;
 
-angle12 = -150;
-angle13 = -90;
-angle23 = -30;
+% 读取信号数据
+ch1 = read_signal('..\\20230718175104.9180CH1.dat', signal_length,r_loction);
+ch2 = read_signal('..\\20230718175104.9180CH2.dat', signal_length,r_loction);
+ch3 = read_signal('..\\20230718175104.9180CH3.dat', signal_length,r_loction);
 
+% 进行带通滤波
+filtered_signal1 = filter_bp(ch1, 20e6, 80e6, 5);
+filtered_signal2 = filter_bp(ch2, 20e6, 80e6, 5);
+filtered_signal3 = filter_bp(ch3, 20e6, 80e6, 5);
+% 平滑信号以减少噪声
+smoothed_signal1 = movmean(filtered_signal1, 10);
+smoothed_signal2 = movmean(filtered_signal2, 10);
+smoothed_signal3 = movmean(filtered_signal3, 10);
 
-% 打开一个文本文件用于写入运行结果
-fileID = fopen('result2.preprocess.12.txt', 'w');
-% 写入第一行的数据介绍
+% 打开文件用于写入
+fileID = fopen('result_4-6.txt', 'w');
 fprintf(fileID, '%-13s%-15s%-15s%-15s%-15s%-15s%-15s%-15s%-15s%-15s%-15s\n', ...
-     'Start_loc','Peak_loc','t12', 't13', 't23', 'cosα', 'cosβ', 'Azimuth', 'Elevation', 'Rcorr', 't123');
+    'Start_loc', 'peak', 't12', 't13', 't23', 'cos_alpha_opt', 'cos_beta_opt', 'Azimuth', 'Elevation', 'Rcorr', 't123');
 
-filtered_signal1 = preprocess(ch1);
-filtered_signal2 = preprocess(ch2);
-filtered_signal3 = preprocess(ch3);
-
-%寻找信号1的所有满足条件的峰值
-peaks = find_peaks(filtered_signal1,12);
-%遍历所有峰值
-for  pi = 1:numel(peaks)
-    idx = peaks(pi);
-    if idx-(window_length*1/2-1) <= 0 
-        continue;  % 超出范围，执行下一个区间
+all_peaks = [];
+all_thresholds = [];
+all_locs = [];
+% 设置动态阈值
+subsignal_length = 1024;
+subsignal_start = 1:subsignal_length:length(smoothed_signal1);
+for subi = 1:numel(subsignal_start)
+    if subsignal_start(subi) > signal_length-subsignal_length
+        break;
     end
-    if  idx+(window_length*1/2) > length(filtered_signal1)
-        break;  % 超出范围，执行下一个区间
-    end
-%     取峰值两端一定长度的信号
-    signal1 = filtered_signal1(idx-(window_length*1/2-1):idx+(window_length*1/2));
-    signal2 = filtered_signal2(idx-(window_length*1/2-1):idx+(window_length*1/2));
-    signal3 = filtered_signal3(idx-(window_length*1/2-1):idx+(window_length*1/2));
-%     窗口处理
-    windows =1:256:length(signal1)-window_length+1;
-    for  wi = 1:numel(windows)
-        win_signal1 = signal1(windows(wi):windows(wi)+window_length-1);
-        win_signal2 = signal2(windows(wi):windows(wi)+window_length-1);
-        win_signal3 = signal3(windows(wi):windows(wi)+window_length-1);
-        
-% %         对信号进行滤波处理
-%         filtered_signal1 = real(filter_fft(win_signal1, 20e6 ,80e6 ));
-%         filtered_signal2 = real(filter_fft(win_signal2, 20e6 ,80e6 ));
-%         filtered_signal3 = real(filter_fft(win_signal3, 20e6 ,80e6 ));
-%          
-%         %带通滤波·
-%         filtered_signal1 = filter_bp(win_signal1,20e6,80e6,8);
-%         filtered_signal2 = filter_bp(win_signal2,20e6,80e6,8);
-%         filtered_signal3 = filter_bp(win_signal3,20e6,80e6,8);
+    subsignal1 = filtered_signal1(subsignal_start(subi):subsignal_start(subi)+subsignal_length-1);
+    threshold = 0.1 * mean(abs(subsignal1));
+    % 寻找峰值
+    [peaks, locs] = findpeaks(subsignal1, 'MinPeakHeight', threshold, 'MinPeakDistance', windows_length/4);
 
-%         filtered_signal1 = preprocess(win_signal1);
-%         filtered_signal2 = preprocess(win_signal2);
-%         filtered_signal3 = preprocess(win_signal3);
-
-        %去直流分量
-        signal1_removed = detrend(win_signal1);
-        signal2_removed = detrend(win_signal2);
-        signal3_removed = detrend(win_signal3);
-
-        % 对滤波后的信号应用窗函数
-        windowed_signal1 = real(windowsignal(signal1_removed));
-        windowed_signal2 = real(windowsignal(signal2_removed));
-        windowed_signal3 = real(windowsignal(signal3_removed));
-        %处理后的信号
-        ch1_new = windowed_signal1;
-        ch2_new = windowed_signal2;
-        ch3_new = windowed_signal3;
-        
-        % 互相关
-        [r12,lags12] = xcorr(ch1_new,ch2_new,'normalized');
-        [r13,lags13] = xcorr(ch1_new,ch3_new,'normalized');
-        [r23,lags23] = xcorr(ch2_new,ch3_new,'normalized');
-
-        R12 = max(r12);
-        R13 = max(r13);
-        R23 = max(r23);
-        %对相关系数函数进行上采样
-        r12_upsp = upsampling_gc(r12,lags12,8);
-        r13_upsp = upsampling_gc(r13,lags13,8);
-        r23_upsp = upsampling_gc(r23,lags23,8);
-    
-        t12 = showfitted(r12_upsp)*5;
-        t13 = showfitted(r13_upsp)*5;
-        t23 = showfitted(r23_upsp)*5;
-    
-%         % 构建矩阵 A 和向量 B
-%         A = [sqrt(3)/2 1/2; sqrt(3)/2 -1/2; 0 1];
-%         B = [c*t12/d; c*t13/d; c*t23/d];
-%         % 使用左除运算符求解线性方程组的最优解
-%         result = A \ B;
-%         % 输出最优的cos(α)和cos(β)值
-%         cos_alpha_opt = result(1);
-%         cos_beta_opt = result(2);
-%         if abs(cos_alpha_opt)>1 || abs(cos_beta_opt)>1
-%             continue;
-%         end
-%         Az = atan2( cos_alpha_opt,cos_beta_opt);
-%         if abs(cos_beta_opt/cos(Az)) > 1
-%             continue;
-%         end
-%         El = acos( cos_beta_opt/cos(Az) );
-%         % 将弧度转换为角度
-%         Az_deg = rad2deg(Az);
-%         El_deg = rad2deg(El);
-%         if Az_deg < 0
-%            Az_deg = Az_deg + 360;
-%         end
-
-
-            cos_alpha_0 = c*t23*tand(angle23)/(d*sind(angle23)*(tand(angle23) - tand(angle12))) - c*t12/(d*cosd(angle12)*(tand(angle23)-tand(angle12)));
-            cos_beta_0 = (c*t12-d*cos_alpha_0*sind(angle12))/(d*cosd(angle12));
-            if abs(cos_beta_0)>1 || abs(cos_alpha_0)>1
-               continue;
-            end
-            x0 = [cos_alpha_0,cos_beta_0];
-            % 调用lsqnonlin函数进行优化
-            options = optimoptions('lsqnonlin', 'MaxIter', 1000, 'TolFun', 1e-6);
-            x = lsqnonlin(@objective, x0, [-1 -1],[1 1], options);
-            % 输出最优的cos(α)和cos(β)值
-            cos_alpha_opt = x(1);
-            cos_beta_opt = x(2);
-             if abs(cos_alpha_opt)>1 || abs(cos_beta_opt)>1
-                 continue;
-             end
-             Az = atan2( cos_alpha_opt,cos_beta_opt);
-             if abs(cos_beta_opt/cos(Az)) > 1
-                continue;
-             end
-             El = acos( cos_beta_opt/cos(Az) );
-             % 将弧度转换为角度
-             Az_deg = rad2deg(Az);
-             El_deg = rad2deg(El);
-             if Az_deg < 0
-             Az_deg = Az_deg + 360;
-             end
-
-        peak_loc = find_max_peaks(ch1_new);
-        t123 = t12 + t23 - t13;
-        Rcorr = (R12 + R13 + R23)/3;
-        
-        
-        if abs(t123) > 1
-           continue;
-        end
-        % 写入计算后的数据
-        fprintf(fileID, '%-13d%-15d%-15.6f%-15.6f%-15.6f%-15.6f%-15.6f%-15.6f%-15.6f%-15.6f%-15.6f\n', ...
-             300000000+idx+windows(wi),peak_loc, t12, t13, t23, cos_alpha_opt, cos_beta_opt, Az_deg, El_deg, Rcorr,t123);
-    end
+    % 存储所有峰值和阈值
+    all_peaks = [all_peaks; peaks];
+    all_thresholds = [all_thresholds; threshold];
+    all_locs = [all_locs; locs + (subsignal_start(subi) - 1)];
 end
+% 遍历所有峰值
+num_peaks = numel(all_peaks);
+for pi = 1:num_peaks
+    idx = all_locs(pi);
+
+
+    % 确保峰值不超出信号范围
+    if idx - (windows_length / 2 - 1) <= 0 || idx + (windows_length / 2) > length(smoothed_signal1)
+        continue;
+    end
+
+    % 截取窗口信号
+    [signal1, signal2, signal3] = deal(...
+        smoothed_signal1(idx-(windows_length/2-1):idx+(windows_length/2)), ...
+        smoothed_signal2(idx-(windows_length/2-1):idx+(windows_length/2)), ...
+        smoothed_signal3(idx-(windows_length/2-1):idx+(windows_length/2)));
+
+
+    % 去直流分量并应用窗函数
+    [ch1_new, ch2_new, ch3_new] = deal(...
+        real(windowsignal(detrend(signal1))), ...
+        real(windowsignal(detrend(signal2))), ...
+        real(windowsignal(detrend(signal3))));
+
+    % 上采样
+    [ch1_upsp, ch2_upsp, ch3_upsp] = deal(...
+        upsampling(ch1_new, upsampling_factor)', ...
+        upsampling(ch2_new, upsampling_factor)', ...
+        upsampling(ch3_new, upsampling_factor)');
+
+
+    % 计算互相关
+    [r12_gcc, lags12_gcc] = xcorr(ch1_upsp(:,2), ch2_upsp(:,2), 'normalized');
+    [r13_gcc, lags13_gcc] = xcorr(ch1_upsp(:,2), ch3_upsp(:,2), 'normalized');
+    [r23_gcc, lags23_gcc] = xcorr(ch2_upsp(:,2), ch3_upsp(:,2), 'normalized');
+
+
+    % 计算时间延迟
+    [t12, t13, t23] = deal(...
+        cal_tau(r12_gcc, lags12_gcc') * 0.1, ...
+        cal_tau(r13_gcc, lags13_gcc') * 0.1, ...
+        cal_tau(r23_gcc, lags23_gcc') * 0.1);
+
+    % 计算初始角度
+    cos_beta_0 = ((c * t13 * d12 * sind(angle12)) - (c * t12 * sind(angle13) * d13)) / (d13 * d12 * sind(angle12 - angle13));
+    cos_alpha_0 = ((c * t12) / d12 - cos_beta_0 * sind(angle12)) / sind(angle12);
+
+    % 检查初始角度是否有效
+    if abs(cos_beta_0) > 1 || abs(cos_alpha_0) > 1
+        continue;
+    end
+
+    % 优化
+    x0 = [cos_alpha_0, cos_beta_0];
+    options = optimoptions('lsqnonlin', 'MaxIter', 1000, 'TolFun', 1e-6);
+    x = lsqnonlin(@objective, x0, [-1 -1], [1 1], options);
+    [cos_alpha_opt, cos_beta_opt] = deal(x(1), x(2));
+
+    % 检查优化结果
+    if abs(cos_alpha_opt) > 1 || abs(cos_beta_opt) > 1
+        continue;
+    end
+
+    % 计算方位角和俯仰角
+    Az = atan2(cos_alpha_opt, cos_beta_opt);
+    if abs(cos_beta_opt / cos(Az)) > 1
+        continue;
+    end
+    El = acos(cos_beta_opt / cos(Az));
+    [Az_deg, El_deg] = deal(rad2deg(Az), rad2deg(El));
+    if Az_deg < 0
+        Az_deg = Az_deg + 360;
+    end
+
+    % 计算 Rcorr
+    R12_gcc = max(xcorr(ch1_upsp(:,2), ch2_upsp(:,2), 'normalized'));
+    R13_gcc = max(xcorr(ch1_upsp(:,2), ch3_upsp(:,2), 'normalized'));
+    R23_gcc = max(xcorr(ch2_upsp(:,2), ch3_upsp(:,2), 'normalized'));
+    Rcorr = (R12_gcc + R13_gcc + R23_gcc) / 3;
+
+    % 计算 t123
+    t123 = t12 + t23 - t13;
+
+    % 写入结果
+    fprintf(fileID, '%-13d%-15d%-15.6f%-15.6f%-15.6f%-15.6f%-15.6f%-15.6f%-15.6f%-15.6f%-15.6f\n', ...
+        r_loction + idx - 512, 513, t12, t13, t23, cos_alpha_opt, cos_beta_opt, Az_deg, El_deg, Rcorr, t123);
+end
+
 % 关闭文件
 fclose(fileID);
-
-
-
-function y = preprocess(x)
-%  预处理输入 x
-%    This function expects an input vector x.
-
-% Generated by MATLAB(R) 9.12 and Signal Processing Toolbox 9.0.
-% Generated on: 28-May-2024 16:47:33
-
-y = bandstop(x,[0.2 0.8],'Steepness',0.9,'StopbandAttenuation',80);
-end
-
-function max_index = maxindex(vector)
-    % 提取实部部分
-    real_vector = real(vector);
-    % 找到实部大于零的元素
-    positive_values = real_vector(real_vector > 0);
-    % 找到实部大于零的元素中的最大值
-    max_value = max(positive_values);
-    % 找到最大值对应的索引
-    max_index = find(real_vector == max_value);
-end
-
-function max_value = maxvalue(vector)
-    % 提取实部部分
-    real_vector = real(vector);
-    % 找到实部大于零的元素
-    positive_values = real_vector(real_vector > 0);
-    % 找到实部大于零的元素中的最大值
-    max_value = max(positive_values);
-end
-
-function plot_signal_spectrum(signal)
-% Plotting the signal spectrum时域信号的频谱图
-fs = 200;
-fft_signal = fft(signal);
-n = length(fft_signal);
-x = (0:n/2-1) * (fs/n);
-figure
-plot(x, 2.0 / n * abs(fft_signal(1:n/2)))
-
-xlabel('Frequency (MHz)')
-ylabel('Amplitude')
-grid on
-end
 
 
 
@@ -345,6 +280,15 @@ function matched_peaks_x = match_peaks(peaks1,peaks2,peaks3)
 end
 
 
+function max_index = maxindex(vector)
+    % 提取实部部分
+    
+    max_value = max(vector);
+    % 找到最大值对应的索引
+    max_index = find(vector == max_value);
+end
+
+
 function mswed_signal = msw_signal(signal , peak_x ,length)
       % 找到峰值的 x 值在信号中的索引
     left_idx = max(peak_x - length+1, 1);  % 确定左边界的索引
@@ -465,4 +409,5 @@ function windowed_signal = windowsignal(signal)
       windowed_signal = ifft(X_windowed);
 
 end
+
 
