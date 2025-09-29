@@ -303,9 +303,9 @@ function correlated_windows = find_correlated_windows(signal1, signal2, signal3,
         window1 = signal1(i:i+window_size-1);
         window2 = signal2(i:i+window_size-1);
         window3 = signal3(i:i+window_size-1);
-        [tau12,R12,lag12] = gccphat(window1,window2, Fs);
-        [tau13,R13,lag13] = gccphat(window1,window3, Fs);
-        [tau23,R23,lag23] = gccphat(window2,window3, Fs);
+        [~,R12,~] = gccphat(window1,window2, Fs);
+        [~,R13,~] = gccphat(window1,window3, Fs);
+        [~,R23,~] = gccphat(window2,window3, Fs);
         max_R12 = maxvalue(R12);
         max_R13 = maxvalue(R13);
         max_R23 = maxvalue(R23);
@@ -409,7 +409,7 @@ end
 
 function tau = showfitted(data)
     % 从数据中找到y的最大值及其索引
-    [max_value, max_index] = max(data(:, 2));
+    [~, max_index] = max(data(:, 2));
     % 获取最大值周围的3个点的索引
     if max_index > length(data(:,2))-3 || max_index <3
         tau = 20/0.299552816 + 1;
@@ -430,7 +430,7 @@ function tau = showfitted(data)
 %         legend('原始数据', '拟合曲线');
 %         xlabel('y的索引');
 %         ylabel('y的值');
-        [max_value_fit, max_index_fit] = max(fit_values_curve);
+        [~, max_index_fit] = max(fit_values_curve);
         tau = fit_indices_curve(1,max_index_fit);
     end
     
