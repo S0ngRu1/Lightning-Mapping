@@ -1,0 +1,11 @@
+yld_signal_start_loc = 4.5e8;
+yld_signal_length = 1e8;
+yld_signal = read_signal('../20240822165932.6610CH1.dat',yld_signal_length,yld_signal_start_loc);
+chj_signal_length = 1e8;
+chj_signal_start_loc = yld_signal_start_loc;
+chj_signal = read_signal('../2024 822 85933.651462CH1.dat',chj_signal_length,chj_signal_start_loc);
+x = downsample(yld_signal,500);
+y = downsample(chj_signal,500);
+[r_gcc,lags_gcc] = xcorr(x,y,'normalized');
+R_gcc = max(r_gcc);
+t_gcc = cal_tau(r_gcc,lags_gcc');
