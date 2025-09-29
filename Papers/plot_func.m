@@ -54,7 +54,7 @@ set(gca, 'GridLineStyle', '--', 'GridAlpha', 0.4, 'Box', 'on'); % 稍微调高Gr
 
 
 
-logicalIndex =  abs(result1.t123) < 1  & abs(result1.Rcorr) > 0.3 &  result1.Start_loc < 4e8 & result1.Start_loc > 3.6e8;
+logicalIndex =  abs(result1.t123) < 1  & abs(result1.Rcorr) > 0.65 &  result1.Start_loc < 4.8e8 & result1.Start_loc > 1.8e8;
 filteredTable1 = result1(logicalIndex, :);
 Start_loc = filteredTable1.Start_loc;
 %动态图
@@ -126,11 +126,14 @@ plot(ch_chj,'b','LineWidth', 1.5)
 
  filtered_chj_signal1 = waveletDenoiseAdaptive(ch2, level, wavelet);
  filtered_chj_signal2 = filter_bp(ch2,20e6,80e6,5);
+
+signal_length = 1e8;
+r_loction_yld = 3.6e8;
+ch1 = read_signal('20240613171023.1120CH1.dat',signal_length,r_loction_yld);
 x1 = downsample(ch1,50);
-x2 = downsample(ch2,50);
-x3 = downsample(ch3,50);
+plot(x1)
 % x3 = downsample(ch3,50);
-subplot(3,1,1);plot(ch1);title('ch1');xlabel('采样点数');ylabel('幅值');
+subplot(3,1,1);plot(x1);title('ch1');xlabel('采样点数');ylabel('幅值');
 subplot(3,1,2);plot(data_filter1);title('wf');xlabel('采样点数');ylabel('幅值');
 subplot(3,1,3);plot(filter2);title('bp');xlabel('采样点数');ylabel('幅值');
 
