@@ -37,73 +37,67 @@ fprintf('原始数据点数: %d\n', size(data_raw, 1));
 % --- 处理事件1 (右子图数据) ---
 fprintf('\n--- 正在处理事件1 (%.2e to %.2e) ---\n', event1_range(1), event1_range(2));
 velocities1 = []; time_midpoints1 = []; avg_vel1 = NaN; % 初始化结果
-try
-    % 筛选事件1数据
-    logicalIndex1 = ...
-        abs(data_raw(:, COL_RCORR)) > 0.6 & ...
-        data_raw(:, COL_START_LOC) > event1_range(1) & ...
-        data_raw(:, COL_START_LOC) < event1_range(2) & ...
-        data_raw(:, COL_ELEVATION) < 80 & ...
-        abs(data_raw(:, COL_T123)) < 1;
-    data1 = data_raw(logicalIndex1, :);
-    fprintf('事件1筛选后有效数据点数: %d\n', size(data1, 1));
-    
-    if ~isempty(data1)
-        % 预处理事件1数据
-        time_samples1 = data1(:, COL_START_LOC);
-        azimuth_deg1 = data1(:, COL_AZIMUTH);   % 【修正】使用常量
-        elevation_deg1 = data1(:, COL_ELEVATION); % 【修正】使用常量
-        time_sec1 = (time_samples1 - time_samples1(1)) / SAMPLING_RATE;
-        azimuth_rad1 = deg2rad(azimuth_deg1);
-        elevation_rad1 = deg2rad(elevation_deg1);
-        R_proj1 = ASSUMED_HEIGHT ./ tan(elevation_rad1);
-        x_coords1 = R_proj1 .* cos(azimuth_rad1);
-        y_coords1 = R_proj1 .* sin(azimuth_rad1);
-        valid_indices1 = isfinite(x_coords1) & isfinite(y_coords1);
-        time_sec1 = time_sec1(valid_indices1);
-        x_coords1 = x_coords1(valid_indices1);
-        y_coords1 = y_coords1(valid_indices1);
-        
-        % 计算事件1速度
-        [velocities1, time_midpoints1, avg_vel1, ~] = calculate_velocity(time_sec1, x_coords1, y_coords1, TIME_WINDOW_VEL);
-    end
+% 筛选事件1数据
+logicalIndex1 = ...
+    abs(data_raw(:, COL_RCORR)) > 0.6 & ...
+    data_raw(:, COL_START_LOC) > event1_range(1) & ...
+    data_raw(:, COL_START_LOC) < event1_range(2) & ...
+    data_raw(:, COL_ELEVATION) < 80 & ...
+    abs(data_raw(:, COL_T123)) < 1;
+data1 = data_raw(logicalIndex1, :);
+fprintf('事件1筛选后有效数据点数: %d\n', size(data1, 1));
 
+if ~isempty(data1)
+    % 预处理事件1数据
+    time_samples1 = data1(:, COL_START_LOC);
+    azimuth_deg1 = data1(:, COL_AZIMUTH);   % 【修正】使用常量
+    elevation_deg1 = data1(:, COL_ELEVATION); % 【修正】使用常量
+    time_sec1 = (time_samples1 - time_samples1(1)) / SAMPLING_RATE;
+    azimuth_rad1 = deg2rad(azimuth_deg1);
+    elevation_rad1 = deg2rad(elevation_deg1);
+    R_proj1 = ASSUMED_HEIGHT ./ tan(elevation_rad1);
+    x_coords1 = R_proj1 .* cos(azimuth_rad1);
+    y_coords1 = R_proj1 .* sin(azimuth_rad1);
+    valid_indices1 = isfinite(x_coords1) & isfinite(y_coords1);
+    time_sec1 = time_sec1(valid_indices1);
+    x_coords1 = x_coords1(valid_indices1);
+    y_coords1 = y_coords1(valid_indices1);
+    
+    % 计算事件1速度
+    [velocities1, time_midpoints1, avg_vel1, ~] = calculate_velocity(time_sec1, x_coords1, y_coords1, TIME_WINDOW_VEL);
 end
 
 % --- 处理事件2 (左子图数据) ---
 fprintf('\n--- 正在处理事件2 (%.2e to %.2e) ---\n', event2_range(1), event2_range(2));
 velocities2 = []; time_midpoints2 = []; avg_vel2 = NaN; % 初始化结果
-try
-    % 筛选事件2数据
-    logicalIndex2 = ...
-        abs(data_raw(:, COL_RCORR)) > 0.6 & ...
-        data_raw(:, COL_START_LOC) > event2_range(1) & ...
-        data_raw(:, COL_START_LOC) < event2_range(2) & ...
-        data_raw(:, COL_ELEVATION) < 80 & ...
-        abs(data_raw(:, COL_T123)) < 1;
-    data2 = data_raw(logicalIndex2, :);
-    fprintf('事件2筛选后有效数据点数: %d\n', size(data2, 1));
+% 筛选事件2数据
+logicalIndex2 = ...
+    abs(data_raw(:, COL_RCORR)) > 0.6 & ...
+    data_raw(:, COL_START_LOC) > event2_range(1) & ...
+    data_raw(:, COL_START_LOC) < event2_range(2) & ...
+    data_raw(:, COL_ELEVATION) < 80 & ...
+    abs(data_raw(:, COL_T123)) < 1;
+data2 = data_raw(logicalIndex2, :);
+fprintf('事件2筛选后有效数据点数: %d\n', size(data2, 1));
 
-    if ~isempty(data2)
-        % 预处理事件2数据
-        time_samples2 = data2(:, COL_START_LOC);
-        azimuth_deg2 = data2(:, COL_AZIMUTH);
-        elevation_deg2 = data2(:, COL_ELEVATION);
-        time_sec2 = (time_samples2 - time_samples2(1)) / SAMPLING_RATE;
-        azimuth_rad2 = deg2rad(azimuth_deg2);
-        elevation_rad2 = deg2rad(elevation_deg2);
-        R_proj2 = ASSUMED_HEIGHT ./ tan(elevation_rad2);
-        x_coords2 = R_proj2 .* cos(azimuth_rad2);
-        y_coords2 = R_proj2 .* sin(azimuth_rad2);
-        valid_indices2 = isfinite(x_coords2) & isfinite(y_coords2);
-        time_sec2 = time_sec2(valid_indices2);
-        x_coords2 = x_coords2(valid_indices2);
-        y_coords2 = y_coords2(valid_indices2);
+if ~isempty(data2)
+    % 预处理事件2数据
+    time_samples2 = data2(:, COL_START_LOC);
+    azimuth_deg2 = data2(:, COL_AZIMUTH);
+    elevation_deg2 = data2(:, COL_ELEVATION);
+    time_sec2 = (time_samples2 - time_samples2(1)) / SAMPLING_RATE;
+    azimuth_rad2 = deg2rad(azimuth_deg2);
+    elevation_rad2 = deg2rad(elevation_deg2);
+    R_proj2 = ASSUMED_HEIGHT ./ tan(elevation_rad2);
+    x_coords2 = R_proj2 .* cos(azimuth_rad2);
+    y_coords2 = R_proj2 .* sin(azimuth_rad2);
+    valid_indices2 = isfinite(x_coords2) & isfinite(y_coords2);
+    time_sec2 = time_sec2(valid_indices2);
+    x_coords2 = x_coords2(valid_indices2);
+    y_coords2 = y_coords2(valid_indices2);
 
-        % 计算事件2速度
-        [velocities2, time_midpoints2, avg_vel2, ~] = calculate_velocity(time_sec2, x_coords2, y_coords2, TIME_WINDOW_VEL);
-    end
-
+    % 计算事件2速度
+    [velocities2, time_midpoints2, avg_vel2, ~] = calculate_velocity(time_sec2, x_coords2, y_coords2, TIME_WINDOW_VEL);
 end
 
 
