@@ -218,7 +218,7 @@ function features = extract_features(waveform, fs)
 end
 
 %% 为簇计算TDOA的函数 (模板匹配法)
-function [t12, t13, t23, Rcorr_avg] = calculate_cluster_tdoa(pulses, indices, upsampling_factor, fs)
+function [t12, t13, t23, Rcorr_avg] = calculate_cluster_tdoa(pulses, indices, upsampling_factor, ~)
     num_in_cluster = length(indices);
     pulse_len = length(pulses(1).ch1);
     
@@ -245,7 +245,6 @@ function [t12, t13, t23, Rcorr_avg] = calculate_cluster_tdoa(pulses, indices, up
     template_s2_up = resample(template_s2, upsampling_factor, 1);
     template_s3_up = resample(template_s3, upsampling_factor, 1);
     
-    fs_up = fs * upsampling_factor;
 
     % 使用GCC-PHAT进行互相关 (更鲁棒)
     % 使用 (:) 将输入强制转换为列向量，以符合函数要求
