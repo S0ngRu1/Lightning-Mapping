@@ -6,62 +6,35 @@ window_length = 1024;
 bigwindows_length = window_length+100;
 window = window_length * upsampling_factor;
 msw_length = 50;
-% % 从化局
-% d12 = 41.6496;
-% d13 = 48.5209;
-% d23 = 25.0182;
-% angle12 = -2.8381;
-% angle13 = 28.2006;
-% angle23 = 87.3358;
-
-% signal_length = 3e8;
-% r_loction = 3e8;
-% ch1 = read_signal('..\\2024 822 85933.651462CH1.dat',signal_length,r_loction);
-% ch2 = read_signal('..\\2024 822 85933.651462CH2.dat',signal_length,r_loction);
-% ch3 = read_signal('..\\2024 822 85933.651462CH3.dat',signal_length,r_loction165/5);
-
-% %引雷点
-% signal_length = 1e8;
-% r_loction = 4.5e8;
+%引雷点
+signal_length = 8e5;
+r_loction = 4.694e8;
 d12 = 24.9586;
 d13 = 34.9335;
 d23 = 24.9675;
 angle12 = -110.8477;
 angle13 = -65.2405;
 angle23 = -19.6541;
-% ch1 = read_signal('..\\20240822165932.6610CH1.dat',signal_length,r_loction);
-% ch2 = read_signal('..\\20240822165932.6610CH2.dat',signal_length,r_loction);
-% ch3 = read_signal('..\\20240822165932.6610CH3.dat',signal_length,r_loction);
+ch1 = read_signal('..\\20240822165932.6610CH1.dat',signal_length,r_loction);
+ch2 = read_signal('..\\20240822165932.6610CH2.dat',signal_length,r_loction);
+ch3 = read_signal('..\\20240822165932.6610CH3.dat',signal_length,r_loction);
 
-%滤波
-original_signal_length = 3e8;
-original_signal_loc = 3e8;
-sub_filter_signal_length = 60000;
-yld_signal1 = read_signal('..\\20240822165932.6610CH1.dat', original_signal_length, original_signal_loc);
-yld_signal2 = read_signal('..\\20240822165932.6610CH2.dat', original_signal_length, original_signal_loc);
-yld_signal3 = read_signal('..\\20240822165932.6610CH3.dat', original_signal_length, original_signal_loc);
-filtered_yld_signal1 = rfi_filter(yld_signal1,sub_filter_signal_length);
-filtered_yld_signal2 = rfi_filter(yld_signal2,sub_filter_signal_length);
-filtered_yld_signal3 = rfi_filter(yld_signal3,sub_filter_signal_length);
 
-% filtered_signal1 = filter_bp(ch1, 30e6 ,80e6 ,5);
-% filtered_signal2 = filter_bp(ch2, 30e6 ,80e6 ,5);
-% filtered_signal3 = filter_bp(ch3, 30e6 ,80e6 ,5);
+filtered_signal1 = filter_xb(ch1);
+filtered_signal2 = filter_xb(ch2);
+filtered_signal3 = filter_xb(ch3);
 
 
 noise = read_signal('..\\20240822165932.6610CH1.dat',60000,2e8);
-filtered_noise = rfi_filter(noise,60000);
-threshold = 7*std(filtered_noise);
+filtered_noise = filter_xb(noise);
+threshold = 0.5*std(filtered_noise);
 
 % 打开一个文本文件用于写入运行结果
-fileID = fopen('result_yld_th1_3-6e8_RFI.txt', 'w');
+fileID = fopen('result_yld_4.5-5.5e8——xb.txt', 'w');
 fprintf(fileID, '%-13s%-15s%-15s%-15s%-15s%-15s%-15s%-15s%-15s%-15s%-15s\n', ...
     'Start_loc','peak','t12', 't13', 't23', 'cos_alpha_opt', 'cos_beta_opt','Azimuth', 'Elevation', 'Rcorr', 't123');
 
-% 设置动态阈值
-all_peaks = [];
-% all_thresholds = [];
-all_locs = [];
+
 % % 设置动态阈值，每4000点取一个阈值
 % subsignal_length = 4000;
 % subsignal_start = 1:subsignal_length:length(filtered_signal1);
@@ -71,12 +44,10 @@ all_locs = [];
 % threshold =  mean(abs(subsignal1)) + 3*std(subsignal1);
 
 % 寻找峰值
-[peaks, locs] = findpeaks(filtered_yld_signal1, 'MinPeakHeight', threshold, 'MinPeakDistance', window_length/4);
+[peaks, locs] = findpeaks(filtered_signal1, 'MinPeakHeight', threshold, 'MinPeakDistance', window_length/4);
 
 % 存储所有峰值和阈值
 all_peaks = peaks;
-%     all_thresholds = [all_thresholds; threshold];
-%     all_locs = [all_locs; locs + (subsignal_start(subi) - 1)];
 all_locs = locs;
 
 % 遍历所有峰值
@@ -88,15 +59,15 @@ for pi = 1:num_peaks
     idx = all_locs(pi);
 
     % 确保峰值不超出信号范围
-    if idx - (bigwindows_length / 2 - 1) <= 0 || idx + (bigwindows_length / 2) > length(filtered_yld_signal1)
+    if idx - (bigwindows_length / 2 - 1) <= 0 || idx + (bigwindows_length / 2) > length(filtered_signal1)
         continue;
     end
 
     % 截取窗口信号
     [signal1, signal2, signal3] = deal(...
-        filtered_yld_signal1(idx-(bigwindows_length/2-1):idx+(bigwindows_length/2)), ...
-        filtered_yld_signal2(idx-(bigwindows_length/2-1):idx+(bigwindows_length/2)), ...
-        filtered_yld_signal3(idx-(bigwindows_length/2-1):idx+(bigwindows_length/2)));
+        filtered_signal1(idx-(bigwindows_length/2-1):idx+(bigwindows_length/2)), ...
+        filtered_signal2(idx-(bigwindows_length/2-1):idx+(bigwindows_length/2)), ...
+        filtered_signal3(idx-(bigwindows_length/2-1):idx+(bigwindows_length/2)));
     % 去直流分量并应用窗函数
     [ch1_new, ch2_new, ch3_new] = deal(...
         real(windowsignal(detrend(signal1))), ...
@@ -175,10 +146,6 @@ for pi = 1:num_peaks
                 end
             end
             if size(t12s,1)~=0 && size(t13s,1)~=0 && size(t23s,1)~=0
-%                                 %从化局
-%                                 t12 = (t12_gcc + mean(t12s))*0.1;
-%                                 t13 = (t13_gcc + mean(t13s))*0.1+2;
-%                                 t23 = (t23_gcc + mean(t23s))*0.1+2;
                 %引雷场
                 t12 = (t12_gcc + mean(t12s))*0.1;
                 t13 = (t13_gcc + mean(t13s))*0.1;
@@ -217,16 +184,12 @@ for pi = 1:num_peaks
 
                 % 写入计算后的数据
                 fprintf(fileID, '%-13d%-15d%-15.6f%-15.6f%-15.6f%-15.6f%-15.6f%-15.6f%-15.6f%-15.6f%-15.6f\n', ...
-                    original_signal_loc+15000+idx-window/100,window/100, t12, t13, t23, cos_alpha_opt, cos_beta_opt, Az_deg, El_deg, Rcorr,t123);
+                     r_loction+idx-window/100,window/100, t12, t13, t23, cos_alpha_opt, cos_beta_opt, Az_deg, El_deg, Rcorr,t123);
                 ismsw = ismsw + 1;
             end
         end
     end
     if ismsw == 0
-%                 从化局
-%                 t12 = t12_gcc *0.1;
-%                 t13 = t13_gcc *0.1+2;
-%                 t23 = t23_gcc *0.1+2;
         %引雷场
         t12 = t12_gcc *0.1;
         t13 = t13_gcc *0.1;
@@ -264,10 +227,171 @@ for pi = 1:num_peaks
 
         % 写入计算后的数据
         fprintf(fileID, '%-13d%-15d%-15.6f%-15.6f%-15.6f%-15.6f%-15.6f%-15.6f%-15.6f%-15.6f%-15.6f\n', ...
-            original_signal_loc+15000+idx-window/100,window/100, t12, t13, t23, cos_alpha_opt, cos_beta_opt, Az_deg, El_deg, Rcorr,t123);
+             r_loction+idx-window/100,window/100, t12, t13, t23, cos_alpha_opt, cos_beta_opt, Az_deg, El_deg, Rcorr,t123);
     end
 end
 % 关闭文件
 fclose(fileID);
 % 关闭进度条
 close(h);
+
+
+function signal = read_signal(signal_path, r_length,r_loction)
+    fid  = fopen(signal_path,'r');%读取数据的位置
+
+    %使用fseek函数将文件指针移动到指定位置，以便读取数据。
+    %这里指定移动位置为r_location，表示移动到指定位置开始读取数据。
+    fseek(fid,r_loction*2,'bof');
+    %使用fread函数从文件中读取数据，读取的数据长度为r_length，数据以int16格式读取。
+    %将读取到的数据分别保存到变量ch_1、ch_2和ch_3中。
+    signal = fread(fid,r_length,'int16');
+    %关闭所有文件
+    fclose('all');
+end
+
+
+% 定义目标函数
+function F = objective(x,t12,t13,t23)
+    % 提取待优化的变量
+    cos_alpha = x(1);
+    cos_beta = x(2);
+
+    % 计算τij的理想值τ_ij^obs
+    tau_ij_obs = calculate_tau_obs(cos_alpha, cos_beta);
+    % 计算Δt12, Δt13, Δt23
+    delta_t12 = delta_t(t12,tau_ij_obs(1));
+    delta_t13 = delta_t(t13,tau_ij_obs(2));
+    delta_t23 = delta_t(t23,tau_ij_obs(3));
+
+    % 计算目标函数，即式(4)
+    F = (delta_t12^2 + delta_t13^2 + delta_t23^2) / 75;
+end
+
+function tau_ij_obs = calculate_tau_obs(cos_alpha, cos_beta)
+    % 初始化输出变量
+    tau_ij_obs = zeros(1, 3);
+        % 引雷场
+        angle12 = -110.8477;
+        angle13 = -65.2405;
+        angle23 = -19.6541;
+        d12 = 24.9586;
+        d13 = 34.9335;
+        d23 = 24.9675;
+
+    % 使用式(3)计算τij的理想值τ_ij^obs
+    tau_ij_obs(1) = (cos_alpha * sind(angle12) + cos_beta * cosd(angle12)) * d12 / 0.299792458;
+    tau_ij_obs(2) = (cos_alpha * sind(angle13) + cos_beta * cosd(angle13)) * d13 / 0.299792458;
+    tau_ij_obs(3) = (cos_alpha * sind(angle23) + cos_beta * cosd(angle23)) * d23 / 0.299792458;
+end
+
+
+
+function tau = cal_tau(R, lag)
+    % 从数据中找到y的最大值及其索引
+    [~, max_index] = max(R);
+    tau = lag(max_index,1);
+end
+
+function delta_t = delta_t(tij,tij_obs)
+    delta_t = tij - tij_obs;
+end
+
+function filtered_signal = filter_xb(signal)
+% 通用小波
+    level = 4;          % 分解层数
+    wavelet = 'db4';    % 小波基
+    [c4, l4] = wavedec(signal, level, wavelet);
+    sigma = median(abs(c4))/0.6745;
+%     thr = sigma*sqrt(2*log(length(signal)));  % 通用阈值
+    thr = sigma*sqrt(log(length(signal)));
+    c_denoised4 = wthresh(c4, 's', 1.5*thr);  % 使用小波软阈值
+    filtered_signal = normalize(waverec(c_denoised4, l4, wavelet));
+
+
+end
+
+
+
+%函数：寻找信号的峰值
+function peaks = find_peaks(signal,threshold)
+    % 找到信号中的峰值
+    [pks,locs] = findpeaks(signal);
+    % 根据阈值筛选峰值
+    peaks = locs(pks > threshold);
+end
+
+
+function matched_peaks_x = match_peaks(peaks1,peaks2,peaks3)
+    matched_peaks_x = []; % 存储匹配峰值的x值矩阵
+    for i = 1:numel(peaks1)
+        curr_peak1 = peaks1(i);
+        % 检查peaks2和peaks3中是否存在与peaks1对应的峰值且x值的差不大于4
+        idx_peak2 = find(abs(peaks2 - curr_peak1) <= 10);  % 获取peaks2中匹配峰值的索引
+        idx_peak3 = find(abs(peaks3 - curr_peak1) <= 10);  % 获取peaks3中匹配峰值的索引
+        % 检查是否找到了匹配的峰值
+        if ~isempty(idx_peak2) && ~isempty(idx_peak3)
+            matched_peaks_x = [matched_peaks_x; [curr_peak1, peaks2(idx_peak2(1)), peaks3(idx_peak3(1))]];% 添加匹配峰值的x值矩阵
+        end
+    end
+end
+
+
+
+function mswed_signal = msw_signal(signal , peak_x ,length)
+      % 找到峰值的 x 值在信号中的索引
+    left_idx = max(peak_x - length+1, 1);  % 确定左边界的索引
+    right_idx = min(peak_x + length, 10240);  % 确定右边界的索引
+    mswed_signal = signal(left_idx:right_idx);  % 提取以中心 x 值为中心的左右40个采样点
+
+end
+
+
+
+function shifted_signal = shift_signal(signal, shift_amount)
+
+    % 使用 circshift 进行平移
+    shifted_signal = circshift(signal, shift_amount);
+    % 如果是向左平移，右侧补零；如果是向右平移，左侧补零
+    if shift_amount < 0
+        shifted_signal(end+shift_amount+1:end) = 0;
+    else
+        shifted_signal(1:shift_amount) = 0;
+    end
+    
+end
+
+
+
+%函数：对主窗口进行上采样
+function new_signal = upsampling(original_signal,upsampling_factor)
+
+    % 原信号
+    original_x = (1:numel(original_signal))';
+    original_y = original_signal;
+    % 上采样后的采样点数
+    upsampled_length = length(original_x) * upsampling_factor;
+    % 上采样后的采样点的 x 坐标
+    upsampled_x = linspace(1, length(original_x), upsampled_length);
+    % 使用多项式插值对原信号进行上采样
+    interpolated_signal = interp1(original_x, original_y, upsampled_x, 'spline');
+    new_signal = [upsampled_x; interpolated_signal];
+end
+
+
+function windowed_signal = windowsignal(signal)
+%     r_length = length(signal);
+%    % 使用汉明窗
+%    window = hamming(r_length);
+%    % 对滤波后的信号应用窗函数
+%    windowed_signal = signal .* window; % 信号与窗函数相乘
+% 
+    X = fft(signal);      %变换到频域加窗
+    r_length = length(X);
+    window = hamming(r_length);
+%     得到的是频域信号
+    X_windowed = X .* window;
+
+% %     % 进行逆傅里叶变换得到时域信号
+      windowed_signal = ifft(X_windowed);
+
+end

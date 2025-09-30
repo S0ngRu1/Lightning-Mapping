@@ -170,3 +170,49 @@ tau_ij_obs(2) = (cos_alpha * sind(angle13) + cos_beta * cosd(angle13)) * d13 / 0
 tau_ij_obs(3) = (cos_alpha * sind(angle23) + cos_beta * cosd(angle23)) * d23 / 0.299792458;
 end
 
+
+
+%函数：对主窗口进行上采样
+function new_signal = upsampling(original_signal,upsampling_factor)
+
+    % 原信号
+    original_x = (1:numel(original_signal))';
+    original_y = original_signal;
+    % 上采样后的采样点数
+    upsampled_length = length(original_x) * upsampling_factor;
+    % 上采样后的采样点的 x 坐标
+    upsampled_x = linspace(1, length(original_x), upsampled_length);
+    % 使用多项式插值对原信号进行上采样
+    interpolated_signal = interp1(original_x, original_y, upsampled_x, 'spline');
+    new_signal = [upsampled_x; interpolated_signal];
+end
+
+
+function windowed_signal = windowsignal(signal)
+%     r_length = length(signal);
+%    % 使用汉明窗
+%    window = hamming(r_length);
+%    % 对滤波后的信号应用窗函数
+%    windowed_signal = signal .* window; % 信号与窗函数相乘
+% 
+    X = fft(signal);      %变换到频域加窗
+    r_length = length(X);
+    window = hamming(r_length);
+%     得到的是频域信号
+    X_windowed = X .* window;
+
+% %     % 进行逆傅里叶变换得到时域信号
+      windowed_signal = ifft(X_windowed);
+
+end
+
+
+%% 设计巴特沃斯带通滤波器
+function filtered_signal = filter_bp(signal,f1,f2,order)
+    Fs = 200e6;
+    fn = Fs/2;
+    Wn = [f1 f2]/fn;
+    [b,a] = butter(order,Wn); 
+    filtered_signal = filtfilt(b,a,signal);
+
+end
