@@ -59,9 +59,7 @@ fprintf(fileID, '%-13s%-15s%-15s%-15s%-15s%-15s%-15s%-15s%-15s%-15s%-15s\n', ...
     'Start_loc','peak','t12', 't13', 't23', 'cos_alpha_opt', 'cos_beta_opt','Azimuth', 'Elevation', 'Rcorr', 't123');
 
 % 设置动态阈值
-all_peaks = [];
 % all_thresholds = [];
-all_locs = [];
 % % 设置动态阈值，每4000点取一个阈值
 % subsignal_length = 4000;
 % subsignal_start = 1:subsignal_length:length(filtered_signal1);
