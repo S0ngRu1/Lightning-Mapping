@@ -1,4 +1,7 @@
-%% Step1 读取引雷点的二维定位结果（需要条件筛选出合格的）   
+%% 修改为保存全部的结果
+
+
+%% Step1 读取引雷点的二维定位结果（需要条件筛选出合格的）
 % 引入变量：位置，方位角，仰角
 chj_signal_length = 512;
 match_signal_length = 6000;
@@ -8,7 +11,7 @@ threshold_std_multiplier = 5;
 noise = read_signal('..\\2024 822 85933.651462CH1.dat', noise_analysis_length, noise_analysis_length);
 filtered_noise = filter_bp(noise, 30e6, 80e6, 5);
 threshold = mean(filtered_noise) + threshold_std_multiplier * std(filtered_noise);
-start_signal_loc = 3.6e8;
+start_signal_loc = 3.65e8;
 mapping_start_signal_loc = 3.8e8;
 end_signal_loc = 4e8;
 step = 127200;
@@ -47,8 +50,8 @@ baseline_ant_indices = [
     1, 3; % 基线13
     2, 3  % 基线23
     ];
-search_radius_xy = 10; 
-search_radius_z  = 10;  
+search_radius_xy = 10;
+search_radius_z  = 10;
 % --- 所有基线的天线全局坐标 (6条站内 + 1条站间) ---
 all_baseline_definitions = zeros(7, 6);
 all_baseline_definitions(1, :) = [yld_ant_global_coords(1,:), yld_ant_global_coords(2,:)];
@@ -59,7 +62,7 @@ all_baseline_definitions(5, :) = [chj_ant_global_coords(1,:), chj_ant_global_coo
 all_baseline_definitions(6, :) = [chj_ant_global_coords(2,:), chj_ant_global_coords(3,:)];
 % 站间基线 (YLD参考天线 - CHJ参考天线)
 all_baseline_definitions(7, :) = [yld_sit, chj_sit];
-all_residuals_history = []; 
+all_residuals_history = [];
 % --- DTOA测量不确定度  ---
 sigmas_ns = [
     2; 2; 2; % YLD 站内基线 DTOA 不确定度 (ns)
@@ -91,15 +94,6 @@ for j = 1:numel(all_start_signal_loc)-1
     h = waitbar(0, 'Processing...');
     %% Step2 根据引雷点的信号窗口得到匹配到的从化局的信号
     for i =1 :numel(yld_start_loc)
-        sub_S_results = [];
-        sub_R_gccs = [];
-        dltas = [];
-        sub_chj_locs = [];
-        sub_chj_azimuth = [];
-        sub_chj_elevation = [];
-        sub_chj_dtoa_t = [];
-        yld_chj_dlta_ts = [];
-        yld_chj_dlta_Ts = [];
         waitbar(i/numel(yld_start_loc), h, sprintf('位置：%d -- %d ；进度： %.2f%%', start_read_loc_yld, end_read_loc_yld, i/numel(yld_start_loc)*100));
         if yld_Rcorr(i) < 0.6 && yld_t123(i) > 1 && yld_elevation(i)  < 80 && yld_elevation(i)  > 10
             continue
@@ -202,181 +196,109 @@ for j = 1:numel(all_start_signal_loc)-1
                 dlta_T = (match_signal_length - chj_start_idx)*5;
                 dlta = abs(dlta_t-dlta_T);
                 if dlta <= W
-                    dltas = [dltas;dlta];
-                    yld_chj_dlta_ts = [yld_chj_dlta_ts;dlta_t];
-                    yld_chj_dlta_Ts = [yld_chj_dlta_Ts;dlta_T];
-                    sub_chj_dtoa_t = [sub_chj_dtoa_t;[chj_t12,chj_t13,chj_t23]];
-                    sub_S_results = [sub_S_results; sub_S];
-                    sub_R_gccs = [sub_R_gccs;R_gcc];
-                    sub_chj_locs = [sub_chj_locs;chj_start_idx];
-                    sub_chj_azimuth = [sub_chj_azimuth;chj_azimuth];
-                    sub_chj_elevation = [sub_chj_elevation;chj_elevation];
+                    %% Step 5: 差分到达时间 (DTOA) 技术
+                    % --- 收集所有测量的DTOA值 (单位: ns) ---
+                    all_measured_dtoas_ns = zeros(7,1);
+                    all_measured_dtoas_ns(1:3) = [yld_t12(i),yld_t13(i),yld_t23(i)];  % YLD站内 (ns)
+                    all_measured_dtoas_ns(4:6) = [chj_t12,chj_t13,chj_t23];% CHJ站内 (ns)
+                    % 站间DTOA (ns)
+                    all_measured_dtoas_ns(7) = dlta_T;
+                    % --- DTOA 优化 ---
+                    S_initial = sub_S; % 使用三角测量结果作为初值
+
+                    objective_fun = @(S_vec) dtoa_objective_function_ns(S_vec, ...
+                        all_baseline_definitions, ...
+                        all_measured_dtoas_ns, ...
+                        sigmas_ns, ...
+                        c);
+
+                    dynamic_lb = S_initial - [search_radius_xy, search_radius_xy, search_radius_z];
+                    dynamic_ub = S_initial + [search_radius_xy, search_radius_xy, search_radius_z];
+                    options = optimoptions('lsqnonlin', 'TolFun', 1e-6, 'MaxIter', 100);
+                    S_optimized = S_initial; % 默认值
+                    optimization_successful = false;
+
+                    try
+                        [S_optimized_temp, ~, ~, exitflag, ~] = lsqnonlin(objective_fun, S_initial, dynamic_lb, dynamic_ub, options);
+                        if exitflag > 0 % 检查优化是否成功收敛
+                            S_optimized = S_optimized_temp;
+                            optimization_successful = true;
+                        else
+                            fprintf('优化未收敛 (exitflag=%d) for YLD event %d (sample loc %d)\n', exitflag, i, current_yld_start_abs_samples);
+                        end
+                    catch ME_optim
+                        fprintf('DTOA优化错误 for YLD event %d (sample loc %d): %s\n', i, yld_start_loc(i), ME_optim.message);
+                    end
+
+
+                    if optimization_successful
+                        % 用最终的优化解 S_optimized 再次调用目标函数，获取最终的理论DTOA
+                        final_theoretical_dtoas_ns = dtoa_objective_function_ns(S_optimized, ...
+                            all_baseline_definitions, ...
+                            all_measured_dtoas_ns, ...
+                            sigmas_ns, ...
+                            c);
+                        % 残差 = 理论DTOA - 测量DTOA
+                        final_residuals_ns = final_theoretical_dtoas_ns;
+                        chi_square_red = sum(final_residuals_ns.^2) / (length(final_residuals_ns) - 3);
+                        all_residuals_history = [all_residuals_history; final_residuals_ns(:)'];
+
+                    end
+                    % --- 使用优化后的S重新进行时间校验 ---
+                    % 理论传播时间 (ns)
+                    t_chj_optimized_ns = norm(S_optimized - chj_sit) / c;
+                    t_yld_optimized_ns = norm(S_optimized - yld_sit) / c;
+                    % 理论站间DTOA (ns),
+                    theoretical_inter_dtoa_optimized_ns = t_yld_optimized_ns - t_chj_optimized_ns;
+
+                    % 最终校验差 (ns)
+                    final_dlta_check_ns = abs(theoretical_inter_dtoa_optimized_ns - dlta_T);
+
+                    if final_dlta_check_ns <= W && optimization_successful
+                        if S_optimized(3) < 0
+                            S_optimized = -S_optimized;
+                        end
+
+                        all_S_results = [all_S_results; S_optimized];
+                        match_info_dtoa = struct(...
+                            'yld_start_loc', yld_start_loc(i), ...
+                            'chj_loc', chj_start_idx + start_read_loc_yld + 34236722-(j-1)*100 +start_read_loc_chj-match_signal_length+1, ...
+                            'chj_azimuth', chj_azimuth, ...
+                            'chj_elevation', chj_elevation, ...
+                            'r_gccs', R_gcc, ...
+                            'dlta', final_dlta_check_ns, ...
+                            'R3_value', R3_value, ...
+                            'chi_square_red', chi_square_red,  ...
+                            'S_initial_triangulation', S_initial ...
+                            );
+                        all_match_results = [all_match_results; match_info_dtoa];
+                    else
+                        % 如果DTOA优化失败或校验不通过，保存三角测量结果
+                        if dlta <= W
+                            if S_initial(3) < 0
+                                S_initial = -S_initial;
+                            end
+                            all_S_results = [all_S_results; S_initial];
+                            match_info_dtoa = struct(...
+                                'yld_start_loc', yld_start_loc(i), ...
+                                'chj_loc', chj_start_idx + start_read_loc_yld + 34236722-(j-1)*100 +start_read_loc_chj-match_signal_length+1, ...
+                                'chj_azimuth', chj_azimuth, ...
+                                'chj_elevation', chj_elevation, ...
+                                'r_gccs', R_gcc, ...
+                                'dlta', final_dlta_check_ns, ...
+                                'R3_value', R3_value, ...
+                                'chi_square_red', 1.5,  ...
+                                'S_initial_triangulation', S_initial ...
+                                );
+                            all_match_results = [all_match_results; match_info_dtoa];
+                        end
+                    end
                 end
-            end
-        end
-        [max_R_gcc, max_R_gcc_index] = max(sub_R_gccs);
-        if isempty(max_R_gcc)
-            continue
-        end
-
-        %% Step 5: 差分到达时间 (DTOA) 技术
-        % --- 收集所有测量的DTOA值 (单位: ns) ---
-        all_measured_dtoas_ns = zeros(7,1);
-
-        all_measured_dtoas_ns(1:3) = [yld_t12(i),yld_t13(i),yld_t23(i)];  % YLD站内 (ns)
-        all_measured_dtoas_ns(4:6) = sub_chj_dtoa_t(max_R_gcc_index);% CHJ站内 (ns)
-        % 站间DTOA (ns)
-        all_measured_dtoas_ns(7) = yld_chj_dlta_Ts(max_R_gcc_index);
-
-        % --- DTOA 优化 ---
-        S_initial = sub_S_results(max_R_gcc_index,:); % 使用三角测量结果作为初值
-
-        objective_fun = @(S_vec) dtoa_objective_function_ns(S_vec, ...
-            all_baseline_definitions, ...
-            all_measured_dtoas_ns, ...
-            sigmas_ns, ...
-            c);
-
-        dynamic_lb = S_initial - [search_radius_xy, search_radius_xy, search_radius_z];
-        dynamic_ub = S_initial + [search_radius_xy, search_radius_xy, search_radius_z];
-        options = optimoptions('lsqnonlin', 'TolFun', 1e-6, 'MaxIter', 100);
-        S_optimized = S_initial; % 默认值
-        optimization_successful = false;
-        try
-            [S_optimized_temp, ~, ~, exitflag, ~] = lsqnonlin(objective_fun, S_initial, dynamic_lb, dynamic_ub, options);
-            if exitflag > 0 % 检查优化是否成功收敛
-                S_optimized = S_optimized_temp;
-                optimization_successful = true;
-            else
-                fprintf('优化未收敛 (exitflag=%d) for YLD event %d (sample loc %d)\n', exitflag, i, current_yld_start_abs_samples);
-            end
-        catch ME_optim
-            fprintf('DTOA优化错误 for YLD event %d (sample loc %d): %s\n', i, yld_start_loc(i), ME_optim.message);
-        end
-
-        if optimization_successful
-            % 用最终的优化解 S_optimized 再次调用目标函数，获取最终的理论DTOA
-            final_theoretical_dtoas_ns = dtoa_objective_function_ns(S_optimized, ...
-                all_baseline_definitions, ...
-                all_measured_dtoas_ns, ...
-                sigmas_ns, ...
-                c);
-            % 残差 = 理论DTOA - 测量DTOA
-            final_residuals_ns = final_theoretical_dtoas_ns;
-            chi_square_red = sum(final_residuals_ns.^2) / (length(final_residuals_ns) - 3);
-            all_residuals_history = [all_residuals_history; final_residuals_ns(:)'];
-
-        end
-
-        % --- 使用优化后的S重新进行时间校验 ---
-        % 理论传播时间 (ns)
-        t_chj_optimized_ns = norm(S_optimized - chj_sit) / c;
-        t_yld_optimized_ns = norm(S_optimized - yld_sit) / c;
-        % 理论站间DTOA (ns),
-        theoretical_inter_dtoa_optimized_ns = t_yld_optimized_ns - t_chj_optimized_ns;
-
-        % 最终校验差 (ns)
-        final_dlta_check_ns = abs(theoretical_inter_dtoa_optimized_ns - yld_chj_dlta_Ts(max_R_gcc_index));
-
-        if final_dlta_check_ns <= W && optimization_successful
-            if S_optimized(3) < 0
-                S_optimized = -S_optimized;
-            end
-
-            all_S_results = [all_S_results; S_optimized];
-            match_info_dtoa = struct(...
-                'yld_start_loc', yld_start_loc(i), ...
-                'chj_loc', sub_chj_locs(max_R_gcc_index)+ start_read_loc_yld + 34236722-(j-1)*100 +start_read_loc_chj-match_signal_length+1, ...
-                'chj_azimuth', sub_chj_azimuth(max_R_gcc_index), ...
-                'chj_elevation', sub_chj_elevation(max_R_gcc_index), ...
-                'r_gccs', max_R_gcc, ...
-                'dlta', final_dlta_check_ns, ...
-                'R3_value', R3_value, ...
-                'chi_square_red', chi_square_red,  ...
-                'S_initial_triangulation', S_initial ...
-                );
-            all_match_results = [all_match_results; match_info_dtoa];
-        else
-            % 如果DTOA优化失败或校验不通过，保存三角测量结果
-            if dltas(max_R_gcc_index) <= W
-                if S_initial(3) < 0
-                    S_initial = -S_initial;
-                end
-                all_S_results = [all_S_results; S_initial];
-                match_info_dtoa = struct(...
-                    'yld_start_loc', yld_start_loc(i), ...
-                    'chj_loc', sub_chj_locs(max_R_gcc_index)+ start_read_loc_yld + 34236722-(j-1)*100 +start_read_loc_chj-match_signal_length+1, ...
-                    'chj_azimuth', sub_chj_azimuth(max_R_gcc_index), ...
-                    'chj_elevation', sub_chj_elevation(max_R_gcc_index), ...
-                    'r_gccs', max_R_gcc, ...
-                    'dlta', dltas(max_R_gcc_index), ...
-                    'R3_value', R3_value, ...
-                    'chi_square_red', 1.5,  ...
-                    'S_initial_triangulation', S_initial ...
-                    );
-                all_match_results = [all_match_results; match_info_dtoa];
             end
         end
     end
     close(h);
 end
-
-
-% 
-% if ~isempty(all_residuals_history)
-% 
-%     baseline_names = {
-%         'YLD 1-2'; 'YLD 1-3'; 'YLD 2-3'; ...
-%         'CHJ 1-2'; 'CHJ 1-3'; 'CHJ 2-3'; ...
-%         'Inter-Station YLD-CHJ'
-%     };
-%     
-%     num_baselines = size(all_residuals_history, 2);
-%     num_events = size(all_residuals_history, 1);
-%     
-%     fprintf('\n--- 逐条基线不确定度验证 ---\n');
-%     
-%     % 创建一个新的 figure 用于绘制所有基线的残差直方图
-%     figure;
-%     sgtitle(sprintf('所有基线的残差分布 (基于 %d 个事件)', num_events)); % 为整个图添加总标题
-%     
-%     for k_base = 1:num_baselines
-%         % 提取当前基线的所有残差
-%         current_residuals = all_residuals_history(:, k_base);
-%         
-%         % 计算残差的均值和标准差
-%         mean_residual = mean(current_residuals);
-%         std_dev_residual = std(current_residuals);
-%         
-%         % 获取预设的不确定度值
-%         assumed_sigma = sigmas_ns(k_base);
-%         
-%         % --- 在命令窗口打印数值结果 ---
-%         fprintf('\n--- 基线 #%d: %s ---\n', k_base, baseline_names{k_base});
-%         fprintf('预设的不确定度 (σ): %.2f ns\n', assumed_sigma);
-%         fprintf('从 %d 个事件的残差中计算出的统计结果:\n', num_events);
-%         fprintf('  - 残差均值: %.2f ns\n', mean_residual);
-%         fprintf('  - 残差标准差: %.2f ns\n', std_dev_residual);
-%         
-%         % --- 在子图中绘制直方图和正态分布拟合曲线 ---
-%         subplot(3, 3, k_base); % 创建一个 3x3 的子图布局，并激活第 k_base 个
-%         histogram(current_residuals, 50, 'Normalization', 'pdf', 'EdgeColor', 'none');
-%         hold on;
-%         
-%         % 拟合一个正态分布曲线进行对比
-%         x_range = linspace(min(current_residuals), max(current_residuals), 100);
-%         pdf_fit = normpdf(x_range, mean_residual, std_dev_residual);
-%         plot(x_range, pdf_fit, 'r-', 'LineWidth', 1.5);
-%         
-%         title(baseline_names{k_base});
-%         xlabel('残差 (ns)');
-%         ylabel('概率密度');
-%         grid on;
-%         legend('残差分布', '正态拟合');
-%         hold off;
-%     end
-% end
-% plot_3d;
 
 % --- DTOA 目标函数 ---
 function errors = dtoa_objective_function_ns(S_guess_xyz, all_baseline_ant_coords, all_measured_dtoas_ns, all_sigmas_ns, c_mpns)
@@ -396,4 +318,47 @@ for k_base = 1:num_baselines
 
     errors(k_base) = (theoretical_dtoa_ns - all_measured_dtoas_ns(k_base)) / all_sigmas_ns(k_base);
 end
+end
+
+
+function [start_loc,t12,t13,t23, azimuth, elevation, Rcorr, t123] = read_result(result_path, start_read_line, end_read_line)
+    % 打开文件读取数据
+    fileID = fopen(result_path, 'r');
+    if fileID == -1
+        error('无法打开文件！请检查文件路径');
+    end
+
+    % 读取表头行并忽略
+    header = fgetl(fileID);
+
+    % 读取文件中的所有数据
+    data = textscan(fileID, '%f %f %f %f %f %f %f %f %f %f %f', 'Delimiter', '\t');
+    
+    % 关闭文件
+    fclose(fileID);
+
+    % 获取 Start_loc 列数据
+    start_loc_full = data{1};
+
+    % 找到大于 start_read_line 的第一个索引
+    start_index = find(start_loc_full > start_read_line, 1, 'first');
+    if isempty(start_index)
+        error('start_read_line:未找到 Start_loc 大于 %d 的数据', start_read_line);
+    end
+
+    % 找到大于 end_read_line 的第一个索引
+    end_index = find(start_loc_full > end_read_line, 1, 'first');
+    if isempty(end_index)
+        error('end_read_line:未找到 Start_loc 大于 %d 的数据', end_read_line);
+    end
+
+    % 从找到的位置开始提取数据
+    start_loc = start_loc_full(start_index:end_index);          % Start_loc
+    t12 = data{3}(start_index:end_index);
+    t13 = data{4}(start_index:end_index);
+    t23 = data{5}(start_index:end_index);
+    azimuth = data{8}(start_index:end_index);                   % Azimuth
+    elevation = data{9}(start_index:end_index);                 % Elevation
+    Rcorr = data{10}(start_index:end_index);                    % Rcorr
+    t123 = data{11}(start_index:end_index);                     % t123
 end
