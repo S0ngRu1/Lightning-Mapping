@@ -9,11 +9,6 @@
 """
 import pandas as pd
 import numpy as np
-import matplotlib
-matplotlib.use('TkAgg')
-import matplotlib.pyplot as plt
-from matplotlib.animation import FuncAnimation
-import time
 
 # 1. 加载2d定位结果数据
 result = pd.read_csv('result_yld_3.8e8_4e8_window_512_128_去零飘_滤波_加窗_阈值15_30_80.txt', sep=r'\s+')
