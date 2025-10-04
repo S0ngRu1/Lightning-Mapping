@@ -33,136 +33,132 @@ fprintf('--- 定位结果数量统计 ---\n');
 fprintf('时间段 1 (%.1e - %.1e) 的定位点数量: %d\n', interval1_start, interval1_end, count1);
 fprintf('时间段 2 (%.1e - %.1e) 的定位点数量: %d\n', interval2_start, interval2_end, count2);
 
-%% --- 3. 分析负先导的发展特征 (时间段 2) ---
-fprintf('\n--- 负先导发展特征分析 (%.1e - %.1e) ---\n', interval2_start, interval2_end);
-
-if count2 > 1
-    % MATLAB的sortrows可以对table进行排序
-    table_interval2 = sortrows(table_interval2, 'Start_loc');
-
-    % 使用 diff 函数计算相邻定位点之间的时间差
-    time_diffs = diff(table_interval2.Start_loc);
-
-    figure; % 创建一个新的图形窗口
-    h = histogram(time_diffs);
-
-    % 为了更好地观察分布，特别是当数值范围很大时，使用对数坐标轴
-    set(gca, 'XScale', 'log');
-
-    % 添加标题和标签，使图形更清晰
-    title('Distribution of Time Differences to Determine Gap Threshold');
-    xlabel('Time Difference (sampling points) - Log Scale');
-    ylim([0,300])
-    ylabel('Frequency (Count)');
-    grid on; % 添加网格线
-
-    % 定义阈值来区分“阶梯内部发展”和“阶梯间断”
-    % 如果时间差大于这个值，我们认为是一次间断。这个值可以根据数据特征调整。
-    gap_threshold = 39000; % 单位：采样点
-
-    % 找出所有的间断间隔
-    gaps = time_diffs(time_diffs > gap_threshold);
-    % 找到间断发生的位置索引
-    gap_indices = find(time_diffs > gap_threshold);
-
-    % 阶梯的起始点索引：第一个点，以及每个间断后的第一个点
-    step_start_indices = [1; gap_indices + 1];
-
-    % 阶梯的结束点索引：每个间断前的点，以及最后一个点
-    step_end_indices = [gap_indices; height(table_interval2)];
-
-
-    fprintf('\n--- 各发展阶段的起始 Start_loc ---\n');
-
-    % 直接使用 step_start_indices 从 table_interval2 中提取每个阶段的第一个 Start_loc 值
-    % 这是一个矢量化操作，无需循环
-    each_step_start_loc = table_interval2.Start_loc(step_start_indices);
-
-    % 在命令行窗口中显示结果
-    fprintf('每个阶段的起始位置 (Start_loc) 如下:\n');
-    disp(each_step_start_loc);
-end
-
-
-
-%% --- 按真实时间发展的动态图绘制 ---
-% 1. 为每个定位点分配一个阶段ID
-num_steps = numel(step_start_indices);
-table_interval2.StepID = zeros(height(table_interval2), 1); 
-for i = 1:num_steps
-    start_idx = step_start_indices(i);
-    end_idx = step_end_indices(i);
-    table_interval2.StepID(start_idx:end_idx) = i;
-end
-
-% 2. 为每个阶段ID创建一种独特的颜色
-step_colors = lines(num_steps);
-
-% --- 参数定义 ---
-fs = 200e6;         % 采样频率 (Hz)
-speed_factor = 500;  % 动画速度的放大倍数
-plot_batch_size = 20; % 定义每次绘制的点数（批次大小）
-
-% --- 图形初始化 ---
-figure;
-hold on;
-grid on;
-box on; 
-xlabel('方位角 (Azimuth)');
-xlim([120, 200]);
-xticks(120:20:200);
-ylabel('仰角 (Elevation)');
-ylim([10, 70]);
-yticks(10:10:70);
-title('闪电发展阶段动态呈现 ');
-
-% 创建图例
-legend_handles = gobjects(num_steps, 1);
-legend_entries = cell(num_steps, 1);
-for i = 1:num_steps
-    legend_handles(i) = scatter(NaN, NaN, 50, step_colors(i,:), 'filled');
-    legend_entries{i} = sprintf('阶段 %d', i);
-end
-legend(legend_handles, legend_entries, 'Location', 'northwest');
-
-
-for i = 1:plot_batch_size:height(table_interval2)
-    % 1. 确定当前批次的起止行号
-    start_idx = i;
-    end_idx = min(i + plot_batch_size - 1, height(table_interval2));
+%% --- 3. 分析正负先导的发展特征 ---
+for leader_case = 1:2
     
-    % 2. 提取当前批次的数据
-    current_batch = table_interval2(start_idx:end_idx, :);
-    
-    % 如果批次为空，则跳过
-    if isempty(current_batch)
+    % --- 2.1 根据循环次数，选择要处理的数据和参数 ---
+    if leader_case == 1
+        % --- 第一次循环：处理正先导 ---
+        % --- 第一次循环：处理正先导 ---
+        current_table = table_interval1;
+        leader_name = '正先导';
+        
+        % 正先导是连续发展的，我们将其视为一个完整的阶段
+        if ~isempty(current_table)
+            step_start_indices = 1;
+            step_end_indices = height(current_table);
+        else
+            step_start_indices = [];
+            step_end_indices = [];
+        end
+        
+    else
+        % --- 第二次循环：处理负先导 ---
+        current_table = table_interval2;
+        leader_name = '负先导';
+        
+        % 对负先导进行详细的阶段划分分析
+        if height(current_table) > 1
+            time_diffs = diff(current_table.Start_loc);
+            
+            % 【注意】直方图仅为负先导生成
+            figure; 
+            h = histogram(time_diffs);
+            set(gca, 'XScale', 'log');
+            title('负先导的时间差分布 (用于确定阈值)');
+            xlabel('Time Difference (sampling points) - Log Scale');
+            ylabel('Frequency (Count)');
+            grid on;
+            
+            gap_threshold = 39000;
+            gap_indices = find(time_diffs > gap_threshold);
+            step_start_indices = [1; gap_indices + 1];
+            step_end_indices = [gap_indices; height(current_table)];
+        elseif ~isempty(current_table)
+            step_start_indices = 1;
+            step_end_indices = 1;
+        else
+            step_start_indices = [];
+            step_end_indices = [];
+        end
+    end
+
+    % 如果当前数据表为空，则跳过本次循环
+    if isempty(current_table)
+        fprintf('\n%s 的数据为空，跳过绘制。\n', leader_name);
         continue;
     end
+
+    %% --- 2.2 通用的阶段分配和绘图逻辑 ---
+    % (这部分代码现在是通用的，无需再复制)
     
-    % 3. 绘制当前批次的所有点
-    batch_step_ids = current_batch.StepID;
-    valid_ids = batch_step_ids > 0;
-    if any(valid_ids)
-        batch_colors = step_colors(batch_step_ids(valid_ids), :);
-        scatter(current_batch.Azimuth(valid_ids), current_batch.Elevation(valid_ids), 5, batch_colors, 'filled', 'HandleVisibility', 'off');
+    % a. 为每个定位点分配一个阶段ID
+    num_steps = numel(step_start_indices);
+    current_table.StepID = zeros(height(current_table), 1); 
+    for i = 1:num_steps
+        start_idx = step_start_indices(i);
+        end_idx = step_end_indices(i);
+        current_table.StepID(start_idx:end_idx) = i;
     end
     
-    % 4. 刷新画布
-    drawnow;
+    % b. 为每个阶段ID创建一种独特的颜色
+    step_colors = lines(num_steps);
     
-    % 5. 计算这一批次所跨越的真实时间，并据此计算暂停时长
-    % 获取批次中第一个点和最后一个点的Start_loc
-    batch_start_time = current_batch.Start_loc(1);
-    batch_end_time = current_batch.Start_loc(end);
+    % c. 参数定义
+    fs = 200e6;
+    speed_factor = 500;
+    plot_batch_size = 20;
     
-    % 计算时间差并转换为秒
-    batch_duration_samples = batch_end_time - batch_start_time;
-    batch_duration_seconds = batch_duration_samples / fs;
+    % d. 图形初始化 (每次循环都会创建一个新的figure窗口)
+    figure; 
+    hold on;
+    grid on;
+    box on; 
+    xlabel('方位角 (Azimuth)');
+    xlim([120, 200]);
+    xticks(120:20:200);
+    ylabel('仰角 (Elevation)');
+    ylim([10, 70]);
+    yticks(10:10:70);
+    title(sprintf('%s 发展阶段动态呈现', leader_name)); % 使用变量设置标题
     
-    % 计算并执行暂停
-    pause_duration = batch_duration_seconds * speed_factor;
-    pause(pause_duration);
-end
-
-hold off;
-disp('最终结合版动态绘制完成。');
+    % e. 创建图例
+    legend_handles = gobjects(num_steps, 1);
+    legend_entries = cell(num_steps, 1);
+    for i = 1:num_steps
+        legend_handles(i) = scatter(NaN, NaN, 50, step_colors(i,:), 'filled');
+        legend_entries{i} = sprintf('%s 阶段 %d', leader_name, i);
+    end
+    legend(legend_handles, legend_entries, 'Location', 'northwest');
+    
+    % f. 动态绘制循环
+    for i = 1:plot_batch_size:height(current_table)
+        start_idx = i;
+        end_idx = min(i + plot_batch_size - 1, height(current_table));
+        current_batch = current_table(start_idx:end_idx, :);
+        
+        if isempty(current_batch)
+            continue;
+        end
+        
+        batch_step_ids = current_batch.StepID;
+        valid_ids = batch_step_ids > 0;
+        if any(valid_ids)
+            batch_colors = step_colors(batch_step_ids(valid_ids), :);
+            scatter(current_batch.Azimuth(valid_ids), current_batch.Elevation(valid_ids), 5, batch_colors, 'filled', 'HandleVisibility', 'off');
+        end
+        
+        drawnow;
+        
+        batch_start_time = current_batch.Start_loc(1);
+        batch_end_time = current_batch.Start_loc(end);
+        batch_duration_samples = batch_end_time - batch_start_time;
+        batch_duration_seconds = batch_duration_samples / fs;
+        pause_duration = batch_duration_seconds * speed_factor;
+        pause(pause_duration);
+    end
+    
+    hold off;
+    fprintf('\n%s 动态绘制完成。\n', leader_name);
+    
+end % 循环结束

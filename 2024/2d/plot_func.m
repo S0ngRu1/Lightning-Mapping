@@ -5,7 +5,7 @@ filename = 'result_yld_3.8e8_4e8_window_512_128_去零飘_滤波_加窗_阈值15
 % 2. 使用 readtable 函数读取数据
 %    该函数会自动将第一行作为表头，并根据空格分隔各列
 result1 = readtable(filename);
-logicalIndex =  abs(result1.t123) < 1  & abs(result1.Rcorr) > 0.65 &  result1.Start_loc < 4e8 & result1.Start_loc > 3.9e8;
+logicalIndex =  abs(result1.t123) < 1  & abs(result1.Rcorr) > 0.65 &  result1.Start_loc < 3.9e8 & result1.Start_loc > 3.81e8;
 filteredTable1 = result1(logicalIndex, :);
 
 
