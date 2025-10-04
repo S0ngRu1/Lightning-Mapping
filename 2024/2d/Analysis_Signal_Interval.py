@@ -36,14 +36,16 @@ time_diffs = np.diff(negative_lead_result.Start_loc)
 negative_time_diffs = pd.DataFrame(data=time_diffs)
 # 查看数据的分布
 print("负先导阶段的每个结果之间的采样点之差:\n", negative_time_diffs.describe())
-# 绘制直方图
-plt.figure()
-n, bins, patches = plt.hist(time_diffs, bins='auto')
-plt.gca().set_xscale('log')
-plt.title('The time difference distribution of negative leaders (used to determine the threshold)')
-plt.xlabel('Time Difference (sampling points) - Log Scale')
-plt.ylabel('Frequency (Count)')
-plt.grid(True)
-plt.show()
 
+
+# 4. 分析正先导的发展特征
+# 选出正先导数据
+positive_lead_result = filtered_result[
+    (filtered_result.Start_loc >= 3.8e8) &
+    (filtered_result.Start_loc < 3.9e8)
+]
+time_diffs = np.diff(positive_lead_result.Start_loc)
+positive_time_diffs = pd.DataFrame(data=time_diffs)
+# 查看数据的分布
+print("正先导阶段的每个结果之间的采样点之差:\n", positive_time_diffs.describe())
 
