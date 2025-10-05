@@ -13,13 +13,13 @@ dist = 8.0967e3; %单位：米
 c = 0.299792458;
 W = 5e8; % 时间误差
 match_signal_length = 6000;
-% 两个站点的距离除以光速 
+% 两个站点的距离除以光速
 rough_dtoa_samples = 6000;
 step = 1e6;
 signal_length=step;
 start_signal_loc = 3.8e8;
 mapping_start_signal_loc = 3.8e8;
-end_signal_loc = 5.5e8;
+end_signal_loc = 4e8;
 
 % 所有信号的开始位置
 all_start_signal_loc = start_signal_loc:step:end_signal_loc;
@@ -75,7 +75,7 @@ sigmas_ns = [
 fs = 200e6;
 ts_ns = 1 / fs * 1e9;
 
-noise_analysis_length = 1e8;
+noise_analysis_length = 1e5;
 threshold_std_multiplier = 5;
 noise_chj = read_signal('..\\2024 822 85933.651462CH1.dat', noise_analysis_length, noise_analysis_length);
 filtered_noise_chj = filter_bp(noise_chj, 30e6, 80e6, 5);
@@ -130,7 +130,7 @@ for j = 1:numel(all_start_signal_loc)-1
         filtered_chj_signal1 = filter_bp(chj_ch1,30e6,80e6,5);
         filtered_chj_signal2 = filter_bp(chj_ch2,30e6,80e6,5);
         filtered_chj_signal3 = filter_bp(chj_ch3,30e6,80e6,5);
-         %% Step2 根据引雷点的信号窗口得到匹配到的从化局的信号
+        %% Step2 根据引雷点的信号窗口得到匹配到的从化局的信号
         chj_catalog = create_pulse_catalog(filtered_chj_signal1, filtered_chj_signal2, filtered_chj_signal3, fs, threshold_chj, snippet_len);
         [matched_chj_pulse, match_cost] = find_best_match(current_yld_pulse, chj_catalog, weights);
         % --- 2.3 如果找到一个好的匹配，则进行精处理 ---
@@ -259,7 +259,7 @@ for j = 1:numel(all_start_signal_loc)-1
                     end
 
                     all_S_results = [all_S_results; S_optimized];
-%                     我们还可以记录损失
+                    %                     我们还可以记录损失
                     match_info_dtoa = struct(...
                         'yld_start_loc', start_signal_loc + current_yld_pulse.loc - snippet_len/2 + 1, ...
                         'chj_loc', matched_chj_pulse.loc + start_signal_loc + 34226222 - snippet_len/2 +1, ...
@@ -423,7 +423,7 @@ for i = 1:numel(chj_catalog)
     else
         r_corr_max = max(xcorr(yld_pulse.snippet, chj_candidate.snippet, 'normalized'));
     end
-%     损失函数，损失，越小越好，而互相关是越大越好，可以通过1- 来转化为越小越好
+    %     损失函数，损失，越小越好，而互相关是越大越好，可以通过1- 来转化为越小越好
     cost1 = 1 - r_corr_max;
 
     % Cost 2: 半峰全宽差异
@@ -541,4 +541,85 @@ residual23 = t23_meas - tau_model(3);
 % 返回残差向量 F
 % lsqnonlin 会自动最小化 sum(F.^2)
 F = [residual12; residual13; residual23];
+end
+
+
+% 定义计算τij的理想值τ_ij^obs的函数
+function tau_ij_obs = calculate_tau_obs(cos_alpha, cos_beta, type)
+% 初始化输出变量
+tau_ij_obs = zeros(1, 3);
+
+% 根据 type 参数选择不同的参数集
+if strcmp(type, 'chj') % 从化局
+    angle12 = -2.8381;
+    angle13 = 50.3964;
+    angle23 = 120.6568;
+    d12 = 41.6496;
+    d13 = 36.9015;
+    d23 = 35.4481;
+elseif strcmp(type, 'yld') % 引雷场
+    angle12 = -110.8477;
+    angle13 = -65.2405;
+    angle23 = -19.6541;
+    d12 = 24.9586;
+    d13 = 34.9335;
+    d23 = 24.9675;
+else
+    error('未知的类型：%s', type);
+end
+
+% 使用式(3)计算τij的理想值τ_ij^obs
+tau_ij_obs(1) = (cos_alpha * sind(angle12) + cos_beta * cosd(angle12)) * d12 / 0.299792458;
+tau_ij_obs(2) = (cos_alpha * sind(angle13) + cos_beta * cosd(angle13)) * d13 / 0.299792458;
+tau_ij_obs(3) = (cos_alpha * sind(angle23) + cos_beta * cosd(angle23)) * d23 / 0.299792458;
+end
+
+
+function signal = read_signal(signal_path, r_length,r_loction)
+fid  = fopen(signal_path,'r');%读取数据的位置
+
+%使用fseek函数将文件指针移动到指定位置，以便读取数据。
+%这里指定移动位置为r_location，表示移动到指定位置开始读取数据。
+fseek(fid,r_loction*2,'bof');
+%使用fread函数从文件中读取数据，读取的数据长度为r_length，数据以int16格式读取。
+%将读取到的数据分别保存到变量ch_1、ch_2和ch_3中。
+signal = fread(fid,r_length,'int16');
+%关闭所有文件
+fclose(fid);
+end
+
+
+%% 设计巴特沃斯带通滤波器
+function filtered_signal = filter_bp(signal,f1,f2,order)
+    Fs = 200e6;
+    fn = Fs/2;
+    Wn = [f1 f2]/fn;
+    [b,a] = butter(order,Wn); 
+    filtered_signal = filtfilt(b,a,signal);
+
+end
+
+
+
+%函数：对主窗口进行上采样
+function new_signal = upsampling(original_signal,upsampling_factor)
+
+% 原信号
+original_x = (1:numel(original_signal))';
+original_y = original_signal;
+% 上采样后的采样点数
+upsampled_length = length(original_x) * upsampling_factor;
+% 上采样后的采样点的 x 坐标
+upsampled_x = linspace(1, length(original_x), upsampled_length);
+% 使用多项式插值对原信号进行上采样
+interpolated_signal = interp1(original_x, original_y, upsampled_x, 'spline');
+new_signal = [upsampled_x; interpolated_signal];
+end
+
+
+
+function tau = cal_tau(R, lag)
+% 从数据中找到y的最大值及其索引
+[~, max_index] = max(R);
+tau = lag(max_index,1);
 end
