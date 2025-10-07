@@ -4,7 +4,7 @@ z_range = [0, 10000];
 
 % 筛选条件
 conditions = ([all_match_results.dlta] < 20000) & ...
-             ([all_match_results.yld_start_loc] > 3.8e8) & ...
+             ([all_match_results.yld_start_loc] > 3.88e8) & ...
              ([all_match_results.yld_start_loc] < 4e8) & ...
              ([all_match_results.r_gccs] > 0.1) & ...
              (abs([all_match_results.R3_value]) < 10000);
@@ -82,6 +82,16 @@ set(gca, ...
     'GridAlpha', 0.3, ...  % 降低网格透明度，避免干扰颜色
     'Box', 'on'); 
 daspect([1 1 1]);
+
+
+all_match_table = struct2table(all_match_results1);
+
+% 步骤2：用 writetable 保存为 CSV（支持 'Delimiter' 参数）
+writetable(all_match_table, ...
+           '3d_win512_cost_cal_yld_chj_dtoa.csv', ...  % 文件名
+           'Encoding', 'UTF-8', ...                    % 编码（确保中文正常）
+           'Delimiter', ',', ...                       % 指定逗号分隔（CSV标准）
+           'WriteVariableNames', true);                % 保存列名（结构体字段名）
 
 
 % 
