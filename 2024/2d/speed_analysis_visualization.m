@@ -4,8 +4,8 @@ y_range = [-10000, 0];
 z_range = [0, 10000];
 % 筛选条件
 conditions = ([all_match_results.dlta] < 20000) & ...
-             ([all_match_results.yld_start_loc] > 3.82e8) & ...
-             ([all_match_results.yld_start_loc] < 3.9e8) & ...
+             ([all_match_results.yld_start_loc] > 3.88e8) & ...
+             ([all_match_results.yld_start_loc] < 4e8) & ...
              ([all_match_results.r_gccs] > 0.1) & ...
              (abs([all_match_results.R3_value]) < 10000);
 % 获取满足条件的索引
@@ -30,7 +30,7 @@ z_coords = filtered_S(:, 3);
 % --- 用户可调参数 ---
 SAMPLING_RATE = 200e6;       % 数据采集卡采样率 (Hz), 200 MS/s
 NUM_SEGMENTS = 400;  
-EPSILON = 500;      % 邻域半径设为500米。如果您的通道发展很密集，可以减小此值
+EPSILON = 300;      % 邻域半径设为500米。如果您的通道发展很密集，可以减小此值
 MIN_POINTS = 2;     % 至少4个点才能构成一个核心簇
 %% ==================== 2. 数据预处理和速度计算 ====================
 
@@ -111,8 +111,8 @@ if ~isempty(velocities)
     xlabel('三维速率 (10^5 m/s)');
     ylabel('高度 (m)');
     title('速率与放电高度的关系');
-    xlim([0 15]);
-    xticks(0:5:15);
+    xlim([0 10]);
+    xticks(0:2:10);
     % 添加颜色条并标注
     h_bar = colorbar;
     ylabel(h_bar, '时间 (ms)'); % YLabel的单位应与颜色数据time_plot_ms一致
