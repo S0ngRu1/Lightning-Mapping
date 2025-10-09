@@ -76,7 +76,7 @@ if ~isempty(velocities)
     
     grid on;
     xlabel('时间 (ms)');
-    ylabel('三维速率 (10^5 m/s)');
+    ylabel('三维速率 (10^7 m/s)');
     title('闪电发展速率随时间的变化');
     legend('show', 'Location', 'northwest');
     set(gca, 'FontSize', 12);
@@ -108,7 +108,7 @@ if ~isempty(velocities)
     scatter(velo_plot_1e6, height_plot_km, 30, time_plot_ms, "filled");
     
     grid on;
-    xlabel('三维速率 (10^5 m/s)');
+    xlabel('三维速率 (10^7 m/s)');
     ylabel('高度 (m)');
     title('速率与放电高度的关系');
     xlim([0 10]);
@@ -184,7 +184,7 @@ function [velocities, time_midpoints, avg_heights] = calculate_3d_velocity_by_po
             z_main_path_sorted = z_main_path(sort_order);
 
             % 3. 仅对主路径计算速度
-            path_length = sum(sqrt(diff(x_main_path_sorted).^2 + diff(y_main_path_sorted).^2 ));         
+            path_length = sum(sqrt(diff(x_main_path_sorted).^2 + diff(y_main_path_sorted).^2 + diff(z_main_path_sorted).^2));         
             delta_t = t_main_path_sorted(end) - t_main_path_sorted(1);
             
             if delta_t > 0

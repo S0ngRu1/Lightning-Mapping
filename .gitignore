@@ -38,5 +38,5 @@ Lightning_Detection_Location/
 .idea/contentModel.xml
 .vscode/
 *.caj
-
+*.tdms
 venv/
