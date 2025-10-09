@@ -5,7 +5,7 @@ fs = 400e6;
 fp_start = 25e6; % 通带起始
 fp_end = 85e6;   % 通带结束
 upsampling_factor = 25;
-window = 'hann';
+window = "hann";
 min_peak_distance = 128;
 % 以峰值为中心，进行处理的信号片段的总长度
 processing_window_len = 512;
@@ -18,22 +18,20 @@ d23 = 24.9675;
 angle12 = -110.8477;
 angle13 = -65.2405;
 angle23 = -19.6541;
-ch1 = read_signal('20250820151326_1505CH1.dat',signal_length,r_loction);
-ch2 = read_signal('20250820151326_1505CH2.dat',signal_length,r_loction);
-ch3 = read_signal('20250820151326_1505CH3.dat',signal_length,r_loction);
+ch1 = read_signal_tdms('20250820151326_1505CH1.tdms',signal_length,r_loction);
+ch2 = read_signal_tdms('20250820151326_1505CH2.tdms',signal_length,r_loction);
+ch3 = read_signal_tdms('20250820151326_1505CH3.tdms',signal_length,r_loction);
 
 % 汉宁窗 
 win = hann(processing_window_len);
 win = win(:);
 
-windowed_ch1 = detrend(ch1) .* win;
-windowed_ch2 = detrend(ch2) .* win;
-windowed_ch3 = detrend(ch3) .* win;
-
-processed_ch1_yld = filter_bp(windowed_ch1,fp_start,fp_end,5);
-processed_ch2_yld = filter_bp(windowed_ch2,fp_start,fp_end,5);
-processed_ch3_yld = filter_bp(windowed_ch3,fp_start,fp_end,5);
-
+processed_ch1_yld = filter_bp(detrend(ch1),fp_start,fp_end,5);
+clear ch1
+processed_ch2_yld = filter_bp(detrend(ch2),fp_start,fp_end,5);
+clear ch2
+processed_ch3_yld = filter_bp(detrend(ch3),fp_start,fp_end,5);
+clear ch3
 
 
 file_name = '20250820151326_1505_result_yld_8e8_11e8_hann_512_128_bandpass_' +window+'_'+string(fp_start/1e6)+'e6_'+string(fp_end/1e6)+'e6_'+ '.txt';
@@ -43,7 +41,7 @@ fprintf(fileID, '%-13s%-15s%-15s%-15s%-15s%-15s%-15s%-15s%-15s%-15s%-15s\n', ...
     'Start_loc','peak','t12', 't13', 't23', 'cos_alpha_opt', 'cos_beta_opt','Azimuth', 'Elevation', 'Rcorr', 't123');
 
 %引雷点阈值
-noise = read_signal('20250820151326_1505CH1.dat',1e5,7e8);
+noise = read_signal_tdms('20250820151326_1505CH1.tdms',1e5,7e8);
 filtered_noise = filter_bp(noise,fp_start,fp_end,5);
 min_peak_height = mean(filtered_noise)+5*std(filtered_noise);
 
@@ -75,12 +73,15 @@ for i = 1:num_peaks
     segment_ch2 = processed_ch2_yld(start_idx:end_idx);
     segment_ch3 = processed_ch3_yld(start_idx:end_idx);
     % 对截取的片段应用窗函数
-    
+    windowed_ch1 = segment_ch1 .* win;
+    windowed_ch2 = segment_ch2 .* win;
+    windowed_ch3 = segment_ch3 .* win;
+
     % 上采样
     [ch1_up, ch2_up, ch3_up] = deal(...
-        upsampling(segment_ch1, upsampling_factor)', ...
-        upsampling(segment_ch2, upsampling_factor)', ...
-        upsampling(segment_ch3, upsampling_factor)');
+        upsampling(windowed_ch1, upsampling_factor)', ...
+        upsampling(windowed_ch2, upsampling_factor)', ...
+        upsampling(windowed_ch3, upsampling_factor)');
     ch1_upsp = ch1_up(:,2);
     ch2_upsp = ch2_up(:,2);
     ch3_upsp = ch3_up(:,2);

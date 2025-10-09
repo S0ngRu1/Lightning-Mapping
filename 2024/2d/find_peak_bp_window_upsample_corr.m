@@ -22,7 +22,7 @@ window = 'hann';
 % ch2 = read_signal('..\\2024 822 85933.651462CH2.dat',signal_length,r_loction);
 % ch3 = read_signal('..\\2024 822 85933.651462CH3.dat',signal_length,r_loction+215/5);
 %引雷点
-signal_length = 3e8;
+signal_length = 1e5;
 r_loction = 3e8;
 d12 = 24.9586;
 d13 = 34.9335;
@@ -31,9 +31,9 @@ angle12 = -110.8477;
 angle13 = -65.2405;
 angle23 = -19.6541;
 
-ch1 = read_signal('..\\2023\\20230718175104.9180CH1.dat',signal_length,r_loction);
-ch2 = read_signal('..\\2023\\20230718175104.9180CH2.dat',signal_length,r_loction);
-ch3 = read_signal('..\\2023\\20230718175104.9180CH3.dat',signal_length,r_loction);
+ch1 = read_signal('..\\..\\2023\\20230718175104.9180CH1.dat',signal_length,r_loction);
+ch2 = read_signal('..\\..\\2023\\20230718175104.9180CH2.dat',signal_length,r_loction);
+ch3 = read_signal('..\\..\\2023\\20230718175104.9180CH3.dat',signal_length,r_loction);
 
 
 % 设计一个8阶巴特沃斯带通滤波器
