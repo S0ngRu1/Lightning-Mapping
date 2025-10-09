@@ -3,153 +3,104 @@ clear;
 clc; 
 close all;
 
-% --- 假设 all_S_results 和 all_match_results 已经存在于您的工作区 ---
-% 如果没有，请先加载包含这两个变量的 .mat 文件
-% load('your_data_file.mat');
-
 % --- 用户可调参数 ---
-% 分析的时间范围 (单位: 采样点)
+filename = 'result_yld_3.8e8_4e8_window_512_128_去零飘_滤波_加窗_阈值15_30_80.txt';
 start_loc = 3.965e8;
 end_loc = 3.98e8;
-
-% 梯级识别的时间阈值 (单位: 采样点)
 thea = 3000;
-
-% DBSCAN 聚类参数
-epsilon = 200;      % 邻域半径 (米)
-min_points = 3;     % 形成核心簇的最小点数
-
-% 最终绘图的子图数量
 num_subplots = 8;
 
-%% ==================== 1. 数据筛选与梯级识别 ====================
-fprintf('--- 正在筛选 %.3e 至 %.3e 范围内的数据 ---\n', start_loc, end_loc);
-
-% a. 根据初始条件和时间范围筛选数据
-conditions = ([all_match_results.yld_start_loc] >= start_loc) & ...
-             ([all_match_results.yld_start_loc] < end_loc) & ...
-             ([all_match_results.dlta] < 20000) & ...
-             ([all_match_results.r_gccs] > 0.1) & ...
-             (abs([all_match_results.R3_value]) < 10000);
-         
-filtered_indices = find(conditions);
-
-if isempty(filtered_indices)
-    error('在指定的时间范围内没有找到满足初始条件的数据点。');
+%% ==================== 1. 数据加载、筛选与梯级识别 ====================
+fprintf('--- 正在加载并筛选二维结果 ---\n');
+try
+    result_table = readtable(filename);
+catch
+    error('数据文件 "%s" 加载失败，请检查文件名或路径。', filename);
 end
-
-% 提取对应的3D坐标和时间戳
-filtered_S = all_S_results(filtered_indices, :);
-filtered_match_result = all_match_results(filtered_indices);
-time_samples = [filtered_match_result.yld_start_loc]';
-
-% b. 按时间排序
-[time_samples_sorted, sort_order] = sort(time_samples);
-S_sorted = filtered_S(sort_order, :);
-
-% c. 识别梯级
-fprintf('--- 正在识别所有梯级 ---\n');
-time_diffs = diff(time_samples_sorted);
+logicalIndex = abs(result_table.t123) < 1 & abs(result_table.Rcorr) > 0.65 & result_table.Start_loc >= start_loc & result_table.Start_loc < end_loc;
+filtered_table = result_table(logicalIndex, :);
+if isempty(filtered_table), error('在指定的时间范围内没有找到满足初始条件的数据点。'); end
+filtered_table = sortrows(filtered_table, 'Start_loc');
+time_diffs = diff(filtered_table.Start_loc);
 gap_indices = find(time_diffs > thea);
-
 step_start_indices = [1; gap_indices + 1];
-step_end_indices = [gap_indices; length(time_samples_sorted)];
+step_end_indices = [gap_indices; height(filtered_table)];
 num_total_steps = numel(step_start_indices);
 fprintf('共识别出 %d 个梯级。\n', num_total_steps);
 
-%% ==================== 2. 对每个梯级进行DBSCAN去噪 ====================
-fprintf('--- 正在对每个梯级进行DBSCAN聚类去噪 ---\n');
 
-cleaned_steps_data = cell(num_total_steps, 1); % 使用cell数组存储清洗后的数据
+%% ==================== 2. 【全新风格】分阶段、分颜色累积可视化 ====================
+fprintf('--- 正在生成 %d 个子图进行分色累积可视化 ---\n', num_subplots);
 
-for i = 1:num_total_steps
-    % 提取当前梯级的所有点
-    step_idx_range = step_start_indices(i):step_end_indices(i);
-    
-    if numel(step_idx_range) < min_points
-        continue; % 点数太少，跳过
-    end
-    
-    points_in_step = S_sorted(step_idx_range, :);
-    times_in_step = time_samples_sorted(step_idx_range);
-    
-    % 执行DBSCAN
-    cluster_labels = dbscan(points_in_step, epsilon, min_points);
-    
-    % 找到最大的簇作为主路径
-    main_cluster_id = mode(cluster_labels(cluster_labels > 0));
-    
-    if isempty(main_cluster_id)
-        continue; % 没有找到主簇
-    end
-    
-    main_path_mask = (cluster_labels == main_cluster_id);
-    
-    % 存储清洗后的主路径数据 [x, y, z, time]
-    cleaned_steps_data{i} = [points_in_step(main_path_mask, :), times_in_step(main_path_mask)];
-end
+% 计算每个子图应该“新增”多少个梯级
+steps_per_subplot = ceil(num_total_steps / num_subplots);
 
-% 移除处理后为空的cell
-cleaned_steps_data = cleaned_steps_data(~cellfun('isempty', cleaned_steps_data));
-num_cleaned_steps = numel(cleaned_steps_data);
-fprintf('聚类后剩余 %d 个有效梯级。\n', num_cleaned_steps);
+% 【新增】定义颜色
+% 为每个新增阶段定义一种独特的、鲜艳的颜色
+new_stage_colors = lines(num_subplots); 
+% 为已经画过的“旧”阶段定义一个统一的灰色
+previous_stage_color = [0.75 0.75 0.75]; 
 
-%% ==================== 3. 分组并进行可视化 ====================
-fprintf('--- 正在生成 %d 个子图进行可视化 ---\n', num_subplots);
-
-% 计算每个子图应该包含多少个梯级
-steps_per_subplot = ceil(num_cleaned_steps / num_subplots);
-
-% 创建一个深色背景的 figure
-figure('Color', [0.1 0.1 0.2], 'Position', [50, 50, 1600, 800]);
-sgtitle(sprintf('负先导分梯级发展图 (%.3e - %.3e)', start_loc, end_loc), ...
-        'FontSize', 18, 'FontWeight', 'bold', 'Color', 'w');
+% 创建一个白色背景的 figure
+figure('Color', 'w');
+sgtitle(sprintf('负先导分阶段累积发展图 (%.3e - %.3e)', start_loc, end_loc), ...
+        'FontSize', 18, 'FontWeight', 'bold', 'Color', 'k');
 
 % 循环创建8个子图
 for i = 1:num_subplots
-    subplot(2, 4, i); % 使用2x4的布局
+    subplot(2, 4, i);
     hold on;
     
-    % a. 确定当前子图要绘制的梯级范围
-    start_step_idx = (i-1) * steps_per_subplot + 1;
-    end_step_idx = min(i * steps_per_subplot, num_cleaned_steps);
+    % a. 确定当前子图“新增”的梯级范围
+    start_step_new = (i-1) * steps_per_subplot + 1;
+    end_step_new = min(i * steps_per_subplot, num_total_steps);
     
-    if start_step_idx > num_cleaned_steps
-        % 如果没有更多梯级可画，则创建一个空坐标轴
-        set(gca, 'Color', [0.1 0.1 0.2], 'XColor', 'w', 'YColor', 'w');
-        title(sprintf('梯级 %d - %d', start_step_idx, end_step_idx), 'Color', 'w');
-        axis off; % 关闭坐标轴
-        continue;
+    if start_step_new > num_total_steps
+        axis off; continue;
     end
     
-    % b. 合并当前子图要绘制的所有点
-    subplot_data = vertcat(cleaned_steps_data{start_step_idx:end_step_idx});
+    % b. 绘制“旧”数据 (如果不是第一个子图)
+    if i > 1
+        % 找到之前所有阶段的结束行号
+        end_row_previous = step_end_indices(start_step_new - 1);
+        previous_data = filtered_table(1:end_row_previous, :);
+        % 用灰色绘制旧数据
+        scatter(previous_data.Azimuth, previous_data.Elevation, 3, previous_stage_color, 'filled');
+    end
     
-    x_plot = subplot_data(:, 1);
-    y_plot = subplot_data(:, 2);
-    time_plot = subplot_data(:, 4);
+    % c. 绘制“新”数据
+    % 找到当前新增阶段的起止行号
+    start_row_new = step_start_indices(start_step_new);
+    end_row_new = step_end_indices(end_step_new);
+    new_data = filtered_table(start_row_new:end_row_new, :);
     
-    % c. 归一化时间并绘图 (使用您提供的风格)
-    colorValues = (time_plot - time_samples_sorted(1)) / (time_samples_sorted(end) - time_samples_sorted(1));
+    % 用当前阶段的独特颜色绘制新数据
+    current_stage_color = new_stage_colors(i, :);
+    scatter(new_data.Azimuth, new_data.Elevation, 3, current_stage_color, 'filled');
     
-    scatter(x_plot, y_plot, 10, colorValues, 'filled', 'MarkerFaceAlpha', 0.8);
-    
-    % d. 设置子图样式
-    title(sprintf('梯级 %d - %d', start_step_idx, end_step_idx), 'FontSize', 12, 'Color', 'w');
-    xlabel('X (m)', 'Color', 'w');
-    ylabel('Y (m)', 'Color', 'w');
-    set(gca, 'Color', [0.1 0.1 0.2], 'XColor', 'w', 'YColor', 'w', 'GridLineStyle', '--', 'GridAlpha', 0.4, 'Box', 'on');
+    % d. 设置子图样式 (白色背景，黑色文字)
+    xlabel('方位角 (Azimuth / °)', 'Color', 'k');
+    ylabel('仰角 (Elevation / °)', 'Color', 'k');
+    ylim([20 32])
+    xlim([140 160])
+    set(gca, 'Color', 'w', 'XColor', 'k', 'YColor', 'k', 'Box', 'on');
     grid on;
-    axis equal; % 保持XY轴比例一致
     
     hold off;
 end
 
-% 为整个 figure 添加一个颜色条
-h = colorbar('Position', [0.92 0.1 0.015 0.8]); % 手动指定颜色条位置
-colormap('parula');
-ylabel(h, '归一化发展时间', 'FontSize', 11, 'Color', 'w');
-set(h, 'Color', 'w');
-caxis([0, 1]);
+% 【新增】手动创建图例来解释颜色含义
+% 我们在一个不可见的新坐标轴上手动创建图例
+ax_legend = axes('Position', [0, 0, 0.1, 0.1], 'Visible', 'off');
+hold(ax_legend, 'on');
+legend_handles = gobjects(num_subplots, 1);
+for i = 1:num_subplots
+    legend_handles(i) = scatter(ax_legend, NaN, NaN, 100, new_stage_colors(i,:), 'filled');
+end
+legend(legend_handles, ...
+    { '阶段1', '阶段2', '阶段3', '阶段4', '阶段5', '阶段6', '阶段7', '阶段8'}, ...
+    'Position', [0.91, 0.3, 0.08, 0.4], 'FontSize', 10);
+hold(ax_legend, 'off');
+
 
 disp('绘图完成!');
