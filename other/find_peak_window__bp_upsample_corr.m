@@ -6,9 +6,9 @@ fp_start = 25e6; % 通带起始
 fp_end = 85e6;   % 通带结束
 upsampling_factor = 25;
 window = "hann";
-min_peak_distance = 128;
+min_peak_distance = 1024;
 % 以峰值为中心，进行处理的信号片段的总长度
-processing_window_len = 512;
+processing_window_len = 4096;
 %引雷点
 signal_length = 3e8;
 r_loction = 8e8;
@@ -34,7 +34,7 @@ processed_ch3_yld = filter_bp(detrend(ch3),fp_start,fp_end,5);
 clear ch3
 
 
-file_name = '20250820151326_1505_result_yld_8e8_11e8_hann_512_128_bandpass_' +window+'_'+string(fp_start/1e6)+'e6_'+string(fp_end/1e6)+'e6_'+ '.txt';
+file_name = '20250820151326_1505_result_yld_8e8_11e8_hann_4096_1024_bandpass_' +window+'_'+string(fp_start/1e6)+'e6_'+string(fp_end/1e6)+'e6'+ '.txt';
 % 打开一个文本文件用于写入运行结果
 fileID = fopen(file_name, 'w');
 fprintf(fileID, '%-13s%-15s%-15s%-15s%-15s%-15s%-15s%-15s%-15s%-15s%-15s\n', ...
@@ -43,7 +43,7 @@ fprintf(fileID, '%-13s%-15s%-15s%-15s%-15s%-15s%-15s%-15s%-15s%-15s%-15s\n', ...
 %引雷点阈值
 noise = read_signal_tdms('20250820151326_1505CH1.tdms',1e5,7e8);
 filtered_noise = filter_bp(noise,fp_start,fp_end,5);
-min_peak_height = mean(filtered_noise)+5*std(filtered_noise);
+min_peak_height = mean(filtered_noise)+3*std(filtered_noise);
 
 
 % 寻找能量峰值的位置
