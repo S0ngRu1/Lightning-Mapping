@@ -22,8 +22,8 @@ window = 'hann';
 % ch2 = read_signal('..\\2024 822 85933.651462CH2.dat',signal_length,r_loction);
 % ch3 = read_signal('..\\2024 822 85933.651462CH3.dat',signal_length,r_loction+215/5);
 %引雷点
-signal_length = 2e7;
-r_loction = 3.985e8;
+signal_length = 3e7;
+r_loction = 3.5e8;
 d12 = 24.9586;
 d13 = 34.9335;
 d23 = 24.9675;

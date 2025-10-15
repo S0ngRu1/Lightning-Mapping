@@ -1,11 +1,11 @@
 %%  静态图绘制
 % --- 1. 数据准备  ---
-filename = 'result_yld_3.8e8_4e8_window_512_128_去零飘_滤波_加窗_阈值15_30_80.txt';
+filename = 'result_yld_3.5e8_4e8_window_512_128_去零飘_滤波_加窗_阈值15_30_80.txt';
 
 % 2. 使用 readtable 函数读取数据
 %    该函数会自动将第一行作为表头，并根据空格分隔各列
 result1 = readtable(filename);
-logicalIndex =  abs(result1.t123) < 1  & abs(result1.Rcorr) > 0.65 &  result1.Start_loc < 3.82e8 & result1.Start_loc > 3.8e8;
+logicalIndex =  abs(result1.t123) < 1  & abs(result1.Rcorr) > 0.55 &  result1.Start_loc < 4e8 & result1.Start_loc > 3.6e8;
 filteredTable1 = result1(logicalIndex, :);
 
 
@@ -30,10 +30,10 @@ xlabel('方位角 (Azimuth / °)', 'FontSize', 12, 'Color', 'w');
 ylabel('仰角 (Elevation / °)', 'FontSize', 12, 'Color', 'w');
 
 % --- 4. 坐标轴和范围设置 ---
-xlim([120, 360]);
-xticks(120:40:360);
-ylim([15, 85]);
-yticks(15:10:85);
+xlim([120, 220]);
+xticks(120:20:220);
+ylim([5, 85]);
+yticks(5:10:85);
 
 % 设置坐标轴的颜色和刻度字体颜色为白色
 set(gca, ...
@@ -70,11 +70,15 @@ figure;
 hold on;
 grid on;
 xlabel('方位角');
-xlim([120, 200]);
-xticks(120:20:200);
+% xlim([120, 200]);
+% xticks(120:20:200);
 ylabel('仰角');
-ylim([10, 70]);
-yticks(10:10:70);
+% ylim([10, 70]);
+% yticks(10:10:70);
+xlim([120, 220]);
+xticks(120:20:220);
+ylim([5, 85]);
+yticks(5:10:85);
 title('目标点动态呈现');
 colormap('hsv');
 h_bar = colorbar;
@@ -82,7 +86,7 @@ ylabel(h_bar, '归一化起始位置');
 caxis([0, 1]);
 
 % 将颜色值划分为若干个区间（批次）
-numBatches = 1000;  % 控制动态速度，越小越快
+numBatches = 3000;  % 控制动态速度，越小越快
 bins = linspace(0, 1, numBatches + 1);
 
 for b = 1:numBatches
@@ -182,9 +186,10 @@ subplot(2,1,2);plot(kalmanfiltered_chj1);title('filtered_chj');xlabel('采样点
 
 
 
-signal_length = 1.5e6;
-r_loction_yld = 4.7e8;
+signal_length = 3e7;
+r_loction_yld = 3.5e8;
 ch1_yld = read_signal('..\\20240822165932.6610CH1.dat',signal_length,r_loction_yld);
+
 bp_filtered_yld = filter_bp(ch1_yld,30e6,80e6,5);
 plot_signal_spectrum(bp_filtered_yld);
 
