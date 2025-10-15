@@ -1,36 +1,29 @@
 %% ==================== 1. 数据准备 ====================
-x_range = [-10000, 6000];
-y_range = [-10000, 0];
-z_range = [0, 10000];
+%% 新版数据结构
+all_match_results = readtable('3d_win512_cost_cal_yld_chj_dtoa3.6e8_4.0e8.csv');
 % 筛选条件
 conditions = ([all_match_results.dlta] < 20000) & ...
-             ([all_match_results.yld_start_loc] > 3.8e8) & ...
-             ([all_match_results.yld_start_loc] < 4e8) & ...
+             ([all_match_results.yld_start_loc] > 3.68e8) & ...
+             ([all_match_results.yld_start_loc] < 3.8e8) & ...
+             ([all_match_results.x] > -10000) & ...
+             ([all_match_results.x] < 6000) & ...
+             ([all_match_results.y] > -10000) & ...
+             ([all_match_results.y] < 0) & ...
+             ([all_match_results.z] > 0) & ...
+             ([all_match_results.z] < 10000) & ...
              ([all_match_results.r_gccs] > 0.1) & ...
              (abs([all_match_results.R3_value]) < 10000);
-% 获取满足条件的索引
 filtered_match_indices = find(conditions);
-filtered_S_temp = all_S_results(filtered_match_indices, :);
-filtered_match_result_temp = all_match_results(filtered_match_indices); 
-
-% 范围筛选
-range_condition_s = filtered_S_temp(:,1) >= x_range(1) & filtered_S_temp(:,1) <= x_range(2) & ...
-    filtered_S_temp(:,2) >= y_range(1) & filtered_S_temp(:,2) <= y_range(2) & ...
-    filtered_S_temp(:,3) >= z_range(1) & filtered_S_temp(:,3) <= z_range(2);
-
-filtered_S = filtered_S_temp(range_condition_s, :);
-filtered_match_result = filtered_match_result_temp(range_condition_s);
-
+filtered_match_result = all_match_results(filtered_match_indices, :);
 % 从数据结构中提取时间和坐标
 time_samples = [filtered_match_result.yld_start_loc]';
-x_coords = filtered_S(:, 1);
-y_coords = filtered_S(:, 2);
-z_coords = filtered_S(:, 3);
-
+x_coords= [filtered_match_result.x];
+y_coords = [filtered_match_result.y]; 
+z_coords = [filtered_match_result.z]; 
 % --- 用户可调参数 ---
 SAMPLING_RATE = 200e6;       % 数据采集卡采样率 (Hz), 200 MS/s
 NUM_SEGMENTS = 18;  
-EPSILON = 50;      % 邻域半径设为500米。如果您的通道发展很密集，可以减小此值
+EPSILON = 30;      % 邻域半径设为500米。如果您的通道发展很密集，可以减小此值
 MIN_POINTS = 2;     % 至少4个点才能构成一个核心簇
 %% ==================== 2. 数据预处理和速度计算 ====================
 
