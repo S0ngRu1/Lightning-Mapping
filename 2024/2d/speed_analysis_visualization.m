@@ -4,7 +4,7 @@ y_range = [-10000, 0];
 z_range = [0, 10000];
 % 筛选条件
 conditions = ([all_match_results.dlta] < 20000) & ...
-             ([all_match_results.yld_start_loc] > 3.88e8) & ...
+             ([all_match_results.yld_start_loc] > 3.8e8) & ...
              ([all_match_results.yld_start_loc] < 4e8) & ...
              ([all_match_results.r_gccs] > 0.1) & ...
              (abs([all_match_results.R3_value]) < 10000);
@@ -29,8 +29,8 @@ z_coords = filtered_S(:, 3);
 
 % --- 用户可调参数 ---
 SAMPLING_RATE = 200e6;       % 数据采集卡采样率 (Hz), 200 MS/s
-NUM_SEGMENTS = 400;  
-EPSILON = 300;      % 邻域半径设为500米。如果您的通道发展很密集，可以减小此值
+NUM_SEGMENTS = 18;  
+EPSILON = 50;      % 邻域半径设为500米。如果您的通道发展很密集，可以减小此值
 MIN_POINTS = 2;     % 至少4个点才能构成一个核心簇
 %% ==================== 2. 数据预处理和速度计算 ====================
 
@@ -42,16 +42,11 @@ end
 % 将采样点时间转换为以秒为单位的相对时间
 time_sec = (time_samples - 0) / SAMPLING_RATE;
 
-% 将所有数据按时间顺序排序
-[time_sec_sorted, sort_indices] = sort(time_sec);
-x_coords_sorted = x_coords(sort_indices);
-y_coords_sorted = y_coords(sort_indices);
-z_coords_sorted = z_coords(sort_indices);
 
 % 调用函数计算三维速度
 fprintf('正在计算三维发展速度...\n');
 [velocities, ~, avg_heights] = calculate_3d_velocity_by_points( ...
-    time_sec_sorted, x_coords_sorted, y_coords_sorted, z_coords_sorted, ...
+    time_sec, x_coords, y_coords, z_coords, ...
     NUM_SEGMENTS, EPSILON, MIN_POINTS);
 
 %% ==================== 3. 结果可视化 ====================
@@ -61,14 +56,14 @@ figure
 subplot(1, 2, 1);
 if ~isempty(velocities)
     % 准备绘图数据
-    time_plot_ms = linspace(0,50,length(velocities));
-    velo_plot_1e6 = velocities / 1e7;     % 速度单位: 10^5 m/s
-    avg_velo_plot = mean(velo_plot_1e6, 'omitnan');
-    smoothed_velo_plot = movmean(velo_plot_1e6, 4, 'omitnan'); % 5点滑动平均
+    time_plot_ms = linspace(0,100,length(velocities));
+    velo_plot_1e5 = velocities / 1e5;     % 速度单位: 10^5 m/s
+    avg_velo_plot = mean(velo_plot_1e5, 'omitnan');
+    smoothed_velo_plot = movmean(velo_plot_1e5, 2, 'omitnan'); % 5点滑动平均
     
     hold on;
     % 绘制原始速度、平滑速度和平均速度
-    plot(time_plot_ms, velo_plot_1e6, 'Color', [0.8 0.8 0.8], 'LineWidth', 1, 'DisplayName', '瞬时三维速率');
+    plot(time_plot_ms, velo_plot_1e5, 'Color', [0.8 0.8 0.8], 'LineWidth', 1, 'DisplayName', '瞬时三维速率');
     plot(time_plot_ms, smoothed_velo_plot, 'b-', 'LineWidth', 1, 'DisplayName', '平滑后速率');
     line([min(time_plot_ms), max(time_plot_ms)], [avg_velo_plot, avg_velo_plot], ...
          'Color', 'r', 'LineStyle', '--', 'LineWidth', 1.5, 'DisplayName', '平均速率');
@@ -76,12 +71,12 @@ if ~isempty(velocities)
     
     grid on;
     xlabel('时间 (ms)');
-    ylabel('三维速率 (10^7 m/s)');
+    ylabel('三维速率 (10^5 m/s)');
     title('闪电发展速率随时间的变化');
     legend('show', 'Location', 'northwest');
     set(gca, 'FontSize', 12);
-    xlim([0 50]);
-    xticks(0:10:50);
+    xlim([0 100]);
+    xticks(0:20:100);
     ylim([0 15]);
     yticks(0:3:15);
 else
@@ -105,10 +100,10 @@ if ~isempty(velocities)
     height_plot_km = avg_heights; % 高度是米，无需转换
     
     % 使用散点图，并用颜色表示时间
-    scatter(velo_plot_1e6, height_plot_km, 30, time_plot_ms, "filled");
+    scatter(velo_plot_1e5, height_plot_km, 30, time_plot_ms, "filled");
     
     grid on;
-    xlabel('三维速率 (10^7 m/s)');
+    xlabel('三维速率 (10^5 m/s)');
     ylabel('高度 (m)');
     title('速率与放电高度的关系');
     xlim([0 10]);
@@ -184,7 +179,7 @@ function [velocities, time_midpoints, avg_heights] = calculate_3d_velocity_by_po
             z_main_path_sorted = z_main_path(sort_order);
 
             % 3. 仅对主路径计算速度
-            path_length = sum(sqrt(diff(x_main_path_sorted).^2 + diff(y_main_path_sorted).^2 + diff(z_main_path_sorted).^2));         
+            path_length = sum(sqrt(diff(x_main_path_sorted).^2 + diff(y_main_path_sorted).^2 ));         
             delta_t = t_main_path_sorted(end) - t_main_path_sorted(1);
             
             if delta_t > 0

@@ -123,9 +123,9 @@ for j = 1:numel(all_start_signal_loc)-1
         current_yld_pulse = yld_catalog(i);
         current_yld_pulse.loc = start_read_loc_yld - start_signal_loc + current_yld_pulse.loc;
         current_chj_pulse_loc = floor(current_yld_pulse.loc *5/5.00390073);
-        chj_ch1 =read_signal('..\\2024 822 85933.651462CH1.dat',match_signal_length*2,start_signal_loc+ 34226222 + current_chj_pulse_loc - match_signal_length);
-        chj_ch2 =read_signal('..\\2024 822 85933.651462CH2.dat',match_signal_length*2,start_signal_loc+ 34226222 + current_chj_pulse_loc - match_signal_length);
-        chj_ch3 =read_signal('..\\2024 822 85933.651462CH3.dat',match_signal_length*2,start_signal_loc+ 34226222 + current_chj_pulse_loc - match_signal_length + 215/5);
+        chj_ch1 =read_signal('..\\2024 822 85933.651462CH1.dat',match_signal_length*2,start_signal_loc+ 34236596 + current_chj_pulse_loc - match_signal_length);
+        chj_ch2 =read_signal('..\\2024 822 85933.651462CH2.dat',match_signal_length*2,start_signal_loc+ 34236596 + current_chj_pulse_loc - match_signal_length);
+        chj_ch3 =read_signal('..\\2024 822 85933.651462CH3.dat',match_signal_length*2,start_signal_loc+ 34236596 + current_chj_pulse_loc - match_signal_length + 215/5);
         filtered_chj_signal1 = filter_bp(chj_ch1,30e6,80e6,5);
         filtered_chj_signal2 = filter_bp(chj_ch2,30e6,80e6,5);
         filtered_chj_signal3 = filter_bp(chj_ch3,30e6,80e6,5);
@@ -304,6 +304,18 @@ for j = 1:numel(all_start_signal_loc)-1
     end
     close(h);
 end
+
+
+
+
+all_match_table = struct2table(all_match_results);
+
+% 步骤2：用 writetable 保存为 CSV（支持 'Delimiter' 参数）
+writetable(all_match_table, ...
+           '3d_win512_cost_cal_yld_chj_dtoa_3.6e8_3.8e8.csv', ...  % 文件名
+           'Encoding', 'UTF-8', ...                    % 编码（确保中文正常）
+           'Delimiter', ',', ...                       % 指定逗号分隔（CSV标准）
+           'WriteVariableNames', true);                % 保存列名（结构体字段名）
 
 
 % --- DTOA 目标函数 ---

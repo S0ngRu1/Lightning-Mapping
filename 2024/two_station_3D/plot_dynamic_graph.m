@@ -1,46 +1,28 @@
-x_range = [-10000, 8000];
-y_range = [-10000, 0];
-z_range = [0, 10000];
-
-conditions = ([all_match_results.chi_square_red] < 1500) & ...
-    ([all_match_results.dlta] < 40000) & ...
-    ([all_match_results.r_gccs] > 0.2) & ...
-    (abs([all_match_results.R3_value]) < 1000 & ...
-    ([all_match_results.yld_start_loc] >3.8e8) & ...
-    ([all_match_results.yld_start_loc] < 5.5e8) );
-
-
-% 一次性获取满足所有条件的索引
+all_match_results = readtable('3d_win512_cost_cal_yld_chj_dtoa3.6e8_4.0e8.csv');
+% 筛选条件
+conditions = ([all_match_results.dlta] < 20000) & ...
+             ([all_match_results.yld_start_loc] > 3.6e8) & ...
+             ([all_match_results.yld_start_loc] < 3.8e8) & ...
+             ([all_match_results.x] > -10000) & ...
+             ([all_match_results.x] < 6000) & ...
+             ([all_match_results.y] > -10000) & ...
+             ([all_match_results.y] < 0) & ...
+             ([all_match_results.z] > 0) & ...
+             ([all_match_results.z] < 10000) & ...
+             ([all_match_results.r_gccs] > 0.1) & ...
+             (abs([all_match_results.R3_value]) < 10000);
 filtered_match_indices = find(conditions);
-
+filtered_match_result = all_match_results(filtered_match_indices, :);
 % 检查是否有数据通过筛选
-if isempty(filtered_match_indices)
+if isempty(filtered_match_result)
     error('没有数据点通过筛选条件，无法生成图像或视频。');
 end
 
-filtered_S_temp = all_S_results(filtered_match_indices, :);
-
-% % 取优化前的原始三维结果
-% initial_S_matrix = vertcat(all_match_results.S_initial_triangulation);
-%
-% filtered_S_temp = initial_S_matrix(filtered_match_indices, :);
-
-
-
-
-filtered_match_result_temp = all_match_results(filtered_match_indices);
-% 应用空间范围筛选
-range_condition_s = filtered_S_temp(:,1) >= x_range(1) & filtered_S_temp(:,1) <= x_range(2) & ...
-    filtered_S_temp(:,2) >= y_range(1) & filtered_S_temp(:,2) <= y_range(2) & ...
-    filtered_S_temp(:,3) >= z_range(1) & filtered_S_temp(:,3) <= z_range(2);
-
-filtered_S = filtered_S_temp(range_condition_s, :);
-filtered_match_result = filtered_match_result_temp(range_condition_s);
 
 % 提取坐标和时间数据
-x = filtered_S(:, 1);
-y = filtered_S(:, 2);
-z = filtered_S(:, 3);
+x = [filtered_match_result.x];
+y = [filtered_match_result.y]; 
+z = [filtered_match_result.z]; 
 t = [filtered_match_result.yld_start_loc]'; % 明确这是时间向量
 
 fprintf('数据筛选完成，共 %d 个点用于生成动画。\n', length(t));

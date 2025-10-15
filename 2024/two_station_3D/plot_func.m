@@ -189,8 +189,8 @@ plot_signal_spectrum(bp_filtered_yld);
 
 signal_length = 1e7;
 % r_loction = 4.2e8;
-ch1_yld = read_signal('..\\20240822165932.6610CH1.dat',signal_length,3.65e8);
-ch1_chj = read_signal('..\\2024 822 85933.651462CH1.dat',signal_length,3.65e8+34236156);
+ch1_yld = read_signal('..\\20240822165932.6610CH1.dat',signal_length,3.6e8);
+ch1_chj = read_signal('..\\2024 822 85933.651462CH1.dat',signal_length,3.6e8+34236156+440);
 figure;
 subplot(2,1,1);plot(ch1_yld);title('yld');
 subplot(2,1,2);plot(ch1_chj);title('chj');

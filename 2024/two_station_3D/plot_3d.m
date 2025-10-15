@@ -1,27 +1,19 @@
-x_range = [-10000, 6000];
-y_range = [-10000, 0];
-z_range = [0, 10000];
-
+%% 新版数据结构
+all_match_results = readtable('3d_win512_cost_cal_yld_chj_dtoa3.6e8_4.0e8.csv');
 % 筛选条件
 conditions = ([all_match_results.dlta] < 20000) & ...
-             ([all_match_results.yld_start_loc] > 3.8e8) & ...
-             ([all_match_results.yld_start_loc] < 3.88e8) & ...
+             ([all_match_results.yld_start_loc] > 3.6e8) & ...
+             ([all_match_results.yld_start_loc] < 3.8e8) & ...
+             ([all_match_results.x] > -10000) & ...
+             ([all_match_results.x] < 6000) & ...
+             ([all_match_results.y] > -10000) & ...
+             ([all_match_results.y] < 0) & ...
+             ([all_match_results.z] > 0) & ...
+             ([all_match_results.z] < 10000) & ...
              ([all_match_results.r_gccs] > 0.1) & ...
              (abs([all_match_results.R3_value]) < 10000);
-
-% 获取满足条件的索引
 filtered_match_indices = find(conditions);
-filtered_S_temp = all_S_results(filtered_match_indices, :);
-filtered_match_result_temp = all_match_results(filtered_match_indices); 
-
-% 范围筛选
-range_condition_s = filtered_S_temp(:,1) >= x_range(1) & filtered_S_temp(:,1) <= x_range(2) & ...
-    filtered_S_temp(:,2) >= y_range(1) & filtered_S_temp(:,2) <= y_range(2) & ...
-    filtered_S_temp(:,3) >= z_range(1) & filtered_S_temp(:,3) <= z_range(2);
-
-filtered_S = filtered_S_temp(range_condition_s, :);
-filtered_match_result = filtered_match_result_temp(range_condition_s);
-
+filtered_match_result = all_match_results(filtered_match_indices, :);
 % 处理颜色数据并归一化（增强对比度）
 if ~isempty(filtered_match_result) && isfield(filtered_match_result, 'yld_start_loc') && isnumeric([filtered_match_result.yld_start_loc])
     time_colors_raw = [filtered_match_result.yld_start_loc]';
@@ -30,14 +22,14 @@ if ~isempty(filtered_match_result) && isfield(filtered_match_result, 'yld_start_
     time_colors = time_colors .^ 0.8;  % 降低幂次使颜色更鲜艳（0.5-0.8之间效果较好）
 else
     disp('警告: filtered_match_result 为空，或 yld_start_loc 不可用/非数值类型。将按索引着色。');
-    time_colors = (1:size(filtered_S,1))' / size(filtered_S,1);
+    time_colors = (1:size(filtered_match_result,1))' / size(filtered_match_result,1);
     time_colors = time_colors .^ 0.8;  % 同样增强索引着色的对比度
 end
 
 marker_size = 3;  % 适当增大点大小，让颜色更显眼
-x = filtered_S(:, 1);
-y = filtered_S(:, 2); 
-z = filtered_S(:, 3); 
+x = [filtered_match_result.x];
+y = [filtered_match_result.y]; 
+z = [filtered_match_result.z]; 
 
 % --- 三维散点图 (鲜艳颜色风格) ---
 figure('Color', [0.1 0.1 0.2]); % 深色背景更能凸显鲜艳颜色
@@ -84,14 +76,9 @@ set(gca, ...
 daspect([1 1 1]);
 
 
-all_match_table = struct2table(all_match_results1);
 
-% 步骤2：用 writetable 保存为 CSV（支持 'Delimiter' 参数）
-writetable(all_match_table, ...
-           '3d_win512_cost_cal_yld_chj_dtoa.csv', ...  % 文件名
-           'Encoding', 'UTF-8', ...                    % 编码（确保中文正常）
-           'Delimiter', ',', ...                       % 指定逗号分隔（CSV标准）
-           'WriteVariableNames', true);                % 保存列名（结构体字段名）
+
+
 
 
 % 
