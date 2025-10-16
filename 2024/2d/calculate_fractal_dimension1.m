@@ -5,7 +5,7 @@ close all;
 
 %% ==================== 1. 参数设置与数据加载 ====================
 % --- 用户需根据实际情况修改的参数 ---
-DATA_FILE = 'result_yld_3.8e8_4e8_window_512_128_去零飘_滤波_加窗_阈值15_30_80.txt'; % 您的数据文件名
+DATA_FILE = 'result_yld_3.5e8_4e8_window_512_128_去零飘_滤波_加窗_阈值15_30_80.txt'; % 您的数据文件名
 
 % --- 列定义  ---
 COL_START_LOC = 1;
@@ -15,8 +15,8 @@ COL_RCORR     = 10;
 COL_T123      = 11;
 
 % --- 定义两个事件的时间窗口 (单位: 采样点) ---
-event1_range = [3.8e8, 3.88e8]; % 例如，正先导
-event2_range = [3.9e8, 4.00e8]; % 例如，负先导
+event1_range = [3.75e8, 3.8e8]; % 例如，正先导
+event2_range = [3.95e8, 4e8]; % 例如，负先导
 
 % --- 加载原始数据 ---
 fprintf('正在加载原始数据: %s\n', DATA_FILE);
@@ -35,7 +35,7 @@ fractal_dim1 = NaN; log_x1 = []; log_y1 = []; % 初始化结果
 try
     % 筛选事件1数据
     logicalIndex1 = ...
-        abs(data_raw(:, COL_RCORR)) > 0.6 & ...
+        abs(data_raw(:, COL_RCORR)) > 0.7 & ...
         data_raw(:, COL_START_LOC) > event1_range(1) & ...
         data_raw(:, COL_START_LOC) < event1_range(2) & ...
         data_raw(:, COL_ELEVATION) < 80 & ...
@@ -84,7 +84,6 @@ catch ME
 end
 
 
-%% ==================== 3. 结果可视化 (全新版本) ====================
 %% ==================== 3. 结果可视化 (精细布局版) ====================
 fprintf('\n正在生成组合分析图...\n');
 % --- 定义布局参数 ---
@@ -183,7 +182,7 @@ function [D, log_one_over_epsilon, log_N_epsilon] = calculateFractalDimension_Bo
 
     % --- 2. 三维盒子计数 ---
     % 定义一系列的盒子尺寸 ε (从0.01到1，共15个)
-    box_sizes_epsilon = logspace(-2, 0, 15); 
+    box_sizes_epsilon = logspace(-2, 0, 5); 
     N_epsilon = zeros(size(box_sizes_epsilon));
 
     % 为了方便地将点分配到盒子里，我们先将所有点归一化到[0,1]的立方体内
