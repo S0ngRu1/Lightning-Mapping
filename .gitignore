@@ -40,3 +40,5 @@ Lightning_Detection_Location/
 *.caj
 *.tdms
 venv/
+*.ini
+*.tdms_index

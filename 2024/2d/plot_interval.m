@@ -4,9 +4,9 @@ clc;
 close all;
 
 % --- 用户可调参数 ---
-filename = 'result_yld_3.8e8_4e8_window_512_128_去零飘_滤波_加窗_阈值15_30_80.txt';
-start_loc = 3.965e8;
-end_loc = 3.98e8;
+filename = 'result_yld_3.5e8_4e8_window_512_128_去零飘_滤波_加窗_阈值15_30_80.txt';
+start_loc = 3.65e8;
+end_loc = 3.8e8;
 thea = 3000;
 num_subplots = 8;
 
@@ -81,8 +81,8 @@ for i = 1:num_subplots
     % d. 设置子图样式 (白色背景，黑色文字)
     xlabel('方位角 (Azimuth / °)', 'Color', 'k');
     ylabel('仰角 (Elevation / °)', 'Color', 'k');
-    ylim([20 32])
-    xlim([140 160])
+    ylim([0 60])
+    xlim([160 210])
     set(gca, 'Color', 'w', 'XColor', 'k', 'YColor', 'k', 'Box', 'on');
     grid on;
     

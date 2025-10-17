@@ -15,8 +15,8 @@ COL_RCORR     = 10;
 COL_T123      = 11;
 
 % --- 定义两个事件的时间窗口 (单位: 采样点) ---
-event1_range = [3.75e8, 3.8e8]; % 例如，正先导
-event2_range = [3.95e8, 4e8]; % 例如，负先导
+event1_range = [3.65e8, 3.72e8]; % 例如，正先导
+event2_range = [3.9e8, 4e8]; % 例如，负先导
 
 % --- 加载原始数据 ---
 fprintf('正在加载原始数据: %s\n', DATA_FILE);
@@ -29,11 +29,11 @@ fprintf('原始数据点数: %d\n', size(data_raw, 1));
 
 %% ==================== 2. 分别处理和计算两个事件的分形维数 ====================
 
-% --- 处理事件1 ---
-fprintf('\n--- 正在处理事件1 (%.2e to %.2e) ---\n', event1_range(1), event1_range(2));
+% --- 处理正先导 ---
+fprintf('\n--- 正在处理正先导 (%.2e to %.2e) ---\n', event1_range(1), event1_range(2));
 fractal_dim1 = NaN; log_x1 = []; log_y1 = []; % 初始化结果
 try
-    % 筛选事件1数据
+    % 筛选正先导数据
     logicalIndex1 = ...
         abs(data_raw(:, COL_RCORR)) > 0.7 & ...
         data_raw(:, COL_START_LOC) > event1_range(1) & ...
@@ -41,26 +41,26 @@ try
         data_raw(:, COL_ELEVATION) < 80 & ...
         abs(data_raw(:, COL_T123)) < 1;
     data1 = data_raw(logicalIndex1, :);
-    fprintf('事件1筛选后有效数据点数: %d\n', size(data1, 1));
+    fprintf('正先导筛选后有效数据点数: %d\n', size(data1, 1));
     
     if size(data1, 1) > 10 % 确保有足够的数据点
         az1 = data1(:, COL_AZIMUTH);
         el1 = data1(:, COL_ELEVATION);
         % 调用函数计算分形维数
         [fractal_dim1, log_x1, log_y1] = calculateFractalDimension_BoxCount(az1, el1);
-        fprintf('事件1计算出的分形维数 D = %.3f\n', fractal_dim1);
+        
     else
-        fprintf('事件1数据点不足，跳过计算。\n');
+        fprintf('正先导数据点不足，跳过计算。\n');
     end
 catch ME
-    fprintf('处理事件1时出错: %s\n', ME.message);
+    fprintf('处理正先导时出错: %s\n', ME.message);
 end
 
-% --- 处理事件2 ---
-fprintf('\n--- 正在处理事件2 (%.2e to %.2e) ---\n', event2_range(1), event2_range(2));
+% --- 处理负先导 ---
+fprintf('\n--- 正在处理负先导 (%.2e to %.2e) ---\n', event2_range(1), event2_range(2));
 fractal_dim2 = NaN; log_x2 = []; log_y2 = []; % 初始化结果
 try
-    % 筛选事件2数据
+    % 筛选负先导数据
     logicalIndex2 = ...
         abs(data_raw(:, COL_RCORR)) > 0.6 & ...
         data_raw(:, COL_START_LOC) > event2_range(1) & ...
@@ -68,22 +68,23 @@ try
         data_raw(:, COL_ELEVATION) < 80 & ...
         abs(data_raw(:, COL_T123)) < 1;
     data2 = data_raw(logicalIndex2, :);
-    fprintf('事件2筛选后有效数据点数: %d\n', size(data2, 1));
+    fprintf('负先导筛选后有效数据点数: %d\n', size(data2, 1));
     
     if size(data2, 1) > 10 % 确保有足够的数据点
         az2 = data2(:, COL_AZIMUTH);
         el2 = data2(:, COL_ELEVATION);
         % 调用函数计算分形维数
         [fractal_dim2, log_x2, log_y2] = calculateFractalDimension_BoxCount(az2, el2);
-        fprintf('事件2计算出的分形维数 D = %.3f\n', fractal_dim2);
+        
     else
-        fprintf('事件2数据点不足，跳过计算。\n');
+        fprintf('负先导数据点不足，跳过计算。\n');
     end
 catch ME
-    fprintf('处理事件2时出错: %s\n', ME.message);
+    fprintf('处理负先导时出错: %s\n', ME.message);
 end
 
-
+fprintf('正先导计算出的分形维数 D = %.3f\n', fractal_dim2);
+fprintf('负先导计算出的分形维数 D = %.3f\n', fractal_dim1);
 %% ==================== 3. 结果可视化 (精细布局版) ====================
 fprintf('\n正在生成组合分析图...\n');
 % --- 定义布局参数 ---
@@ -109,13 +110,13 @@ pos1 = [margin_horiz, pos_bottom(2) + bottom_height + gap_vert, top_width, top_h
 pos2 = [pos1(1) + top_width + gap_horiz, pos1(2), top_width, top_height];
 
 
-% --- 左上子图: 事件1 空间分布 (方位角 vs 仰角) ---
+% --- 左上子图: 正先导 空间分布 (方位角 vs 仰角) ---
 axes('Position', pos1); % 使用手动计算的位置创建子图
 if ~isempty(az1)
     plot(az1, el1, '.k', 'MarkerSize', 4);
     grid on;
     % 注意：对于角度图，axis equal 可能会过度拉伸，可手动设置范围
-    title(sprintf('正先导 空间分布\n分形维数 D = %.3f', fractal_dim1), 'FontSize', 12);
+    title(sprintf('正先导 空间分布\n分形维数 D = %.3f', fractal_dim2), 'FontSize', 12);
     xlabel('方位角 (度)');
     ylabel('仰角 (度)');
     xlim([150 185]); % 保持您设定的范围
@@ -125,12 +126,12 @@ else
     title('正先导: 无足够数据点');
 end
 
-% --- 右上子图: 事件2 空间分布 (方位角 vs 仰角) ---
+% --- 右上子图: 负先导 空间分布 (方位角 vs 仰角) ---
 axes('Position', pos2); % 使用手动计算的位置创建子图
 if ~isempty(az2)
     plot(az2, el2, '.k', 'MarkerSize', 4);
     grid on;
-    title(sprintf('负先导 空间分布\n分形维数 D = %.3f', fractal_dim2), 'FontSize', 12);
+    title(sprintf('负先导 空间分布\n分形维数 D = %.3f', fractal_dim1), 'FontSize', 12);
     xlabel('方位角 (度)');
     ylabel('仰角 (度)');
     xlim([130 200]); % 保持您设定的范围
@@ -151,8 +152,8 @@ title('盒子计数法对数-对数图', 'FontSize', 12);
 xlabel('log(1/\epsilon)');
 ylabel('log(N(\epsilon))');
 legend_entries = {};
-if ~isnan(fractal_dim1), legend_entries{end+1} = '事件1 数据点'; legend_entries{end+1} = sprintf('事件1 拟合 (D = %.3f)', fractal_dim1); end
-if ~isnan(fractal_dim2), legend_entries{end+1} = '事件2 数据点'; legend_entries{end+1} = sprintf('事件2 拟合 (D = %.3f)', fractal_dim2); end
+if ~isnan(fractal_dim1), legend_entries{end+1} = '正先导 数据点'; legend_entries{end+1} = sprintf('正先导 拟合 (D = %.3f)', fractal_dim2); end
+if ~isnan(fractal_dim2), legend_entries{end+1} = '负先导 数据点'; legend_entries{end+1} = sprintf('负先导 拟合 (D = %.3f)', fractal_dim1); end
 if ~isempty(legend_entries), legend(legend_entries, 'Location', 'northwest', 'FontSize', 10); end
 set(gca, 'FontSize', 12);
 hold off;

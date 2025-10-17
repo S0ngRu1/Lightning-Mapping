@@ -1,11 +1,11 @@
 %%  静态图绘制
 % --- 1. 数据准备  ---
-filename = 'result_yld_3.5e8_4e8_window_512_128_去零飘_加窗_滤波_阈值15_30_80.txt';
+filename = 'result_yld_3.5e8_4e8_window_512_128_去零飘_滤波_加窗_阈值15_30_80.txt';
 
 % 2. 使用 readtable 函数读取数据
 %    该函数会自动将第一行作为表头，并根据空格分隔各列
 result1 = readtable(filename);
-logicalIndex =  abs(result1.t123) < 1  & abs(result1.Rcorr) > 0.65 &  result1.Start_loc < 4e8 & result1.Start_loc > 3.9e8;
+logicalIndex =  abs(result1.t123) < 1  & abs(result1.Rcorr) > 0.7 &  result1.Start_loc < 3.72e8 & result1.Start_loc > 3.65e8;
 filteredTable1 = result1(logicalIndex, :);
 
 
@@ -125,9 +125,9 @@ plot_signal_spectrum(bp_filtered_yld);
 
 
 
-signal_length = 1e7;
+signal_length = 2e6;
 % r_loction = 4.2e8;
-ch1_yld = read_signal('..\\20240822165932.6610CH1.dat',signal_length,3.65e8);
+ch1_yld = read_signal('..\\20240822165932.6610CH1.dat',signal_length,3.68e8);
 ch1_chj = read_signal('..\\2024 822 85933.651462CH1.dat',signal_length,3.65e8+34236156);
 figure;
 subplot(2,1,1);plot(ch1_yld);title('yld');

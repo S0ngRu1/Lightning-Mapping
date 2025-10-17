@@ -1,7 +1,7 @@
 %% 正先导信号
-% 1. 第一段信号（3.8 - 3.84e8 区间）
+% 1. 第一段信号（3.65 - 3.66e8 区间）
 % 读取信号
-signal1 = read_signal('..\\20240822165932.6610CH1.dat', 0.04e8, 3.8e8);
+signal1 = read_signal('..\\20240822165932.6610CH1.dat', 0.01e8, 3.65e8);
 % 1.1 计算信号的原始均值（所有元素的均值）
 mean_all1 = mean(signal1);
 % 1.2 筛选出“大于原始均值”的元素
@@ -12,15 +12,15 @@ mean_above_mean1 = mean(signal_above_mean1);
 peak_value1 = max(signal1);
 
 % 打印结果（可选，验证数据）
-fprintf('第一段信号（3.8 - 3.84e8）：\n');
+fprintf('第一段信号（3.65 - 3.66e8）：\n');
 fprintf('原始均值 = %.4f\n', mean_all1);
 fprintf('大于原始均值的元素的均值 = %.4f\n', mean_above_mean1);
 fprintf('峰值 = %.4f\n\n', peak_value1);
 
 
-% 2. 第二段信号（3.84 - 3.88e8 区间，高度6000-7500）
+% 2. 第二段信号（3.66 - 3.68e8 区间）
 % 读取信号
-signal2 = read_signal('..\\20240822165932.6610CH1.dat', 0.04e8, 3.84e8);
+signal2 = read_signal('..\\20240822165932.6610CH1.dat', 0.02e8, 3.66e8);
 % 2.1 计算信号的原始均值（所有元素的均值）
 mean_all2 = mean(signal2);
 % 2.2 筛选出“大于原始均值”的元素
@@ -31,10 +31,48 @@ mean_above_mean2 = mean(signal_above_mean2);
 peak_value2 = max(signal2);
 
 % 打印结果（可选，验证数据）
-fprintf('第二段信号（3.84 - 3.88e8，高度6000-7500）：\n');
+fprintf('第二段信号（3.66 - 3.68e8）：\n');
 fprintf('原始均值 = %.4f\n', mean_all2);
 fprintf('大于原始均值的元素的均值 = %.4f\n', mean_above_mean2);
 fprintf('峰值 = %.4f\n', peak_value2);
+
+
+% 2. 第二段信号（3.68 - 3.7e8 区间）
+% 读取信号
+signal2 = read_signal('..\\20240822165932.6610CH1.dat', 0.02e8, 3.68e8);
+% 2.1 计算信号的原始均值（所有元素的均值）
+mean_all2 = mean(signal2);
+% 2.2 筛选出“大于原始均值”的元素
+signal_above_mean2 = signal2(signal2 > mean_all2);
+% 2.3 计算筛选后元素的均值（目标均值）
+mean_above_mean2 = mean(signal_above_mean2);
+% 2.4 计算峰值（保留原逻辑）
+peak_value2 = max(signal2);
+
+% 打印结果（可选，验证数据）
+fprintf('第二段信号（3.68 - 3.7e8）：\n');
+fprintf('原始均值 = %.4f\n', mean_all2);
+fprintf('大于原始均值的元素的均值 = %.4f\n', mean_above_mean2);
+fprintf('峰值 = %.4f\n', peak_value2);
+
+% 2. 第二段信号（3.7 - 3.72e8 区间）
+% 读取信号
+signal2 = read_signal('..\\20240822165932.6610CH1.dat', 0.02e8, 3.7e8);
+% 2.1 计算信号的原始均值（所有元素的均值）
+mean_all2 = mean(signal2);
+% 2.2 筛选出“大于原始均值”的元素
+signal_above_mean2 = signal2(signal2 > mean_all2);
+% 2.3 计算筛选后元素的均值（目标均值）
+mean_above_mean2 = mean(signal_above_mean2);
+% 2.4 计算峰值（保留原逻辑）
+peak_value2 = max(signal2);
+
+% 打印结果（可选，验证数据）
+fprintf('第二段信号（3.7 - 3.72e8）：\n');
+fprintf('原始均值 = %.4f\n', mean_all2);
+fprintf('大于原始均值的元素的均值 = %.4f\n', mean_above_mean2);
+fprintf('峰值 = %.4f\n', peak_value2);
+
 
 
 %% 负先导信号

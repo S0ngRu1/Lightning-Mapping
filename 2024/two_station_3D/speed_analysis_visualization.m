@@ -2,9 +2,9 @@
 %% 新版数据结构
 all_match_results = readtable('3d_win512_cost_cal_yld_chj_dtoa3.6e8_4.0e8.csv');
 % 筛选条件
-conditions = ([all_match_results.dlta] < 20000) & ...
-             ([all_match_results.yld_start_loc] > 3.68e8) & ...
-             ([all_match_results.yld_start_loc] < 3.8e8) & ...
+conditions = ([all_match_results.dlta] < 6000) & ...
+             ([all_match_results.yld_start_loc] > 3.65e8) & ...
+             ([all_match_results.yld_start_loc] < 3.72e8) & ...
              ([all_match_results.x] > -10000) & ...
              ([all_match_results.x] < 6000) & ...
              ([all_match_results.y] > -10000) & ...
@@ -22,8 +22,8 @@ y_coords = [filtered_match_result.y];
 z_coords = [filtered_match_result.z]; 
 % --- 用户可调参数 ---
 SAMPLING_RATE = 200e6;       % 数据采集卡采样率 (Hz), 200 MS/s
-NUM_SEGMENTS = 18;  
-EPSILON = 30;      % 邻域半径设为500米。如果您的通道发展很密集，可以减小此值
+NUM_SEGMENTS = 30;  
+EPSILON = 40;      % 邻域半径设为500米。如果您的通道发展很密集，可以减小此值
 MIN_POINTS = 2;     % 至少4个点才能构成一个核心簇
 %% ==================== 2. 数据预处理和速度计算 ====================
 
@@ -41,7 +41,9 @@ fprintf('正在计算三维发展速度...\n');
 [velocities, ~, avg_heights] = calculate_3d_velocity_by_points( ...
     time_sec, x_coords, y_coords, z_coords, ...
     NUM_SEGMENTS, EPSILON, MIN_POINTS);
-
+valid_indices = velocities <= 2e6;
+velocities = velocities(valid_indices);
+avg_heights = avg_heights(valid_indices);
 %% ==================== 3. 结果可视化 ====================
 fprintf('正在生成分析图...\n');
 % --- 绘制左子图 (速度 vs. 时间) ---
@@ -49,7 +51,7 @@ figure
 subplot(1, 2, 1);
 if ~isempty(velocities)
     % 准备绘图数据
-    time_plot_ms = linspace(0,100,length(velocities));
+    time_plot_ms = linspace(0,70,length(velocities));
     velo_plot_1e5 = velocities / 1e5;     % 速度单位: 10^5 m/s
     avg_velo_plot = mean(velo_plot_1e5, 'omitnan');
     smoothed_velo_plot = movmean(velo_plot_1e5, 2, 'omitnan'); % 5点滑动平均
@@ -68,8 +70,8 @@ if ~isempty(velocities)
     title('闪电发展速率随时间的变化');
     legend('show', 'Location', 'northwest');
     set(gca, 'FontSize', 12);
-    xlim([0 100]);
-    xticks(0:20:100);
+    xlim([0 70]);
+    xticks(0:10:70);
     ylim([0 15]);
     yticks(0:3:15);
 else

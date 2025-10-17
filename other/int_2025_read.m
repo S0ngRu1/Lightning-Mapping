@@ -10,7 +10,7 @@ clear
 skip_byte=2; %%每个数据占2个字节，因此该参数为2时，提取波形为400Mhz。改变为2*n，采样率减小为400/n
 %%%CardOne 混合保存通道1和通道2数据
 int_filename_CardOne='software_CardOne_20250823172542.dat';
-read_int_CardOne=strcat('H:\CHJ400\data\',int_filename_CardOne);
+read_int_CardOne=strcat('20250823\',int_filename_CardOne);
 fid_CardOne=fopen(read_int_CardOne,'rb');
 where_CardOne=fseek(fid_CardOne,0, 'bof'); 
 CH1_data = fread(fid_CardOne, inf, 'int16',skip_byte,'b');   
@@ -23,7 +23,7 @@ CH2_data = fread(fid_CardOne, inf, 'int16',skip_byte,'b');
 % CH2_data=data_CardOne_read(CH2_index);
 %%%CardTwo 混合保存通道3和通道4数据
 int_filename_CardTwo='software_CardTwo_20250823172542.dat';
-read_int_CardTwo=strcat('H:\CHJ400\data\',int_filename_CardTwo);
+read_int_CardTwo=strcat('20250823',int_filename_CardTwo);
 fid_CardTwo=fopen(read_int_CardTwo,'rb');
 where_CardTwo=fseek(fid_CardTwo,0, 'bof');  
 CH3_data = fread(fid_CardTwo, inf, 'int16',skip_byte,'b');  
