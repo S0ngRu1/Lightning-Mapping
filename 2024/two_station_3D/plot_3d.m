@@ -1,5 +1,5 @@
 %% 新版数据结构
-all_match_results = readtable('3d_win512_cost_cal_yld_chj_dtoa3.6e8_4.0e8.csv');
+all_match_results = readtable('results\3d_win512_cost_cal_yld_chj_dtoa3.6e8_4.0e8.csv');
 % 筛选条件
 conditions = ([all_match_results.dlta] < 20000) & ...
              ([all_match_results.yld_start_loc] > 3.65e8) & ...

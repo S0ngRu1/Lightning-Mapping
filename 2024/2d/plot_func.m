@@ -1,6 +1,6 @@
 %%  静态图绘制
 % --- 1. 数据准备  ---
-filename = 'result_yld_3.5e8_4e8_window_512_128_去零飘_滤波_加窗_阈值15_30_80.txt';
+filename = 'results\result_yld_3.5e8_4e8_window_512_128_去零飘_滤波_加窗_阈值15_30_80.txt';
 
 % 2. 使用 readtable 函数读取数据
 %    该函数会自动将第一行作为表头，并根据空格分隔各列

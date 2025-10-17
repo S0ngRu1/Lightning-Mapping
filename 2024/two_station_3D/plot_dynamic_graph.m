@@ -1,4 +1,4 @@
-all_match_results = readtable('3d_win512_cost_cal_yld_chj_dtoa3.6e8_4.0e8.csv');
+all_match_results = readtable('results\3d_win512_cost_cal_yld_chj_dtoa3.6e8_4.0e8.csv');
 % 筛选条件
 conditions = ([all_match_results.dlta] < 20000) & ...
              ([all_match_results.yld_start_loc] > 3.6e8) & ...
@@ -51,9 +51,9 @@ ax.GridColor = [0.7, 0.7, 0.7];
 ax.GridAlpha = 0.5;
 
 h_scatter = scatter3(nan, nan, nan, 2, nan, 'filled');
-xlim(x_range);
-ylim(y_range);
-zlim(z_range);
+xlim([-10000 6000]);
+ylim([-10000 0]);
+zlim([0 10000]);
 
 xlabel('X (东 / m)', 'Color', 'w');
 ylabel('Y (北 / m)', 'Color', 'w');
