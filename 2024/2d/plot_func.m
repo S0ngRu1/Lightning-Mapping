@@ -385,8 +385,8 @@ xlabel('采样点');ylabel('幅值');
 
 
 
-signal_length = 3.8e8-3.66e8;
-r_loction_yld = 3.66e8;
+signal_length = 0.35e8;
+r_loction_yld = 3.65e8;
 ch1_yld = read_signal('..\\20240822165932.6610CH1.dat',signal_length,r_loction_yld);
 bp_filtered_yld = filter_bp(ch1_yld,30e6,80e6,5);
 figure
