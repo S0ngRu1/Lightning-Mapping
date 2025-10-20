@@ -5,7 +5,7 @@ close all;
 
 %% ==================== 1. 参数设置与数据加载 ====================
 % --- 用户需根据实际情况修改的参数 ---
-DATA_FILE = 'result_yld_3.5e8_4e8_window_512_128_去零飘_滤波_加窗_阈值15_30_80.txt'; % 您的数据文件名
+DATA_FILE = 'results\result_yld_3.5e8_4e8_window_512_128_去零飘_滤波_加窗_阈值15_30_80.txt'; % 您的数据文件名
 
 % --- 列定义  ---
 COL_START_LOC = 1;
@@ -15,8 +15,8 @@ COL_RCORR     = 10;
 COL_T123      = 11;
 
 % --- 定义两个事件的时间窗口 (单位: 采样点) ---
-event1_range = [3.65e8, 3.72e8]; % 例如，正先导
-event2_range = [3.9e8, 4e8]; % 例如，负先导
+event1_range = [3.816e8, 3.9e8]; % 例如，正先导
+event2_range = [3.66e8, 3.8e8]; % 例如，负先导
 
 % --- 加载原始数据 ---
 fprintf('正在加载原始数据: %s\n', DATA_FILE);
@@ -35,7 +35,7 @@ fractal_dim1 = NaN; log_x1 = []; log_y1 = []; % 初始化结果
 try
     % 筛选正先导数据
     logicalIndex1 = ...
-        abs(data_raw(:, COL_RCORR)) > 0.7 & ...
+        abs(data_raw(:, COL_RCORR)) > 0.5 & ...
         data_raw(:, COL_START_LOC) > event1_range(1) & ...
         data_raw(:, COL_START_LOC) < event1_range(2) & ...
         data_raw(:, COL_ELEVATION) < 80 & ...
@@ -62,7 +62,7 @@ fractal_dim2 = NaN; log_x2 = []; log_y2 = []; % 初始化结果
 try
     % 筛选负先导数据
     logicalIndex2 = ...
-        abs(data_raw(:, COL_RCORR)) > 0.6 & ...
+        abs(data_raw(:, COL_RCORR)) > 0.65 & ...
         data_raw(:, COL_START_LOC) > event2_range(1) & ...
         data_raw(:, COL_START_LOC) < event2_range(2) & ...
         data_raw(:, COL_ELEVATION) < 80 & ...
@@ -83,8 +83,8 @@ catch ME
     fprintf('处理负先导时出错: %s\n', ME.message);
 end
 
-fprintf('正先导计算出的分形维数 D = %.3f\n', fractal_dim2);
-fprintf('负先导计算出的分形维数 D = %.3f\n', fractal_dim1);
+fprintf('正先导计算出的分形维数 D = %.3f\n', fractal_dim1);
+fprintf('负先导计算出的分形维数 D = %.3f\n', fractal_dim2);
 %% ==================== 3. 结果可视化 (精细布局版) ====================
 fprintf('\n正在生成组合分析图...\n');
 % --- 定义布局参数 ---
@@ -116,7 +116,7 @@ if ~isempty(az1)
     plot(az1, el1, '.k', 'MarkerSize', 4);
     grid on;
     % 注意：对于角度图，axis equal 可能会过度拉伸，可手动设置范围
-    title(sprintf('正先导 空间分布\n分形维数 D = %.3f', fractal_dim2), 'FontSize', 12);
+    title(sprintf('正先导 空间分布\n分形维数 D = %.3f', fractal_dim1), 'FontSize', 12);
     xlabel('方位角 (度)');
     ylabel('仰角 (度)');
     xlim([150 185]); % 保持您设定的范围
@@ -131,7 +131,7 @@ axes('Position', pos2); % 使用手动计算的位置创建子图
 if ~isempty(az2)
     plot(az2, el2, '.k', 'MarkerSize', 4);
     grid on;
-    title(sprintf('负先导 空间分布\n分形维数 D = %.3f', fractal_dim1), 'FontSize', 12);
+    title(sprintf('负先导 空间分布\n分形维数 D = %.3f', fractal_dim2), 'FontSize', 12);
     xlabel('方位角 (度)');
     ylabel('仰角 (度)');
     xlim([130 200]); % 保持您设定的范围
@@ -152,8 +152,8 @@ title('盒子计数法对数-对数图', 'FontSize', 12);
 xlabel('log(1/\epsilon)');
 ylabel('log(N(\epsilon))');
 legend_entries = {};
-if ~isnan(fractal_dim1), legend_entries{end+1} = '正先导 数据点'; legend_entries{end+1} = sprintf('正先导 拟合 (D = %.3f)', fractal_dim2); end
-if ~isnan(fractal_dim2), legend_entries{end+1} = '负先导 数据点'; legend_entries{end+1} = sprintf('负先导 拟合 (D = %.3f)', fractal_dim1); end
+if ~isnan(fractal_dim1), legend_entries{end+1} = '正先导 数据点'; legend_entries{end+1} = sprintf('正先导 拟合 (D = %.3f)', fractal_dim1); end
+if ~isnan(fractal_dim2), legend_entries{end+1} = '负先导 数据点'; legend_entries{end+1} = sprintf('负先导 拟合 (D = %.3f)', fractal_dim2); end
 if ~isempty(legend_entries), legend(legend_entries, 'Location', 'northwest', 'FontSize', 10); end
 set(gca, 'FontSize', 12);
 hold off;

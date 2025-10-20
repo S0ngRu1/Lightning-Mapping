@@ -10,7 +10,7 @@ min_peak_distance = 128;
 % 以峰值为中心，进行处理的信号片段的总长度
 processing_window_len = 512;
 %引雷点
-signal_length = 3e8;
+signal_length = 3e7;
 r_loction = 5.96e8;
 angle23 = 155.1576;
 angle12 = 152.1048;

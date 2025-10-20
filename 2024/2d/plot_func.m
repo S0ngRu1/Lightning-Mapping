@@ -5,7 +5,7 @@ filename = 'results\result_yld_3.5e8_4e8_window_512_128_去零飘_滤波_加窗_
 % 2. 使用 readtable 函数读取数据
 %    该函数会自动将第一行作为表头，并根据空格分隔各列
 result1 = readtable(filename);
-logicalIndex =  abs(result1.t123) < 1  & abs(result1.Rcorr) > 0.7 &  result1.Start_loc < 3.72e8 & result1.Start_loc > 3.65e8;
+logicalIndex =  abs(result1.t123) < 1  & abs(result1.Rcorr) > 0.65 &  result1.Start_loc < 3.8e8 & result1.Start_loc > 3.65e8;
 filteredTable1 = result1(logicalIndex, :);
 
 
@@ -227,10 +227,22 @@ r_loction_yld = 3.8e8+3500;
 ch1_yld = read_signal('..\\20240822165932.6610CH1.dat',signal_length,r_loction_yld);
 bp_filtered_yld = filter_bp(ch1_yld,30e6,80e6,5);
 plot_signal_spectrum(bp_filtered_yld);
-
-plot_signal_spectrum(ch1_yld);
 figure
 plot(bp_filtered_yld);
+
+
+signal_length = 1024;
+r_loction_yld = 3.66e8+144000;
+ch1_yld = read_signal('..\\20240822165932.6610CH1.dat',signal_length,r_loction_yld);
+bp_filtered_yld = filter_bp(ch1_yld,30e6,80e6,5);
+plot_signal_spectrum(bp_filtered_yld);
+figure
+plot(bp_filtered_yld);
+
+
+
+plot_signal_spectrum(ch1_yld);
+
 figure
 plot(ch1_yld);
 % 绘制原始信号功率谱
@@ -368,3 +380,20 @@ yticks(-80:20:80);
 xlim([0, 1024]);
 xticks(0:100:1024);
 xlabel('采样点');ylabel('幅值');
+
+
+
+
+
+signal_length = 3.8e8-3.66e8;
+r_loction_yld = 3.66e8;
+ch1_yld = read_signal('..\\20240822165932.6610CH1.dat',signal_length,r_loction_yld);
+bp_filtered_yld = filter_bp(ch1_yld,30e6,80e6,5);
+figure
+plot(bp_filtered_yld);
+ylim([-80, 80]);
+yticks(-80:20:80); 
+xlim([0, 1024]);
+xticks(0:100:1024);
+xlabel('采样点');ylabel('幅值');
+plot_signal_spectrum(bp_filtered_yld);

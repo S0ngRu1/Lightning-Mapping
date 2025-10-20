@@ -1,11 +1,11 @@
 %%  静态图绘制
 % --- 1. 数据准备  ---
-filename = '20250823172542_1505_result_yld_5.95e8_7.95e8_hann_512_128_bandpass_hann_20e6_160e6.txt';
+filename = '20250823172542_1505_result_yld_5.95e8_7.95e8_hann_512_128_bandpass_hann_20e6_100e6.txt';
 
 % 2. 使用 readtable 函数读取数据
 %    该函数会自动将第一行作为表头，并根据空格分隔各列
 result1 = readtable(filename);
-logicalIndex =  abs(result1.t123) < 1  & abs(result1.Rcorr) > 0.5 &  result1.Start_loc < 8.96e8 & result1.Start_loc > 5.95e8;
+logicalIndex =  abs(result1.t123) < 100  & abs(result1.Rcorr) > 0.5 &  result1.Start_loc < 8.96e8 & result1.Start_loc > 5.95e8;
 filteredTable1 = result1(logicalIndex, :);
 
 
@@ -127,11 +127,11 @@ plot(x3)
 
 
 figure
-plot(processed_ch1_yld)
+plot(processed_ch1_yld(9477*50-512:9477*50+512))
 figure
-plot(processed_ch2_yld)
+plot(processed_ch2_yld(9477*50-512:9477*50+512))
 figure
-plot(processed_ch3_yld)
+plot(processed_ch3_yld(9477*50-512:9477*50+512))
 
 
 
