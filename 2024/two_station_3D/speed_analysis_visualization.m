@@ -1,10 +1,10 @@
 %% ==================== 1. 数据准备 ====================
 %% 新版数据结构
-all_match_results = readtable('3d_win512_cost_cal_yld_chj_dtoa3.6e8_4.0e8.csv');
+all_match_results = readtable('results\3d_win512_cost_cal_yld_chj_dtoa3.6e8_4.0e8.csv');
 % 筛选条件
 conditions = ([all_match_results.dlta] < 6000) & ...
              ([all_match_results.yld_start_loc] > 3.65e8) & ...
-             ([all_match_results.yld_start_loc] < 3.72e8) & ...
+             ([all_match_results.yld_start_loc] < 3.8e8) & ...
              ([all_match_results.x] > -10000) & ...
              ([all_match_results.x] < 6000) & ...
              ([all_match_results.y] > -10000) & ...
@@ -22,7 +22,7 @@ y_coords = [filtered_match_result.y];
 z_coords = [filtered_match_result.z]; 
 % --- 用户可调参数 ---
 SAMPLING_RATE = 200e6;       % 数据采集卡采样率 (Hz), 200 MS/s
-NUM_SEGMENTS = 30;  
+NUM_SEGMENTS = 100;  
 EPSILON = 40;      % 邻域半径设为500米。如果您的通道发展很密集，可以减小此值
 MIN_POINTS = 2;     % 至少4个点才能构成一个核心簇
 %% ==================== 2. 数据预处理和速度计算 ====================
@@ -70,8 +70,8 @@ if ~isempty(velocities)
     title('闪电发展速率随时间的变化');
     legend('show', 'Location', 'northwest');
     set(gca, 'FontSize', 12);
-    xlim([0 70]);
-    xticks(0:10:70);
+    xlim([0 40]);
+    xticks(0:5:40);
     ylim([0 15]);
     yticks(0:3:15);
 else
@@ -103,6 +103,7 @@ if ~isempty(velocities)
     title('速率与放电高度的关系');
     xlim([0 10]);
     xticks(0:2:10);
+    % ylim([5000 6500]);
     % 添加颜色条并标注
     h_bar = colorbar;
     ylabel(h_bar, '时间 (ms)'); % YLabel的单位应与颜色数据time_plot_ms一致

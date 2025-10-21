@@ -19,7 +19,7 @@ step = 1e6;
 signal_length=step;
 start_signal_loc = 3.6e8;
 mapping_start_signal_loc = 3.6e8;
-end_signal_loc = 3.8e8;
+end_signal_loc = 5.6e8;
 
 % 所有信号的开始位置
 all_start_signal_loc = start_signal_loc:step:end_signal_loc;
@@ -75,7 +75,7 @@ fs = 200e6;
 ts_ns = 1 / fs * 1e9;
 
 noise_analysis_length = 1e5;
-threshold_std_multiplier = 5;
+threshold_std_multiplier = 4;
 noise_chj = read_signal('..\\2024 822 85933.651462CH1.dat', noise_analysis_length, noise_analysis_length);
 filtered_noise_chj = filter_bp(noise_chj, 30e6, 80e6, 5);
 threshold_chj = mean(filtered_noise_chj) + threshold_std_multiplier * std(filtered_noise_chj);
@@ -312,7 +312,7 @@ all_match_table = struct2table(all_match_results);
 
 % 步骤2：用 writetable 保存为 CSV（支持 'Delimiter' 参数）
 writetable(all_match_table, ...
-           '3d_win512_cost_cal_yld_chj_dtoa_3.6e8_3.8e8.csv', ...  % 文件名
+           'results\3d_win512_cost_cal_yld_chj_dtoa_3.6e8_5.6e8.csv', ...  % 文件名
            'Encoding', 'UTF-8', ...                    % 编码（确保中文正常）
            'Delimiter', ',', ...                       % 指定逗号分隔（CSV标准）
            'WriteVariableNames', true);                % 保存列名（结构体字段名）
