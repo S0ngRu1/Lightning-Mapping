@@ -51,7 +51,7 @@ plot(CH4_data)
 
 %% %%%tdms 文件读取 引雷点   
 %%tdms读取方式一样，  更改文件名即可， 每个通道单独存储
-string_400='20250823\20250823172542_5453CH6.tdms';  
+string_400='20250823\20250823172542_5453CH4.tdms';  
 [output_400,metaStruct_400] = TDMS_getStruct(string_400);    
 int_400=output_400.groups.chans.data; %%%数据
 double_400 = double(int_400);

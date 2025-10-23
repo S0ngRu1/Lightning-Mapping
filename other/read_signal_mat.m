@@ -17,5 +17,5 @@ function signal = read_signal_mat(signal_mat_path, r_length, r_location)
     end
     full_signal = full_signal.double_400';
     % 截取信号片段并转换为double类型（与原函数输出格式一致）
-    signal = double(full_signal(r_location:r_location + r_length - 1));
+    signal = full_signal(r_location:r_location + r_length - 1);
 end
