@@ -1,11 +1,11 @@
 %%  静态图绘制
 % --- 1. 数据准备  ---
-filename = 'results\result_yld_3.5e8_4e8_window_512_128_去零飘_滤波_加窗_阈值15_30_80.txt';
+filename = 'results\20240822165932_result_yld_3.6e8_5.6e8_window_1024_256_阈值4倍标准差_去零飘_30_80_hann.txt';
 
 % 2. 使用 readtable 函数读取数据
 %    该函数会自动将第一行作为表头，并根据空格分隔各列
 result1 = readtable(filename);
-logicalIndex =  abs(result1.t123) < 1  & abs(result1.Rcorr) > 0.65 &  result1.Start_loc < 3.8e8 & result1.Start_loc > 3.65e8;
+logicalIndex =  abs(result1.t123) < 1  & abs(result1.Rcorr) > 0.6 &  result1.Start_loc < 5.6e8 & result1.Start_loc > 3.65e8;
 filteredTable1 = result1(logicalIndex, :);
 
 
@@ -59,25 +59,32 @@ set(gca, 'GridLineStyle', '--', 'GridAlpha', 0.3, 'Box', 'on'); % 浅色背景�
 
 
 
-%%  动态图绘制
+%%  动态图绘制 + 视频保存
 Start_loc = filteredTable1.Start_loc;
-%动态图
-% 归一化颜色值
+% 动态图参数设置
+numBatches = 3000;  % 控制动态速度（越小越快，越大越慢）
+videoName = '2d_dynamic_video.mp4';  % 输出视频文件名（可自定义路径，如'C:\video\test.mp4'）
+videoFps = 30;      % 视频帧率（建议20-60，越高越流畅）
+
+% 1. 归一化颜色值（与原逻辑一致）
 Start_loc_min = min(Start_loc);
 Start_loc_max = max(Start_loc);
 colorValues = (Start_loc - Start_loc_min) / (Start_loc_max - Start_loc_min);
-% 创建图形
-figure;
+
+% 2. 创建视频写入对象（关键新增）
+% 创建MP4格式视频，设置帧率
+vidObj = VideoWriter(videoName, 'MPEG-4');
+vidObj.FrameRate = videoFps;
+open(vidObj);  % 打开视频写入流
+
+% 3. 创建图形窗口（与原逻辑一致）
+figure('Position', [100, 100, 800, 600]);  % 设置窗口大小（避免帧大小不一）
 hold on;
 grid on;
 xlabel('方位角');
-% xlim([120, 200]);
-% xticks(120:20:200);
-ylabel('仰角');
-% ylim([10, 70]);
-% yticks(10:10:70);
 xlim([120, 220]);
 xticks(120:20:220);
+ylabel('仰角');
 ylim([5, 85]);
 yticks(5:10:85);
 title('目标点动态呈现');
@@ -86,26 +93,35 @@ h_bar = colorbar;
 ylabel(h_bar, '归一化起始位置');
 caxis([0, 1]);
 
-% 将颜色值划分为若干个区间（批次）
-numBatches = 3000;  % 控制动态速度，越小越快
+% 4. 划分颜色区间（与原逻辑一致）
 bins = linspace(0, 1, numBatches + 1);
 
+% 5. 逐批次绘制+捕捉帧写入视频（核心修改）
 for b = 1:numBatches
-    % 找到当前批次中的点
+    % 找到当前批次的点
     idx = colorValues >= bins(b) & colorValues < bins(b+1);
     if any(idx)
         az = filteredTable1.Azimuth(idx);
         el = filteredTable1.Elevation(idx);
         colors = colorValues(idx);
-
-        % 一次性绘制当前批次所有点
+        
+        % 绘制当前批次的点
         scatter(az, el, 3, colors, 'filled');
-        drawnow;  % 每批次刷新一次
+        drawnow;  % 实时刷新图像
+        
+        % 捕捉当前图像帧并写入视频（关键新增）
+        frame = getframe(gcf);  % 获取当前图形窗口的帧
+        writeVideo(vidObj, frame);  % 将帧写入视频
     end
 end
 
+% 6. 释放资源（关键步骤，避免视频损坏）
 hold off;
-disp('快速动态绘制完成。');
+close(vidObj);  % 关闭视频写入流
+close(gcf);     % 关闭图形窗口（可选）
+
+disp(['动态图已保存为视频：', fullfile(pwd, videoName)]);  % 输出视频保存路径
+disp('快速动态绘制及视频保存完成。');
 
 %% 其它图像绘制
 

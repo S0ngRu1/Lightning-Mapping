@@ -69,7 +69,7 @@ filename = '标准结果\20250823172542_5453_300000000_200000000_2048_512_8_spec
 % 2. 使用 readtable 函数读取数据
 %    该函数会自动将第一行作为表头，并根据空格分隔各列
 result1 = readtable(filename);
-logicalIndex =  abs(result1.t123) < 0.001  & abs(result1.Rcorr) > 0.001 &  result1.Start_loc < 7.9e8 & result1.Start_loc >7.4e8;
+logicalIndex =  abs(result1.t123) < 0.0005  & abs(result1.Rcorr) > 0.05 &  result1.Start_loc < 8.96e8 & result1.Start_loc >5.96e8;
 filteredTable1 = result1(logicalIndex, :);
 
 
@@ -165,12 +165,31 @@ plot(yld_ch1)
 
 
 ch1 = read_signal_tdms('20250823\20250823172542_5453CH3.tdms',3e8,5.95e8);
+x1 = downsample(ch1,50);
+clear ch1
 figure
-plot(ch1)
+plot(x1)
 ylim([-1000 1000])
-plot_signal_spectrum(ch1)
+
+ch2 = read_signal_tdms('20250823\20250823172542_5453CH4.tdms',3e8,5.95e8);
+x2 = downsample(ch2,50);
+clear ch2
+figure
+plot(x2)
+ylim([-1000 1000])
+
+ch3 = read_signal_tdms('20250823\20250823172542_5453CH6.tdms',3e8,5.95e8);
+x3 = downsample(ch3,50);
+clear ch3
+figure
+plot(x3)
+ylim([-1000 1000])
 
 
+clear
+yld_ch4 = read_signal_tdms('20250823\20250823172542_5453CH7.tdms',3e8,5.9e8);
+x4 = downsample(yld_ch4,50);
+plot(x4)
 
 x1 = downsample(processed_ch1_yld,50);
 figure
@@ -193,8 +212,14 @@ plot(windowed_ch3)
 
 
 
-ch1 = read_signal_tdms('20250823\20250823172542_5453CH3.tdms',1024,5.95e8+15063800);
-plot(processed_ch1_yld)
+ch1 = read_signal_tdms('20250823\20250823172542_5453CH3.tdms',1024,5.95e8+1473850-512);
+plot(ch1)
+plot_signal_spectrum(ch1)
+
+
+ch1 = read_signal_tdms('20250823\20250823172542_5453CH3.tdms',1024,5.95e8-512);
+plot(ch1)
+plot_signal_spectrum(ch1)
 
 plot(processed_ch1_yld(47437900-5120:47437900+5120))
 plot_signal_spectrum(processed_ch1_yld(47437900-5120:47437900+5120))

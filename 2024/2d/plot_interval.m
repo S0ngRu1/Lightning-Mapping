@@ -5,8 +5,8 @@ close all;
 
 % --- 用户可调参数 ---
 filename = 'results\result_yld_3.5e8_4e8_window_512_128_去零飘_滤波_加窗_阈值15_30_80.txt';
-start_loc = 3.665e8;
-end_loc = 3.668e8;
+start_loc = 3.816e8;
+end_loc = 3.9e8;
 thea = 50;
 num_subplots = 6;
 %% ==================== 1. 数据加载、筛选与梯级识别 ====================
@@ -16,7 +16,7 @@ try
 catch
     error('数据文件 "%s" 加载失败，请检查文件名或路径。', filename);
 end
-logicalIndex = abs(result_table.t123) < 1 & abs(result_table.Rcorr) > 0.5 & result_table.Start_loc >= start_loc & result_table.Start_loc < end_loc;
+logicalIndex = abs(result_table.t123) < 1 & abs(result_table.Rcorr) > 0.5 & result_table.Start_loc >= start_loc & result_table.Start_loc < end_loc & result_table.Elevation < 80;
 filtered_table = result_table(logicalIndex, :);
 if isempty(filtered_table), error('在指定的时间范围内没有找到满足初始条件的数据点。'); end
 filtered_table = sortrows(filtered_table, 'Start_loc');
@@ -64,7 +64,7 @@ for i = 1:num_subplots
         end_row_previous = step_end_indices(start_step_new - 1);
         previous_data = filtered_table(1:end_row_previous, :);
         % 用灰色绘制旧数据
-        scatter(previous_data.Azimuth, previous_data.Elevation, 40, previous_stage_color, 'filled');
+        scatter(previous_data.Azimuth, previous_data.Elevation, 3, previous_stage_color, 'filled');
     end
     
     % c. 绘制“新”数据
@@ -75,15 +75,15 @@ for i = 1:num_subplots
     
     % 用当前阶段的独特颜色绘制新数据
     current_stage_color = new_stage_colors(i, :);
-    scatter(new_data.Azimuth, new_data.Elevation, 40, current_stage_color, 'filled');
+    scatter(new_data.Azimuth, new_data.Elevation, 3, current_stage_color, 'filled');
     
     % d. 设置子图样式 (白色背景，黑色文字)
     if i == 0
         xlabel('方位角 (Azimuth / °)', 'Color', 'k');
         ylabel('仰角 (Elevation / °)', 'Color', 'k');
     end
-    ylim([38 41])
-    xlim([185 188])
+    ylim([40 75])
+    xlim([150 200])
     set(gca, 'Color', 'w', 'XColor', 'k', 'YColor', 'k', 'Box', 'on');
     grid on;
     
