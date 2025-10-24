@@ -4,12 +4,11 @@ clc;
 close all;
 
 % --- 用户可调参数 ---
-filename = 'result_yld_3.5e8_4e8_window_512_128_去零飘_滤波_加窗_阈值15_30_80.txt';
-start_loc = 3.65e8;
-end_loc = 3.8e8;
-thea = 3000;
-num_subplots = 8;
-
+filename = 'results\result_yld_3.5e8_4e8_window_512_128_去零飘_滤波_加窗_阈值15_30_80.txt';
+start_loc = 3.816e8;
+end_loc = 3.9e8;
+thea = 50;
+num_subplots = 6;
 %% ==================== 1. 数据加载、筛选与梯级识别 ====================
 fprintf('--- 正在加载并筛选二维结果 ---\n');
 try
@@ -17,7 +16,7 @@ try
 catch
     error('数据文件 "%s" 加载失败，请检查文件名或路径。', filename);
 end
-logicalIndex = abs(result_table.t123) < 1 & abs(result_table.Rcorr) > 0.65 & result_table.Start_loc >= start_loc & result_table.Start_loc < end_loc;
+logicalIndex = abs(result_table.t123) < 1 & abs(result_table.Rcorr) > 0.5 & result_table.Start_loc >= start_loc & result_table.Start_loc < end_loc & result_table.Elevation < 80;
 filtered_table = result_table(logicalIndex, :);
 if isempty(filtered_table), error('在指定的时间范围内没有找到满足初始条件的数据点。'); end
 filtered_table = sortrows(filtered_table, 'Start_loc');
@@ -48,7 +47,7 @@ sgtitle(sprintf('负先导分阶段累积发展图 (%.3e - %.3e)', start_loc, en
 
 % 循环创建8个子图
 for i = 1:num_subplots
-    subplot(2, 4, i);
+    subplot(1, num_subplots, i);
     hold on;
     
     % a. 确定当前子图“新增”的梯级范围
@@ -79,10 +78,12 @@ for i = 1:num_subplots
     scatter(new_data.Azimuth, new_data.Elevation, 3, current_stage_color, 'filled');
     
     % d. 设置子图样式 (白色背景，黑色文字)
-    xlabel('方位角 (Azimuth / °)', 'Color', 'k');
-    ylabel('仰角 (Elevation / °)', 'Color', 'k');
-    ylim([0 60])
-    xlim([160 210])
+    if i == 0
+        xlabel('方位角 (Azimuth / °)', 'Color', 'k');
+        ylabel('仰角 (Elevation / °)', 'Color', 'k');
+    end
+    ylim([40 75])
+    xlim([150 200])
     set(gca, 'Color', 'w', 'XColor', 'k', 'YColor', 'k', 'Box', 'on');
     grid on;
     

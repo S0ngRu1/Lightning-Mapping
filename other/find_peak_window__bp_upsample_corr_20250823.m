@@ -2,22 +2,24 @@ clear;
 N = 3;
 c = 0.299792458;
 fs = 400e6;
-fp_start = 25e6; % 通带起始
-fp_end = 85e6;   % 通带结束
+fp_start = 30e6; % 通带起始
+fp_end = 80e6;   % 通带结束
 upsampling_factor = 25;
 window = "hann";
-min_peak_distance = 128;
+min_peak_distance = 256;
 % 以峰值为中心，进行处理的信号片段的总长度
-processing_window_len = 512;
+processing_window_len = 2048;
 %引雷点
-signal_length = 2e8;
-r_loction = 5.95e8;
-angle23 = 128.5727;
-angle12 = 111.4851;
-angle13 = 77.5749;
-d12 = 25.0128;
-d13 = 47.4914;
-d23 = 66.1534;
+signal_length = 1e8;
+r_loction = 7.95e8;
+
+angle12 = 107.7812;
+angle13 = 152.1048;
+angle23 = -155.1576;
+d12 = 33.0029;
+d13 = 41.1531;
+d23 = 28.9738;
+
 
 ch1 = read_signal_tdms('20250823\20250823172542_5453CH3.tdms',signal_length,r_loction);
 processed_ch1_yld = filter_bp(detrend(ch1),fp_start,fp_end,5);
@@ -28,11 +30,11 @@ clear ch2
 ch3 = read_signal_tdms('20250823\20250823172542_5453CH6.tdms',signal_length,r_loction);
 processed_ch3_yld = filter_bp(detrend(ch3),fp_start,fp_end,5);
 clear ch3
-% 汉宁窗 
+% 汉宁窗
 win = hann(processing_window_len);
 win = win(:);
 
-file_name = '20250823172542_1505_result_yld_5.95e8_7.95e8_hann_512_128_bandpass_' +window+'_'+string(fp_start/1e6)+'e6_'+string(fp_end/1e6)+'e6'+ '.txt';
+file_name = '20250823172542_1505_result_yld_7.95e8_8.95e8_hann_'+string(processing_window_len)+'_'+string(min_peak_distance)+'_bandpass_'+ window +'_'+string(fp_start/1e6)+'e6_'+string(fp_end/1e6)+'e6'+ '.txt';
 % 打开一个文本文件用于写入运行结果
 fileID = fopen(file_name, 'w');
 fprintf(fileID, '%-13s%-15s%-15s%-15s%-15s%-15s%-15s%-15s%-15s%-15s%-15s\n', ...
@@ -166,13 +168,13 @@ end
 
 
 
-% 定义目标函数 (正确版本)
+% 定义目标函数
 function F = objective(x, t12_meas, t13_meas, t23_meas, type)
 % 提取待优化的变量
 cos_alpha = x(1);
 cos_beta = x(2);
 
-% 计算τij的理论值 τ_model (我将 obs 改为 model，语义更清晰)
+% 计算τij的理论值 τ_model
 tau_model = calculate_tau_obs(cos_alpha, cos_beta, type);
 
 % t12, t13, t23 是测量的时延 (measurement)
@@ -203,12 +205,15 @@ if strcmp(type, 'chj') % 从化局
     d13 = 36.9015;
     d23 = 35.4481;
 elseif strcmp(type, 'yld') % 引雷场
-angle23 = 128.5727;
-angle12 = 111.4851;
-angle13 = 77.5749;
-d12 = 25.0128;
-d13 = 47.4914;
-d23 = 66.1534;
+
+angle12 = 107.7812;
+angle13 = 152.1048;
+angle23 = -155.1576;
+d12 = 33.0029;
+d13 = 41.1531;
+d23 = 28.9738;
+
+
 
 else
     error('未知的类型：%s', type);
@@ -220,13 +225,3 @@ tau_ij_obs(2) = (cos_alpha * sind(angle13) + cos_beta * cosd(angle13)) * d13 / 0
 tau_ij_obs(3) = (cos_alpha * sind(angle23) + cos_beta * cosd(angle23)) * d23 / 0.299792458;
 end
 
-
-%% 设计巴特沃斯带通滤波器
-function filtered_signal = filter_bp(signal,f1,f2,order)
-    Fs = 400e6;
-    fn = Fs/4;
-    Wn = [f1 f2]/fn;
-    [b,a] = butter(order,Wn); 
-    filtered_signal = filtfilt(b,a,signal);
-
-end

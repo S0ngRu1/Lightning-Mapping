@@ -1,21 +1,18 @@
 %% ==================== 1. 数据准备与参数定义 ====================
-all_match_results = readtable('3d_win512_cost_cal_yld_chj_dtoa3.6e8_4.0e8.csv');
+all_match_results = readtable('results\3d_win512_cost_cal_yld_chj_dtoa3.6e8_4.0e8.csv');
 % --- 定义您要分析的六个时间段 ---
 time_intervals = [
     3.65e8,  3.66e8;
-    3.66e8, 3.68e8;
-    3.68e8,  3.7e8;
+    3.66e8, 3.67e8;
+    3.67e8,  3.7e8;
     3.7e8, 3.72e8;
-    3.989e8, 4e8;
-    3.965e8, 3.98e8;
-    3.94e8, 3.965e8;
-    3.9e8,  3.94e8
+    3.82e8,  3.9e8
     ];
 
 % --- 用户可调参数 ---
 SAMPLING_RATE = 200e6;
 NUM_SEGMENTS_PER_INTERVAL = 1; % 在每个时间段内，再细分成的计算单元数
-EPSILON = 50;
+EPSILON = 80;
 MIN_POINTS = 2;
 
 fprintf('开始计算每个时间段的平均速度...\n');
