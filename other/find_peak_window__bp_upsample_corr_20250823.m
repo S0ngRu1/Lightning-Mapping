@@ -10,8 +10,8 @@ min_peak_distance = 256;
 % 以峰值为中心，进行处理的信号片段的总长度
 processing_window_len = 2048;
 %引雷点
-signal_length = 5e7;
-r_loction = 7.4e8;
+signal_length = 1e8;
+r_loction = 7.95e8;
 
 angle12 = 107.7812;
 angle13 = 152.1048;
@@ -34,7 +34,7 @@ clear ch3
 win = hann(processing_window_len);
 win = win(:);
 
-file_name = '20250823172542_1505_result_yld_7.4e8_7.9e8_hann_'+string(processing_window_len)+'_'+string(min_peak_distance)+'_bandpass_'+ window +'_'+string(fp_start/1e6)+'e6_'+string(fp_end/1e6)+'e6'+ '.txt';
+file_name = '20250823172542_1505_result_yld_7.95e8_8.95e8_hann_'+string(processing_window_len)+'_'+string(min_peak_distance)+'_bandpass_'+ window +'_'+string(fp_start/1e6)+'e6_'+string(fp_end/1e6)+'e6'+ '.txt';
 % 打开一个文本文件用于写入运行结果
 fileID = fopen(file_name, 'w');
 fprintf(fileID, '%-13s%-15s%-15s%-15s%-15s%-15s%-15s%-15s%-15s%-15s%-15s\n', ...

@@ -1,11 +1,11 @@
 %%  静态图绘制
 % --- 1. 数据准备  ---
-filename = '20250823172542_1505_result_yld_7.4e8_7.9e8_hann_2048_256_bandpass_hann_30e6_90e6.txt';
+filename = '20250823172542_1505_result_yld_5.95e8_8.95e8_hann_2048_256_bandpass_hann_30e6_80e6.txt';
 
 % 2. 使用 readtable 函数读取数据
 %    该函数会自动将第一行作为表头，并根据空格分隔各列
 result1 = readtable(filename);
-logicalIndex =  abs(result1.t123) < 10  & abs(result1.Rcorr) > 0.1 &  result1.Start_loc < 9e8 & result1.Start_loc > 5.9e8;
+logicalIndex =  abs(result1.t123) < 1  & abs(result1.Rcorr) > 0.35 &  result1.Start_loc < 6.9e8 & result1.Start_loc > 5.9e8;
 filteredTable1 = result1(logicalIndex, :);
 
 
@@ -45,7 +45,7 @@ set(gca, ...
     'YColor', [0.2 0.2 0.2]);    % Y轴颜色（深灰色）
 
 % --- 5. 颜色映射和颜色条优化 ---
-colormap('cool'); % 保持专业的颜色映射
+colormap('parula'); % 保持专业的颜色映射
 h = colorbar;
 
 % 颜色条标签和刻度颜色为深色
