@@ -1,19 +1,18 @@
 %% ==================== 1. 数据准备与参数定义 ====================
 all_match_results = readtable('results\3d_win512_cost_cal_yld_chj_dtoa3.6e8_4.0e8.csv');
-% --- 定义您要分析的六个时间段 ---
+% 您要分析的六个时间段 ---
 time_intervals = [
-    3.65e8,  3.66e8;
+    3.655e8,  3.66e8;
     3.66e8, 3.67e8;
-    3.67e8,  3.7e8;
+    3.68e8,  3.7e8;
     3.7e8, 3.72e8;
-    3.82e8,  3.9e8
+    3.82e8,  3.87e8
     ];
 
-% --- 用户可调参数 ---
 SAMPLING_RATE = 200e6;
-NUM_SEGMENTS_PER_INTERVAL = 1; % 在每个时间段内，再细分成的计算单元数
-EPSILON = 80;
-MIN_POINTS = 2;
+NUM_SEGMENTS_PER_INTERVAL = 1; 
+EPSILON = [45 180 100 80 200];
+MIN_POINTS = 5;
 
 fprintf('开始计算每个时间段的平均速度...\n');
 fprintf('----------------------------------------\n');
@@ -28,7 +27,7 @@ for i = 1:size(time_intervals, 1)
     fprintf('正在处理时间段: %.3e to %.3e ...\n', current_start_loc, current_end_loc);
 
     % 筛选条件
-    conditions = ([all_match_results.dlta] < 6000) & ...
+    conditions = ([all_match_results.dlta] < 20000) & ...
         ([all_match_results.yld_start_loc] > current_start_loc) & ...
         ([all_match_results.yld_start_loc] < current_end_loc) & ...
         ([all_match_results.x] > -10000) & ...
@@ -59,7 +58,7 @@ for i = 1:size(time_intervals, 1)
     % 调用函数计算速度
     [velocities, ~, ~] = calculate_3d_velocity_by_points( ...
         time_sec, x_coords, y_coords, z_coords, ...
-        NUM_SEGMENTS_PER_INTERVAL, EPSILON, MIN_POINTS);
+        NUM_SEGMENTS_PER_INTERVAL, EPSILON(i), MIN_POINTS);
 
     % --- c. 计算平均速度并输出结果 ---
     if ~isempty(velocities)
@@ -79,7 +78,6 @@ fprintf('----------------------------------------\n');
 fprintf('所有时间段计算完成。\n');
 
 
-%% ==================== 函数定义区 ====================
 function [velocities, time_midpoints, avg_heights] = calculate_3d_velocity_by_points(t, x, y, z, num_segments, epsilon, min_points)
 velocities = [];
 time_midpoints = [];
@@ -95,6 +93,9 @@ if points_per_segment == 0
     points_per_segment = 1; % 确保至少有一个点
     num_segments = total_points;
 end
+
+% 点大小设置
+marker_size = 10;
 
 for i = 1:num_segments
     start_idx = (i-1) * points_per_segment + 1;
@@ -134,6 +135,36 @@ for i = 1:num_segments
             velocities = [velocities; path_length / delta_t];
             time_midpoints = [time_midpoints; mean(t_main_path_sorted)];
             avg_heights = [avg_heights; mean(z_main_path_sorted)];
+
+            % 绘制当前段主路径的三维散点图
+            figure('Color', [1 1 1]); % 白色背景
+
+            % 绘制三维散点图，点颜色为黑色
+            scatter3(x_main_path_sorted, y_main_path_sorted, z_main_path_sorted, ...
+                     marker_size, 'k', 'filled', 'MarkerFaceAlpha', 0.8);
+
+            % 设置标题和轴标签（黑色字体）
+            xlabel('X (东)', 'FontSize', 12, 'Color', 'k'); 
+            ylabel('Y (北)', 'FontSize', 12, 'Color', 'k'); 
+            zlabel('Z (上)', 'FontSize', 12, 'Color', 'k'); 
+            title(sprintf('主路径三维分布'), 'FontSize', 16, 'FontWeight', 'bold', 'Color', 'k');
+
+            % 坐标轴样式设置（黑色线条/文字，白色背景）
+            set(gca, ...
+                'FontSize', 11, ...
+                'LineWidth', 1.2, ...
+                'Color', [1 1 1], ...  % 坐标轴区域白色背景
+                'XColor', 'k', ...     % 坐标轴刻度/线条黑色
+                'YColor', 'k', ...
+                'ZColor', 'k');
+
+            % 网格设置（灰色虚线网格，适配白色背景）
+            grid on;
+            set(gca, ...
+                'GridLineStyle', '--', ...
+                'GridAlpha', 0.5, ...  % 网格适当透明
+                'Box', 'on'); 
+            daspect([1 1 1]);  % 保持坐标轴比例一致，避免空间变形
         end
     end
 end
