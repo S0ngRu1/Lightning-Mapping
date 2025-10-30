@@ -3,8 +3,8 @@ clear;
 clc; 
 close all;
 filename = 'results\20240822165932_result_yld_3.6e8_5.6e8_window_1024_256_阈值4倍标准差_去零飘_30_80_hann.txt';
-start_loc = 3.9e8;
-end_loc = 4e8;
+start_loc = 3.711e8;
+end_loc = 3.712e8;
 thea = 3000;
 point_size = 20;  
 num_subplots = 20;  
@@ -20,7 +20,7 @@ end
 
 % 数据筛选条件
 logicalIndex = abs(result_table.t123) < 1 & ...
-               abs(result_table.Rcorr) > 0.4 & ...
+               abs(result_table.Rcorr) > 0.6 & ...
                result_table.Start_loc >= start_loc & ...
                result_table.Start_loc < end_loc & ...
                result_table.Elevation < 80 ;
@@ -112,8 +112,8 @@ for i = 1:num_subplots
     end
 
     % 统一坐标轴范围和样式
-    xlim([155 175]);
-    ylim([65 70]);
+    % xlim([155 175]);
+    % ylim([65 70]);
     set(gca, 'Color', 'w', 'XColor', 'k', 'YColor', 'k', 'Box', 'on', ...
         'FontSize', 6, 'TickDir', 'in');  % 减小字体，刻度向内更整洁
     axis equal;  % 保持坐标比例一致
