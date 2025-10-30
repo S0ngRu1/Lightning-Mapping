@@ -5,7 +5,7 @@ filename = 'results/20250823172542_1505_result_yld_5.95e8_8.95e8_hann_2048_256_b
 % 2. 使用 readtable 函数读取数据
 %    该函数会自动将第一行作为表头，并根据空格分隔各列
 result1 = readtable(filename);
-logicalIndex =  abs(result1.t123) < 1  & abs(result1.Rcorr) > 0.35 &  result1.Start_loc < 8.96e8 & result1.Start_loc > 7.96e8;
+logicalIndex =  abs(result1.t123) < 1  & abs(result1.Rcorr) > 0.35 &  result1.Start_loc < 8.96e8 & result1.Start_loc > 8.1e8 & result1.Azimuth > 250 & result1.Azimuth < 300 & result1.Elevation < 80 & result1.Elevation > 55;
 filteredTable1 = result1(logicalIndex, :);
 
 
