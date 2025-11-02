@@ -6,12 +6,16 @@ time_intervals = [
     3.66e8, 3.67e8;
     3.68e8,  3.7e8;
     3.7e8, 3.72e8;
-    3.82e8,  3.87e8
+    3.82e8,  3.83e8;
+    3.83e8,  3.84e8;
+    3.84e8,  3.85e8;
+    3.85e8,  3.86e8;
+    3.86e8,  3.87e8;
     ];
 
 SAMPLING_RATE = 200e6;
 NUM_SEGMENTS_PER_INTERVAL = 1; 
-EPSILON = [45 180 100 80 200];
+EPSILON = [45 180 100 80 200  200 200 200 100];
 MIN_POINTS = 5;
 
 fprintf('开始计算每个时间段的平均速度...\n');
