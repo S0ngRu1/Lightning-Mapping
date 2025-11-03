@@ -94,10 +94,10 @@ xlabel('方位角 (Azimuth / °)', 'FontSize', 12, 'Color', 'k');
 ylabel('仰角 (Elevation / °)', 'FontSize', 12, 'Color', 'k');
 
 % --- 4. 坐标轴和范围设置 ---
-xlim([200, 300]);
-xticks(200:20:300);
-ylim([5, 85]);
-yticks(5:10:85);
+% xlim([200, 300]);
+% xticks(200:20:300);
+% ylim([5, 85]);
+% yticks(5:10:85);
 
 % 设置坐标轴的颜色和刻度字体颜色为深色
 set(gca, ...
