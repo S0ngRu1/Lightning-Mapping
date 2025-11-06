@@ -5,7 +5,7 @@ filename = 'results\20240822165932_result_yld_3.6e8_5.6e8_window_1024_256_阈值
 % 2. 使用 readtable 函数读取数据
 %    该函数会自动将第一行作为表头，并根据空格分隔各列
 result1 = readtable(filename);
-logicalIndex =  abs(result1.t123) < 1  & abs(result1.Rcorr) > 0.6 &  result1.Start_loc < 4e8 & result1.Start_loc > 3.9e8;
+logicalIndex =  abs(result1.t123) < 1  & abs(result1.Rcorr) > 0.6 &  result1.Start_loc < 3.8e8 & result1.Start_loc > 3.65e8;
 filteredTable1 = result1(logicalIndex, :);
 
 
@@ -413,3 +413,29 @@ xlim([0, 1024]);
 xticks(0:100:1024);
 xlabel('采样点');ylabel('幅值');
 plot_signal_spectrum(bp_filtered_yld);
+
+
+%% 绘制归一化后的快电场信号
+signal_length = 5e7;
+r_loction_yld = 3.5e8;
+ch1_yld = read_signal('..\\20240822165932.6610CH4.dat', signal_length, r_loction_yld);
+
+% --------------- 新增：信号归一化处理 ---------------
+% 计算信号的最大值和最小值（用于归一化）
+y_abs_max = max(abs(ch1_yld));  % 取信号绝对值的最大值
+if y_abs_max ~= 0
+    ch1_normalized = ch1_yld / y_abs_max;  % 归一化到[-1,1]范围
+else
+    ch1_normalized = ch1_yld;
+end
+% 1. 创建原始数据点的索引向量
+x_indices = r_loction_yld : r_loction_yld + signal_length - 1;
+
+% 2. 将索引转换为毫秒（ms）
+time_ms = x_indices * (5 / 1e6);
+
+% 3. 绘制归一化后的信号
+plot(time_ms, ch1_normalized);
+xlabel('时间 (ms)');
+ylabel('归一化电场强度');  % 标注y轴为归一化后的幅值
+title('归一化快电场信号波形');  % 可选：添加标题
