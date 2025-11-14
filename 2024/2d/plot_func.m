@@ -416,7 +416,7 @@ plot_signal_spectrum(bp_filtered_yld);
 
 
 %% 绘制归一化后的快电场信号
-signal_length = 5e7;
+signal_length = 1e8;
 r_loction_yld = 3.5e8;
 ch1_yld = read_signal('..\\20240822165932.6610CH4.dat', signal_length, r_loction_yld);
 
