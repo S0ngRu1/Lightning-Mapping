@@ -1,11 +1,11 @@
 %%  静态图绘制
 % --- 1. 数据准备  ---
-filename = 'results\20240822165932_result_yld_3.6e8_5.6e8_window_1024_256_阈值4倍标准差_去零飘_30_80_hann.txt';
+filename = 'results\20240822165932_result_yld_3.65e8_4.05e8_window_256_64_阈值4倍标准差_去零飘_30_80_hann.txt';
 
 % 2. 使用 readtable 函数读取数据
 %    该函数会自动将第一行作为表头，并根据空格分隔各列
 result1 = readtable(filename);
-logicalIndex =  abs(result1.t123) < 1  & abs(result1.Rcorr) > 0.6 &  result1.Start_loc < 3.8e8 & result1.Start_loc > 3.65e8;
+logicalIndex =  abs(result1.t123) < 1  & abs(result1.Rcorr) > 0.6 &  result1.Start_loc < 365756907+13731 & result1.Start_loc > 365756907;
 filteredTable1 = result1(logicalIndex, :);
 
 
@@ -18,7 +18,7 @@ figure('Color', [1 1 1]); % figure背景设置为白色
 
 % 使用 scatter 绘图，并应用尺寸和透明度优化
 scatter(filteredTable1.Azimuth, filteredTable1.Elevation, ...
-        2, ... % 尺寸
+        20, ... % 尺寸
         colorValues, ...
         'filled', ...
         'MarkerFaceAlpha', 0.8); % 浅色背景下可适当提高透明度
@@ -44,7 +44,7 @@ set(gca, ...
     'YColor', [0.2 0.2 0.2]);    % Y轴颜色（深灰色）
 
 % --- 5. 颜色映射和颜色条优化 ---
-colormap('parula'); % 保持专业的颜色映射
+colormap('cool'); % 保持专业的颜色映射
 h = colorbar;
 
 % 颜色条标签和刻度颜色为深色
@@ -59,69 +59,97 @@ set(gca, 'GridLineStyle', '--', 'GridAlpha', 0.3, 'Box', 'on'); % 浅色背景�
 
 
 
-%%  动态图绘制 + 视频保存
-Start_loc = filteredTable1.Start_loc;
-% 动态图参数设置
-numBatches = 3000;  % 控制动态速度（越小越快，越大越慢）
-videoName = '2d_dynamic_video.mp4';  % 输出视频文件名（可自定义路径，如'C:\video\test.mp4'）
-videoFps = 30;      % 视频帧率（建议20-60，越高越流畅）
 
-% 1. 归一化颜色值（与原逻辑一致）
+%% 按比例的“实时回放”
+filename = 'results\20240822165932_result_yld_3.65e8_4.05e8_window_256_64_阈值4倍标准差_去零飘_30_80_hann.txt';
+
+% 2. 使用 readtable 函数读取数据
+%    该函数会自动将第一行作为表头，并根据空格分隔各列
+result1 = readtable(filename);
+logicalIndex =  abs(result1.t123) < 1  & abs(result1.Rcorr) > 0.6 &  result1.Start_loc < 365756907+13731 & result1.Start_loc > 365756907;
+filteredTable1 = result1(logicalIndex, :);
+
+
+Fs = 200e6; % 采样率 
+target_viz_duration = 40; % (秒) 播放总时长
+min_viz_pause = 5e-9; % (秒) 最小暂停时间
+
+% 2. 计算真实时间和颜色
+Start_loc = filteredTable1.Start_loc;
 Start_loc_min = min(Start_loc);
 Start_loc_max = max(Start_loc);
-colorValues = (Start_loc - Start_loc_min) / (Start_loc_max - Start_loc_min);
 
-% 2. 创建视频写入对象（关键新增）
-% 创建MP4格式视频，设置帧率
-vidObj = VideoWriter(videoName, 'MPEG-4');
-vidObj.FrameRate = videoFps;
-open(vidObj);  % 打开视频写入流
+all_event_times_real = (Start_loc - Start_loc_min) / Fs;
+all_colorValues = (Start_loc - Start_loc_min) / (Start_loc_max - Start_loc_min);
+T_duration_real = max(all_event_times_real); % 闪电事件实际总时长
 
-% 3. 创建图形窗口（与原逻辑一致）
-figure('Position', [100, 100, 800, 600]);  % 设置窗口大小（避免帧大小不一）
+disp(['闪电事件实际持续时间: ', num2str(T_duration_real * 1e6), ' 微秒 (us)']);
+disp(['将缩放到 ', num2str(target_viz_duration), ' 秒进行可视化回放...']);
+
+% 3. 按时间顺序，对所有数据点进行排序
+[sorted_times, sort_idx] = sort(all_event_times_real);
+sorted_az = filteredTable1.Azimuth(sort_idx);
+sorted_el = filteredTable1.Elevation(sort_idx);
+sorted_colors = all_colorValues(sort_idx);
+
+% 4. 计算点与点之间的真实时间间隔
+% diff([0; V]) 会计算 t1-0, t2-t1, t3-t2 ...
+time_gaps_real = diff([0; sorted_times]);
+
+% 5. 计算缩放后的可视化暂停时间
+% 缩放因子 = 目标总时长 / 真实总时长
+scale_factor = target_viz_duration / T_duration_real;
+viz_pauses = time_gaps_real * scale_factor;
+
+% 6. 创建图形窗口
+figure('Position', [100, 100, 800, 600]);
 hold on;
 grid on;
 xlabel('方位角');
-xlim([120, 220]);
-xticks(120:20:220);
+xlim([178, 186]);
+xticks(178:1:186);
 ylabel('仰角');
-ylim([5, 85]);
-yticks(5:10:85);
-title('目标点动态呈现');
+ylim([45, 50]);
+yticks(45:0.5:50);
+title('目标点动态呈现 (按比例实时回放)');
 colormap('hsv');
 h_bar = colorbar;
-ylabel(h_bar, '归一化起始位置');
+ylabel(h_bar, '归一化起始位置 (代表时间)');
 caxis([0, 1]);
 
-% 4. 划分颜色区间（与原逻辑一致）
-bins = linspace(0, 1, numBatches + 1);
+% 7. 逐点绘制，并按比例暂停
+N = length(sorted_times);
+disp(['开始回放... 总共 ', num2str(N), ' 个点。']);
+tic; % 开始计时
 
-% 5. 逐批次绘制+捕捉帧写入视频（核心修改）
-for b = 1:numBatches
-    % 找到当前批次的点
-    idx = colorValues >= bins(b) & colorValues < bins(b+1);
-    if any(idx)
-        az = filteredTable1.Azimuth(idx);
-        el = filteredTable1.Elevation(idx);
-        colors = colorValues(idx);
-        
-        % 绘制当前批次的点
-        scatter(az, el, 3, colors, 'filled');
-        drawnow;  % 实时刷新图像
-        
-        % 捕捉当前图像帧并写入视频（关键新增）
-        frame = getframe(gcf);  % 获取当前图形窗口的帧
-        writeVideo(vidObj, frame);  % 将帧写入视频
+for i = 1:N
+    % (1) 获取当前点的暂停时间
+    current_pause = viz_pauses(i);
+    
+    % (2) 执行暂停
+    % 只有当暂停时间大于最小阈值时才真正暂停
+    if current_pause > min_viz_pause
+        pause(current_pause);
+    end
+    
+    % (3) 绘制当前点
+    scatter(sorted_az(i), sorted_el(i), 20, sorted_colors(i), 'filled');
+    
+    % (4) 刷新图像
+    % 如果暂停时间太短，我们必须手动刷新，否则看不见
+    if current_pause <= min_viz_pause
+        drawnow; 
+        % drawnow limitrate; % (如果点太多导致卡顿，可以尝试这个)
     end
 end
 
-% 6. 释放资源（关键步骤，避免视频损坏）
+viz_elapsed_time = toc; % 结束计时
 hold off;
-close(vidObj);  % 关闭视频写入流
-close(gcf);     % 关闭图形窗口（可选）
+disp('回放完成。');
+disp(['实际回放耗时: ', num2str(viz_elapsed_time), ' 秒 (理论目标: ', num2str(target_viz_duration), ' 秒)']);
 
-disp(['动态图已保存为视频：', fullfile(pwd, videoName)]);  % 输出视频保存路径
-disp('快速动态绘制及视频保存完成。');
+
+
 
 %% 其它图像绘制
 
@@ -416,18 +444,20 @@ plot_signal_spectrum(bp_filtered_yld);
 
 
 %% 绘制归一化后的快电场信号
-signal_length = 5e7;
-r_loction_yld = 3.5e8;
-ch1_yld = read_signal('..\\20240822165932.6610CH4.dat', signal_length, r_loction_yld);
+signal_length = 2e4;
+r_loction_yld = 380162704;
+ch4_yld = read_signal('..\\20240822165932.6610CH4.dat', signal_length, r_loction_yld);
 
 % --------------- 新增：信号归一化处理 ---------------
 % 计算信号的最大值和最小值（用于归一化）
-y_abs_max = max(abs(ch1_yld));  % 取信号绝对值的最大值
+y_abs_max = max(abs(ch4_yld));  % 取信号绝对值的最大值
 if y_abs_max ~= 0
-    ch1_normalized = ch1_yld / y_abs_max;  % 归一化到[-1,1]范围
+    ch1_normalized = ch4_yld / y_abs_max;  % 归一化到[-1,1]范围
 else
-    ch1_normalized = ch1_yld;
+    ch1_normalized = ch4_yld;
 end
+baseline = movmedian(ch1_normalized, 1024);
+E_fast = ch1_normalized - baseline;
 % 1. 创建原始数据点的索引向量
 x_indices = r_loction_yld : r_loction_yld + signal_length - 1;
 
@@ -435,7 +465,116 @@ x_indices = r_loction_yld : r_loction_yld + signal_length - 1;
 time_ms = x_indices * (5 / 1e6);
 
 % 3. 绘制归一化后的信号
-plot(time_ms, ch1_normalized);
+% plot(time_ms, E_fast);
+plot( ch1_normalized);
 xlabel('时间 (ms)');
 ylabel('归一化电场强度');  % 标注y轴为归一化后的幅值
 title('归一化快电场信号波形');  % 可选：添加标题
+
+%%
+
+signal_length = 13731;
+r_loction_yld = 365648853+108054;
+ch4_yld = read_signal('..\\20240822165932.6610CH4.dat', signal_length, r_loction_yld);
+ch1_yld = read_signal('..\\20240822165932.6610CH1.dat',signal_length,r_loction_yld);
+bp_filtered_ch1 = filter_bp(ch1_yld,30e6,80e6,5);
+x_indices = 0 :  signal_length - 1;
+time_ms = x_indices * (5 / 1e3);
+baseline = movmedian(ch4_yld, 1024);
+E_fast = ch4_yld - baseline;
+figure
+% plot(bp_filtered_ch1+300)
+% hold on 
+% plot(E_fast)
+plot(time_ms,bp_filtered_ch1+300)
+hold on 
+plot(time_ms,E_fast)
+title(sprintf('%d + %d 电场', r_loction_yld, signal_length));
+xlabel('时间 (us)');
+
+
+
+
+
+
+%%
+% -------------------------- 参数设置 --------------------------
+filename = 'results\20240822165932_result_yld_3.65e8_4.05e8_window_256_64_阈值4倍标准差_去零飘_30_80_hann.txt';
+base_value = 365756907;  % 基准值
+start_positions = [955, 1951, 2350, 3855, 4540, 5623, 8033, 9518, 11995, 13433];  % 起始位置列表
+n = length(start_positions);  % 总区间数，最终绘制n-1个子图
+
+% -------------------------- 数据读取与预处理 --------------------------
+result1 = readtable(filename);
+% 先筛选出所有满足基础条件的数据（t123和Rcorr的条件）
+baseIndex = abs(result1.t123) < 1 & abs(result1.Rcorr) > 0.6;
+baseData = result1(baseIndex, :);
+
+% 预计算每个区间的上下限（用于后续筛选）
+bounds = base_value + start_positions;  % 所有区间的分界点（含起点和终点）
+
+% -------------------------- 绘制累积叠加子图 --------------------------
+figure('Color', [1 1 1], 'Position', [100 100 1200 800]);
+% 定义每个新增区间的颜色（区分累积的不同阶段）
+colors = lines(n-1);  % 生成n-1种区分度较高的颜色
+
+for i = 1:n-1
+    % 当前子图包含第1到第i个区间的数据（累积叠加）
+    % 区间范围：[bounds(1), bounds(i+1))
+    currentIndex = baseData.Start_loc > bounds(1) & baseData.Start_loc < bounds(i+1);
+    currentData = baseData(currentIndex, :);
+    
+    % 子图布局（2行3列，可根据数量调整）
+    subplot(3, 3, i);
+    
+    % 分阶段绘制：先画之前累积的区间（灰色），再画新增区间（彩色）
+    if i > 1
+        % 绘制1到i-1区间的累积数据（灰色，半透明）
+        prevIndex = baseData.Start_loc > bounds(1) & baseData.Start_loc < bounds(i);
+        prevData = baseData(prevIndex, :);
+        scatter(prevData.Azimuth, prevData.Elevation, 20, [0.5 0.5 0.5], ...
+            'filled', 'MarkerFaceAlpha', 0.3);
+        hold on;  % 保持当前图，用于叠加新数据
+    end
+    
+    % 绘制第i个新增区间的数据（用对应颜色）
+    newIndex = baseData.Start_loc > bounds(i) & baseData.Start_loc < bounds(i+1);
+    newData = baseData(newIndex, :);
+    scatter(newData.Azimuth, newData.Elevation, 20, colors(i,:), ...
+        'filled', 'MarkerFaceAlpha', 0.8);
+    
+    % 子图标题（显示累积区间范围）
+    title(['区间: [', num2str(bounds(1)), ', ', num2str(bounds(i+1)), ')'], ...
+        'FontSize', 10, 'FontWeight', 'bold', 'Color', 'k');
+    
+    % 坐标轴设置
+    xlabel('方位角 (°)', 'FontSize', 9, 'Color', 'k');
+    ylabel('仰角 (°)', 'FontSize', 9, 'Color', 'k');
+    xlim([178, 186]);
+    xticks(178:1:186);
+    ylim([45, 50]);
+    yticks(45:0.5:50);
+    % 坐标轴样式
+    set(gca, ...
+        'FontSize', 8, ...
+        'LineWidth', 1, ...
+        'Color', [1 1 1], ...
+        'XColor', [0.2 0.2 0.2], ...
+        'YColor', [0.2 0.2 0.2]);
+    
+    % 网格设置
+    grid on;
+    set(gca, 'GridLineStyle', '--', 'GridAlpha', 0.3, 'Box', 'on');
+    hold off;  % 结束当前子图的叠加
+end
+
+% 整体标题与图例
+sgtitle('闪电VHF辐射源累积发展过程（按区间叠加）', 'FontSize', 16, 'FontWeight', 'bold');
+
+% 添加图例（说明新增区间的颜色对应关系）
+legendAx = axes('Position', [0.05, 0.02, 0.9, 0.05], 'Visible', 'off');
+for i = 1:n-1
+    scatter(legendAx, i, 0.5, 20, colors(i,:), 'filled', 'DisplayName', ['第', num2str(i), '区间']);
+    hold on;
+end
+legend('Location', 'eastoutside', 'FontSize', 8, 'Orientation', 'horizontal');
