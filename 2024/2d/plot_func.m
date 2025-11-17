@@ -1,11 +1,11 @@
 %%  2d静态图绘制
 % --- 1. 数据准备  ---
-filename = 'results\20240822165932_result_yld_3.65e8_4.05e8_window_256_64_阈值4倍标准差_去零飘_30_80_hann.txt';
+filename = 'results\20240822165932_result_yld_3.6e8_5.6e8_window_1024_256_阈值4倍标准差_去零飘_30_80_hann.txt';
 
 % 2. 使用 readtable 函数读取数据
 %    该函数会自动将第一行作为表头，并根据空格分隔各列
 result1 = readtable(filename);
-logicalIndex =  abs(result1.t123) < 1  & abs(result1.Rcorr) > 0.6 &  result1.Start_loc < 365756907+13731 & result1.Start_loc > 365756907;
+logicalIndex =  abs(result1.t123) < 1  & abs(result1.Rcorr) > 0.3 &  result1.Start_loc < 4.8e8 & result1.Start_loc > 4.74e8;
 filteredTable1 = result1(logicalIndex, :);
 
 
@@ -18,7 +18,7 @@ figure('Color', [1 1 1]); % figure背景设置为白色
 
 % 使用 scatter 绘图，并应用尺寸和透明度优化
 scatter(filteredTable1.Azimuth, filteredTable1.Elevation, ...
-        20, ... % 尺寸
+        2, ... % 尺寸
         colorValues, ...
         'filled', ...
         'MarkerFaceAlpha', 0.8); % 浅色背景下可适当提高透明度
@@ -30,8 +30,8 @@ xlabel('方位角 (Azimuth / °)', 'FontSize', 12, 'Color', 'k');
 ylabel('仰角 (Elevation / °)', 'FontSize', 12, 'Color', 'k');
 
 % --- 4. 坐标轴和范围设置 ---
-xlim([120, 220]);
-xticks(120:20:220);
+xlim([120, 260]);
+xticks(120:20:260);
 ylim([5, 85]);
 yticks(5:10:85);
 
