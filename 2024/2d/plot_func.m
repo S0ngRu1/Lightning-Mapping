@@ -107,11 +107,16 @@ figure('Position', [100, 100, 800, 600]);
 hold on;
 grid on;
 xlabel('方位角');
-% xlim([176, 184]);
-% xticks(176:1:184);
 ylabel('仰角');
-% ylim([16, 25]);
-% yticks(16:1:25);
+az_min = min(sorted_az);
+az_max = max(sorted_az);
+el_min = min(sorted_el);
+el_max = max(sorted_el);
+xlim([az_min, az_max]);  % 固定x轴范围（动态绘图不变化）
+xticks('auto');          % 让Matlab在固定范围内自动生成规整刻度
+ylim([el_min, el_max]);  % 固定y轴范围
+yticks('auto');  
+
 title('目标点动态呈现 (按比例实时回放)');
 colormap('jet');
 h_bar = colorbar;
