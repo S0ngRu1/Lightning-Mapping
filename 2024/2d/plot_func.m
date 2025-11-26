@@ -1,11 +1,11 @@
 %%  2d静态图绘制
 % --- 1. 数据准备  ---
-filename = 'results\20240822165932_result_yld_3.6e8_5.6e8_window_1024_256_阈值4倍标准差_去零飘_30_80_hann.txt';
-Start_loc = 3.703e8;
+filename = 'results\20240822165932_result_yld_3.65e8_5e8_window_256_64_阈值4倍标准差_去零飘_30_80_hann.txt';
+Start_loc = 3.703e8+1e4;
 % 2. 使用 readtable 函数读取数据
 %    该函数会自动将第一行作为表头，并根据空格分隔各列
 result1 = readtable(filename);
-logicalIndex =  abs(result1.t123) < 1  & abs(result1.Rcorr) > 0.6 &  result1.Start_loc < Start_loc+1e5 & result1.Start_loc > Start_loc & result1.Azimuth > 179 & result1.Azimuth < 184;
+logicalIndex =  abs(result1.t123) < 1  & abs(result1.Rcorr) > 0.6 &  result1.Start_loc < Start_loc+5.5e5 & result1.Start_loc > Start_loc & result1.Azimuth > 179 & result1.Azimuth < 184;
 filteredTable1 = result1(logicalIndex, :);
 
 
@@ -62,12 +62,12 @@ set(gca, 'GridLineStyle', '--', 'GridAlpha', 0.3, 'Box', 'on'); % 浅色背景�
 
 
 %% 2d动态图绘制
-filename = 'results\20240822165932_result_yld_3.65e8_4.05e8_window_256_64_阈值4倍标准差_去零飘_30_80_hann.txt';
+filename = 'results\20240822165932_result_yld_3.65e8_5e8_window_256_64_阈值4倍标准差_去零飘_30_80_hann.txt';
 Start_loc = 3.703e8;
 % 2. 使用 readtable 函数读取数据
 %    该函数会自动将第一行作为表头，并根据空格分隔各列
 result1 = readtable(filename);
-logicalIndex =  abs(result1.t123) < 1  & abs(result1.Rcorr) > 0.8 &  result1.Start_loc < Start_loc+1e5 & result1.Start_loc > Start_loc & result1.Azimuth > 179 & result1.Azimuth < 184;
+logicalIndex =  abs(result1.t123) < 1  & abs(result1.Rcorr) > 0.6 &  result1.Start_loc < Start_loc+5.5e4 & result1.Start_loc > Start_loc & result1.Azimuth > 179 & result1.Azimuth < 184;
 filteredTable1 = result1(logicalIndex, :);
 
 
@@ -79,7 +79,7 @@ min_viz_pause = 5e-9; % (秒) 最小暂停时间
 Start_loc = filteredTable1.Start_loc;
 Start_loc_min = min(Start_loc);
 Start_loc_max = max(Start_loc);
-
+diff_start_loc = diff(Start_loc);
 all_event_times_real = (Start_loc - Start_loc_min) / Fs;
 all_colorValues = (Start_loc - Start_loc_min) / (Start_loc_max - Start_loc_min);
 T_duration_real = max(all_event_times_real); % 闪电事件实际总时长
@@ -103,7 +103,7 @@ scale_factor = target_viz_duration / T_duration_real;
 viz_pauses = time_gaps_real * scale_factor;
 
 % 6. 创建图形窗口
-figure('Position', [100, 100, 800, 600]);
+figure;
 hold on;
 grid on;
 xlabel('方位角');
@@ -117,10 +117,10 @@ xticks('auto');          % 让Matlab在固定范围内自动生成规整刻度
 ylim([el_min, el_max]);  % 固定y轴范围
 yticks('auto');  
 
-title('目标点动态呈现 (按比例实时回放)');
+title('目标点动态呈现');
 colormap('jet');
 h_bar = colorbar;
-ylabel(h_bar, '归一化起始位置 (代表时间)');
+ylabel(h_bar, '归一化起始位置');
 caxis([0, 1]);
 
 % 7. 逐点绘制，并按比例暂停
