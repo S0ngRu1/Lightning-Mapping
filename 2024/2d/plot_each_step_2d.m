@@ -1,8 +1,8 @@
 %% 根据每一个梯级的起始位置绘制每一个梯级的二维结果
 % -------------------------- 参数设置 --------------------------
-filename = 'results\20240822165932_result_yld_3.65e8_4.05e8_window_256_64_阈值4倍标准差_去零飘_30_80_hann.txt';
-base_value = 3.703e8;  % 基准值（采样位置起点）
-start_positions = [1594, 5268, 10680, 23069, 27392, 31898, 35753, 39023, 43162, 48468, 52688];  % 起始位置列表（采样点偏移量）
+filename = 'results\20240822165932_result_yld_3.65e8_5e8_window_256_64_阈值4倍标准差_去零飘_30_80_hann.txt';
+base_value = 4.176e8;  % 基准值（采样位置起点）
+start_positions = [0,884, 1503, 31402, 33394, 35094, 37558];  % 起始位置列表
 n = length(start_positions);  % 总区间数，最终绘制n-1个子图
 
 % 预计算每个区间的独立持续时间（diff(start_positions)→相邻起点差，*5/1e3转μs）
@@ -28,21 +28,21 @@ for i = 1:n-1
     currentData = baseData(currentIndex, :);
     
     % 子图布局（2行5列，适配10个子图）
-    ax = subplot(2, 5, i); % 获取子图句柄，方便后续设置
+    ax = subplot(2,3, i); % 获取子图句柄，方便后续设置
     hold on; % 统一hold on，避免重复切换
     
     % 分阶段绘制：先画之前累积的区间（灰色，半透明）
     if i > 1
         prevIndex = baseData.Start_loc > bounds(1) & baseData.Start_loc < bounds(i);
         prevData = baseData(prevIndex, :);
-        scatter(prevData.Azimuth, prevData.Elevation, 20, [0.5 0.5 0.5], ...
+        scatter(prevData.Azimuth, prevData.Elevation, 10, [0.5 0.5 0.5], ...
             'filled', 'MarkerFaceAlpha', 0.3);
     end
     
     % 绘制第i个新增区间的数据（用对应颜色）
     newIndex = baseData.Start_loc > bounds(i) & baseData.Start_loc < bounds(i+1);
     newData = baseData(newIndex, :);
-    scatter(newData.Azimuth, newData.Elevation, 20, colors(i,:), ...
+    scatter(newData.Azimuth, newData.Elevation, 10, colors(i,:), ...
         'filled', 'MarkerFaceAlpha', 0.8);
     
     % -------------------------- 子图标题与坐标轴设置 --------------------------
@@ -58,10 +58,10 @@ for i = 1:n-1
     ylabel('仰角 (°)', 'FontSize', 9, 'Color', 'k');
     
     % 坐标轴范围与刻度
-    xlim([178.5, 183]);
-    xticks(178.5:0.5:183); % 保留方位角刻度数值（数据本身是方位角）
-    ylim([18.5, 24]);
-    yticks(18.5:0.5:24);
+    xlim([192, 204]);
+    xticks(192:2:204); % 保留方位角刻度数值（数据本身是方位角）
+    ylim([54, 70]);
+    yticks(54:2:70);
     
     % 坐标轴样式优化
     set(ax, ...
