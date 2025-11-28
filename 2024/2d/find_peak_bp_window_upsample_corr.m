@@ -22,7 +22,7 @@ window = 'hann';
 % ch2 = read_signal('..\\2024 822 85933.651462CH2.dat',signal_length,r_loction);
 % ch3 = read_signal('..\\2024 822 85933.651462CH3.dat',signal_length,r_loction+215/5);
 %引雷点
-signal_length = 4e7;
+signal_length = 1.35e8;
 r_loction = 3.65e8;
 d12 = 24.9586;
 d13 = 34.9335;
@@ -36,14 +36,6 @@ ch2 = read_signal('..\\20240822165932.6610CH2.dat',signal_length,r_loction);
 ch3 = read_signal('..\\20240822165932.6610CH3.dat',signal_length,r_loction);
 
 
-% 设计一个8阶巴特沃斯带通滤波器
-% order = 8;
-% [b, a] = butter(order, [fp_start, fp_end] / (fs/2), 'bandpass');
-% % 对信号进行零相位滤波
-% processed_ch1_yld = filtfilt(b, a, ch1);
-% processed_ch2_yld = filtfilt(b, a, ch2);
-% processed_ch3_yld = filtfilt(b, a, ch3);
-
 processed_ch1_yld = filter_bp(detrend(ch1),fp_start,fp_end,5);
 clear ch1
 processed_ch2_yld = filter_bp(detrend(ch2),fp_start,fp_end,5);
@@ -51,7 +43,7 @@ clear ch2
 processed_ch3_yld = filter_bp(detrend(ch3),fp_start,fp_end,5);
 clear ch3
 
-file_name = 'results\20240822165932_result_yld_3.65e8_4.05e8_window_256_64_阈值4倍标准差_去零飘_'+string(fp_start/1e6)+'_'+string(fp_end/1e6)+'_'+ window +'.txt';
+file_name = 'results\20240822165932_result_yld_3.65e8_5e8_window_4096_2034_阈值4倍标准差_去零飘_'+string(fp_start/1e6)+'_'+string(fp_end/1e6)+'_'+ window +'.txt';
 % 打开一个文本文件用于写入运行结果
 fileID = fopen(file_name, 'w');
 fprintf(fileID, '%-13s%-15s%-15s%-15s%-15s%-15s%-15s%-15s%-15s%-15s%-15s\n', ...
@@ -61,9 +53,9 @@ fprintf(fileID, '%-13s%-15s%-15s%-15s%-15s%-15s%-15s%-15s%-15s%-15s%-15s\n', ...
 noise = read_signal('..\\20240822165932.6610CH1.dat',1e5,1e8);
 filtered_noise = filter_bp(noise,fp_start,fp_end,5);
 min_peak_height = mean(filtered_noise)+4*std(filtered_noise);
-min_peak_distance = 64;
+min_peak_distance = 1024;
 % 以峰值为中心，进行处理的信号片段的总长度
-processing_window_len =256;
+processing_window_len =4096;
 
 % 寻找能量峰值的位置
 [pks, locs] = findpeaks(processed_ch1_yld, ...
@@ -280,20 +272,11 @@ end
 % 使用式(3)计算τij的理想值τ_ij^obs
 tau_ij_obs(1) = (cos_alpha * sind(angle12) + cos_beta * cosd(angle12)) * d12 / 0.299792458;
 tau_ij_obs(2) = (cos_alpha * sind(angle13) + cos_beta * cosd(angle13)) * d13 / 0.299792458;
+
 tau_ij_obs(3) = (cos_alpha * sind(angle23) + cos_beta * cosd(angle23)) * d23 / 0.299792458;
 end
 
 
-
-%% 设计巴特沃斯带通滤波器
-function filtered_signal = filter_bp(signal,f1,f2,order)
-Fs = 200e6;
-fn = Fs/2;
-Wn = [f1 f2]/fn;
-[b,a] = butter(order,Wn);
-filtered_signal = filtfilt(b,a,signal);
-
-end
 
 function w = exp_hanning(n, alpha)
 % 指数加权汉宁窗：通过指数因子强化边缘衰减
