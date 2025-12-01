@@ -1,11 +1,11 @@
 %%  2d静态图绘制
 % --- 1. 数据准备  ---
 filename = 'results\20240822165932_result_yld_3.65e8_5e8_window_256_64_阈值4倍标准差_去零飘_30_80_hann.txt';
-Start_loc = 4.176e8;
+Start_loc = 3.905e8;
 % 2. 使用 readtable 函数读取数据
 %    该函数会自动将第一行作为表头，并根据空格分隔各列
 result1 = readtable(filename);
-logicalIndex =  abs(result1.t123) < 1  & abs(result1.Rcorr) > 0.6 &  result1.Start_loc < Start_loc+1e5 & result1.Start_loc > Start_loc ;
+logicalIndex =  abs(result1.t123) < 0.5  & abs(result1.Rcorr) > 0.8 &  result1.Start_loc < Start_loc+2e6 & result1.Start_loc > Start_loc & result1.Elevation < 42 ;
 filteredTable1 = result1(logicalIndex, :);
 
 Start_loc = filteredTable1.Start_loc;
@@ -67,19 +67,15 @@ set(gca, 'GridLineStyle', '--', 'GridAlpha', 0.3, 'Box', 'on'); % 浅色背景�
 
 
 %% 2d动态图绘制
-filename = 'results\20240822165932_result_yld_3.65e8_5e8_window_256_64_阈值4倍标准差_去零飘_30_80_hann.txt';
-Start_loc = 380162704;
+filename = 'results\20240822165932_result_yld_3.6e8_3.8e8_window_512_128_阈值4倍标准差_去零飘_30_80_hann.txt';
+Start_loc = 369650000;
 % 2. 使用 readtable 函数读取数据
 %    该函数会自动将第一行作为表头，并根据空格分隔各列
 result1 = readtable(filename);
-logicalIndex =  abs(result1.t123) < 1  & abs(result1.Rcorr) > 0.6 &  result1.Start_loc < Start_loc+2000 & result1.Start_loc > Start_loc ;
+logicalIndex =  abs(result1.t123) < 0.5  & abs(result1.Rcorr) > 0.7 &  result1.Start_loc < Start_loc+1e5 & result1.Start_loc > Start_loc & result1.Elevation < 28 & result1.Azimuth < 184;
 filteredTable1 = result1(logicalIndex, :);
-
-
-
-
 Fs = 200e6; % 采样率 
-target_viz_duration = 10; % (秒) 播放总时长
+target_viz_duration = 40; % (秒) 播放总时长
 min_viz_pause = 5e-9; % (秒) 最小暂停时间
 
 % 2. 计算真实时间和颜色
