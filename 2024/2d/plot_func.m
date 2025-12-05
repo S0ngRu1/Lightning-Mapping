@@ -1,13 +1,22 @@
 %%  2d静态图绘制
 % --- 1. 数据准备  ---
 filename = 'results\20240822165932_result_yld_3.65e8_5e8_window_256_64_阈值4倍标准差_去零飘_30_80_hann.txt';
-Start_loc = 4.176e8;
-% 2. 使用 readtable 函数读取数据
-%    该函数会自动将第一行作为表头，并根据空格分隔各列
+Start_loc_Base = 469781875; % 基准值
+if ~isfile(filename), error('文件不存在'); end
+base_value = Start_loc_Base;
+point_size = 10;
+stepSize = 1;
+% 读取数据
 result1 = readtable(filename);
-logicalIndex =  abs(result1.t123) < 1  & abs(result1.Rcorr) > 0.6 &  result1.Start_loc < Start_loc+1e5 & result1.Start_loc > Start_loc ;
-filteredTable1 = result1(logicalIndex, :);
 
+% 筛选数据
+logicalIndex =  abs(result1.t123) < 0.5  & ...
+                abs(result1.Rcorr) > 0.6 & ...
+                result1.Start_loc < Start_loc_Base +2e4 & ...
+                result1.Start_loc > Start_loc_Base ;
+            
+filteredTable1 = result1(logicalIndex, :);
+% & result1.Elevation > 60.7 & result1.Elevation < 75 & result1.Azimuth < 170 & result1.Azimuth > 162
 Start_loc = filteredTable1.Start_loc;
 colorValues = (Start_loc - min(Start_loc)) / (max(Start_loc) - min(Start_loc)); % 归一化到 [0, 1]
 
@@ -17,7 +26,7 @@ figure('Color', [1 1 1]); % figure背景设置为白色
 
 % 使用 scatter 绘图，并应用尺寸和透明度优化
 scatter(filteredTable1.Azimuth, filteredTable1.Elevation, ...
-        10, ... % 尺寸
+        15, ... % 尺寸
         colorValues, ...
         'filled', ...
         'MarkerFaceAlpha', 0.8); % 浅色背景下可适当提高透明度
@@ -64,22 +73,9 @@ set(gca, 'GridLineStyle', '--', 'GridAlpha', 0.3, 'Box', 'on'); % 浅色背景�
 
 
 
-
-
 %% 2d动态图绘制
-filename = 'results\20240822165932_result_yld_3.65e8_5e8_window_256_64_阈值4倍标准差_去零飘_30_80_hann.txt';
-Start_loc = 380162704;
-% 2. 使用 readtable 函数读取数据
-%    该函数会自动将第一行作为表头，并根据空格分隔各列
-result1 = readtable(filename);
-logicalIndex =  abs(result1.t123) < 1  & abs(result1.Rcorr) > 0.6 &  result1.Start_loc < Start_loc+2000 & result1.Start_loc > Start_loc ;
-filteredTable1 = result1(logicalIndex, :);
-
-
-
-
 Fs = 200e6; % 采样率 
-target_viz_duration = 10; % (秒) 播放总时长
+target_viz_duration = 20; % (秒) 播放总时长
 min_viz_pause = 5e-9; % (秒) 最小暂停时间
 
 % 2. 计算真实时间和颜色
