@@ -2,22 +2,21 @@
 clc; clear; close all;
 
 % -------------------------- 1. 数据读取与预处理 --------------------------
-filename = 'results\20240822165932_result_yld_3.6e8_5.6e8_window_1024_256_阈值4倍标准差_去零飘_30_80_hann.txt';
-Start_loc_Base = 3.709e8; % 基准值
+filename = 'results\20240822165932_result_yld_3.65e8_5e8_window_256_64_阈值4倍标准差_去零飘_30_80_hann.txt';
+Start_loc_Base = 469781875; % 基准值
 if ~isfile(filename), error('文件不存在'); end
 base_value = Start_loc_Base;
-point_size = 15;
+point_size = 10;
 stepSize = 1;
 % 读取数据
 result1 = readtable(filename);
 
 % 筛选数据
 logicalIndex =  abs(result1.t123) < 0.5  & ...
-                abs(result1.Rcorr) > 0.5 & ...
-                result1.Start_loc < Start_loc_Base + 5e5 & ...
-                result1.Start_loc > Start_loc_Base & ...
-                result1.Elevation < 20 & ...
-                result1.Azimuth > 180;
+                abs(result1.Rcorr) > 0.6 & ...
+                result1.Start_loc < Start_loc_Base +2e4 & ...
+                result1.Start_loc > Start_loc_Base ;
+            
 filteredTable1 = result1(logicalIndex, :);
 % 提取 offset 数据
 valid_start_locs = filteredTable1.Start_loc;
@@ -88,27 +87,34 @@ intervals = final_intervals;
 disp(intervals);
 
 %% 精细化绘制：带全局统计标题的闪电发展过程
-
-% intervals = [
-%         4996        7548
-%        23780       25358
-%        44612       47444
-%        64419       65623
-%        67130       70267
-%        73757       78134
-%        81112       82340
-%       100844      104152
-%       111151      112261
-%       120178      122024
-%       126467      128155
-%       138195      139745
-%       147062      149721
-%       154634      156109
-%       162719      169446
-%       179042      182158
-%       184527      188775
-% ];
-n = size(intervals, 1); 
+% 
+intervals = [
+ 131         665
+        1234        1487
+        2075        2528
+        2621        2776
+        4683        5148
+        5694        6034
+        6539        6884
+        7368        7836
+        8120        8350
+        9047        9646
+        9741       10286
+        10381      10474
+        10581      10877
+        10994      11255
+       12025       12379
+       12535       13210
+       13328       13718
+       14184       14718
+       14837       15101
+       15876       16369
+       16849       17148
+       17665       17988
+       18308       18750
+       19033       19219
+];
+n = size(intervals, 1);     
 
 % -------------------------- 2. 统计计算 --------------------------
 % A. 计算所有区间的持续时间 (Duration)
@@ -154,7 +160,7 @@ sgtitle(fullTitle, 'FontSize', 16, 'FontWeight', 'bold', 'Color', 'k');
 
 % ========================== 循环处理每个子图 ==========================
 for i = 1:n
-    ax = subplot(4, 5, i);
+    ax = subplot(4, 6, i);
     hold(ax, 'on');
     
     % --- 坐标轴设置 ---
