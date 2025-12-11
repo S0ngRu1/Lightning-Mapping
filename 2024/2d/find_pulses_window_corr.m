@@ -164,3 +164,119 @@ for j = 1:num_total_blocks
 end
 close(h_overall);
 fclose(fileID);
+
+
+%函数：对主窗口进行上采样
+function new_signal = upsampling(original_signal,upsampling_factor)
+
+% 原信号
+original_x = (1:numel(original_signal))';
+original_y = original_signal;
+% 上采样后的采样点数
+upsampled_length = length(original_x) * upsampling_factor;
+% 上采样后的采样点的 x 坐标
+upsampled_x = linspace(1, length(original_x), upsampled_length);
+% 使用多项式插值对原信号进行上采样
+interpolated_signal = interp1(original_x, original_y, upsampled_x, 'spline');
+new_signal = [upsampled_x; interpolated_signal];
+end
+
+
+
+function signal = read_signal(signal_path, r_length,r_loction)
+fid  = fopen(signal_path,'r');%读取数据的位置
+
+%使用fseek函数将文件指针移动到指定位置，以便读取数据。
+%这里指定移动位置为r_location，表示移动到指定位置开始读取数据。
+fseek(fid,r_loction*2,'bof');
+%使用fread函数从文件中读取数据，读取的数据长度为r_length，数据以int16格式读取。
+%将读取到的数据分别保存到变量ch_1、ch_2和ch_3中。
+signal = fread(fid,r_length,'int16');
+%关闭所有文件
+fclose(fid);
+end
+
+
+function tau = cal_tau(R, lag)
+% 从数据中找到y的最大值及其索引
+[~, max_index] = max(R);
+tau = lag(max_index,1);
+end
+
+
+
+% 定义目标函数 (正确版本)
+function F = objective(x, t12_meas, t13_meas, t23_meas, type)
+% 提取待优化的变量
+cos_alpha = x(1);
+cos_beta = x(2);
+
+% 计算τij的理论值 τ_model (我将 obs 改为 model，语义更清晰)
+tau_model = calculate_tau_obs(cos_alpha, cos_beta, type);
+
+% t12, t13, t23 是测量的时延 (measurement)
+% tau_model(1), tau_model(2), tau_model(3) 是根据当前 x 计算出的理论时延
+
+% 计算残差向量
+residual12 = t12_meas - tau_model(1);
+residual13 = t13_meas - tau_model(2);
+residual23 = t23_meas - tau_model(3);
+
+% 返回残差向量 F
+% lsqnonlin 会自动最小化 sum(F.^2)
+F = [residual12; residual13; residual23];
+end
+
+
+% 定义计算τij的理想值τ_ij^obs的函数
+function tau_ij_obs = calculate_tau_obs(cos_alpha, cos_beta, type)
+% 初始化输出变量
+tau_ij_obs = zeros(1, 3);
+
+% 根据 type 参数选择不同的参数集
+if strcmp(type, 'chj') % 从化局
+    angle12 = -2.8381;
+    angle13 = 50.3964;
+    angle23 = 120.6568;
+    d12 = 41.6496;
+    d13 = 36.9015;
+    d23 = 35.4481;
+elseif strcmp(type, 'yld') % 引雷场
+    angle12 = -110.8477;
+    angle13 = -65.2405;
+    angle23 = -19.6541;
+    d12 = 24.9586;
+    d13 = 34.9335;
+    d23 = 24.9675;
+else
+    error('未知的类型：%s', type);
+end
+
+% 使用式(3)计算τij的理想值τ_ij^obs
+tau_ij_obs(1) = (cos_alpha * sind(angle12) + cos_beta * cosd(angle12)) * d12 / 0.299792458;
+tau_ij_obs(2) = (cos_alpha * sind(angle13) + cos_beta * cosd(angle13)) * d13 / 0.299792458;
+
+tau_ij_obs(3) = (cos_alpha * sind(angle23) + cos_beta * cosd(angle23)) * d23 / 0.299792458;
+end
+
+
+
+function w = exp_hanning(n, alpha)
+% 指数加权汉宁窗：通过指数因子强化边缘衰减
+% 输入：n - 窗长；alpha - 陡峭度参数（>0，值越大边缘越陡）
+% 输出：w - 指数加权汉宁窗（归一化至最大值为1）
+
+if nargin < 2
+    alpha = 3;  % 默认陡峭度参数
+end
+
+% 生成0到1的归一化索引
+k = 0:n-1;
+% 标准汉宁窗
+hann_win = 0.5 - 0.5 * cos(2*pi*k/(n-1));
+% 指数因子：中心权重为1，向边缘快速衰减
+exp_factor = exp(-alpha * (abs(k - (n-1)/2) ./ ((n-1)/2)).^2);
+% 组合并归一化
+w = hann_win .* exp_factor;
+w = w / max(w);
+end

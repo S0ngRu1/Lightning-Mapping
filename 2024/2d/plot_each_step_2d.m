@@ -1,5 +1,5 @@
 %% 自动计算 20 个有效区间 (Intervals Generation - Target 20)
-clc; clear; close all;
+% clc; clear; close all;
 
 % -------------------------- 1. 数据读取与预处理 --------------------------
 filename = 'results\20240822165932_result_yld_3.65e8_5e8_window_256_64_阈值4倍标准差_去零飘_30_80_hann.txt';
