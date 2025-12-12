@@ -1,21 +1,22 @@
 %%  2d静态图绘制
 % --- 1. 数据准备  ---
 % filename = 'results\20240822165932_result_yld_3.6e8_5.6e8_window_1024_256_阈值4倍标准差_去零飘_30_80_hann.txt';
-filename = 'results\20230618125747.5480_400000000_99999999_1024_256_8_gage-20230306.txt';
+filename = 'results\20240822165932_loop_result_yld_3.65e8_5e8_window_1024_256_去零飘_30_80_hann.txt';
 
-Start_loc_Base = 4.008e8; % 基准值  
+Start_loc_Base = 3.9e8; % 基准值  
 if ~isfile(filename), error('文件不存在'); end
+base_value = Start_loc_Base;
+point_size = 15;
+stepSize = 1;
 % 读取数据
 result1 = readtable(filename);
 
 % 筛选数据
-logicalIndex =  abs(result1.t123) < 1  & ...
-                abs(result1.Rcorrn) > 0.3 & ...
-                result1.Start_loc < Start_loc_Base +3.7e5 & ...
+logicalIndex =  abs(result1.t123) < 0.5  & ...
+                abs(result1.Rcorr) > 0.5 & ...
+                result1.Start_loc < Start_loc_Base +2e6 & ...
                 result1.Start_loc > Start_loc_Base & ...
-                result1.Elevation < 80 & ...
-                result1.Azimuth > 255 & ...
-                result1.Azimuth < 330 ;
+                result1.Elevation < 50;
             
 filteredTable1 = result1(logicalIndex, :);
 
@@ -29,7 +30,7 @@ figure('Color', [1 1 1]); % figure背景设置为白色
 
 % 使用 scatter 绘图，并应用尺寸和透明度优化
 scatter(filteredTable1.Azimuth, filteredTable1.Elevation, ...
-        10, ... % 尺寸
+        5, ... % 尺寸
         colorValues, ...
         'filled', ...
         'MarkerFaceAlpha', 0.8); % 浅色背景下可适当提高透明度
@@ -78,7 +79,7 @@ set(gca, 'GridLineStyle', '--', 'GridAlpha', 0.3, 'Box', 'on'); % 浅色背景�
 
 %% 2d动态图绘制
 Fs = 200e6; % 采样率 
-target_viz_duration = 20; % (秒) 播放总时长
+target_viz_duration = 40; % (秒) 播放总时长
 min_viz_pause = 5e-9; % (秒) 最小暂停时间
 
 % 2. 计算真实时间和颜色

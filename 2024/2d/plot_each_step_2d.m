@@ -2,8 +2,8 @@
 % clc; clear; close all;
 
 % -------------------------- 1. 数据读取与预处理 --------------------------
-filename = 'results\20240822165932_result_yld_3.65e8_5e8_window_256_64_阈值4倍标准差_去零飘_30_80_hann.txt';
-Start_loc_Base = 4.176e8+1500; % 基准值
+filename = 'results\20240822165932_loop_result_yld_3.65e8_5e8_window_1024_256_去零飘_30_80_hann.txt';
+Start_loc_Base = 3.66e8; % 基准值  
 if ~isfile(filename), error('文件不存在'); end
 base_value = Start_loc_Base;
 point_size = 15;
@@ -13,110 +13,56 @@ result1 = readtable(filename);
 
 % 筛选数据
 logicalIndex =  abs(result1.t123) < 0.5  & ...
-                abs(result1.Rcorr) > 0.6 & ...
-                result1.Start_loc < Start_loc_Base +1e4 & ...
-                result1.Start_loc > Start_loc_Base ;
+                abs(result1.Rcorr) > 0.5 & ...
+                result1.Start_loc < Start_loc_Base +3e6 & ...
+                result1.Start_loc > Start_loc_Base & ...
+                result1.Elevation < 80;
             
 filteredTable1 = result1(logicalIndex, :);
-
 
 % 提取 offset 数据
 valid_start_locs = filteredTable1.Start_loc;
 offset = valid_start_locs - Start_loc_Base;
 
-if isempty(offset)
-    error('筛选后数据为空，无法计算区间。');
-end
-
-% 计算相邻点之间的差值 (Gaps)
+% 计算相邻点之间的差值
 diff_start_loc = diff(offset);
 
-% -------------------------- 2. 动态计算区间 (核心算法) --------------------------
-% 目标：找到 20 个区间，且每个区间长度 (End - Start) > 2
+gap_threshold = 1500; 
 
-target_count = 20;       % 目标区间数量
-min_interval_len = 2;    % 最小区间长度限制
-
-% 对所有间隙从大到小排序，获取排序后的索引
-[~, sortIdx] = sort(diff_start_loc, 'descend');
-
-found_intervals = [];
-final_intervals = [];
-
-max_possible_cuts = length(diff_start_loc);
-start_cuts = target_count - 1; 
-
-for k = start_cuts : max_possible_cuts
-    % 1. 取出当前最大的 k 个间隙的索引
-    % 必须重新按索引大小排序(sort)，以保证时间轴的先后顺序
-    current_gap_indices = sort(sortIdx(1:k));
-    
-    % 2. 根据这些断点构建临时区间
-    % 中间的 End 和 Start
-    middle_ends = offset(current_gap_indices) + 1; 
-    middle_starts = offset(current_gap_indices + 1) - 1;
-    
-    % 首尾
-    first_start = offset(1) - 1;
-    last_end = offset(end) + 1;
-    
-    % 拼接
-    temp_starts = [first_start; middle_starts];
-    temp_ends   = [middle_ends; last_end];
-    temp_intervals = [temp_starts, temp_ends];
-    
-    % 3. 筛选：检查长度是否满足条件 > 2
-    % 计算长度：End - Start
-    lens = temp_intervals(:, 2) - temp_intervals(:, 1);
-    valid_mask = lens > min_interval_len;
-    
-    valid_intervals = temp_intervals(valid_mask, :);
-    
-    % 4. 检查数量是否达标
-    if size(valid_intervals, 1) >= target_count
-        % 如果有效区间数量达到或超过目标，取前 target_count 个（按时间顺序）
-        final_intervals = valid_intervals(1:target_count, :);
-        disp(['成功找到 ', num2str(target_count), ' 个有效区间！(使用了 ', num2str(k), ' 个切分点)']);
-        break;
-    end
+% -------------------------- 3. 计算区间 (Intervals Logic) --------------------------
+if isempty(offset)
+    error('筛选后的数据为空，请检查筛选条件或基准值。');
 end
 
-if isempty(final_intervals) || size(final_intervals, 1) < target_count
-    warning(['未能找到足够的区间。仅找到了 ', num2str(size(valid_intervals, 1)), ' 个符合条件的区间。']);
-    final_intervals = valid_intervals; % 返回尽力找到的结果
-end
-intervals = final_intervals;
-disp(intervals);
+gap_indices = find(diff_start_loc > gap_threshold);
+
+% --- 步骤 A: 计算所有中间区间的 End 和 Start ---
+middle_ends = offset(gap_indices) + 1; 
+
+% 规则：offset中找到索引+1对应的位置 - 1 作为 Start 
+middle_starts = offset(gap_indices + 1) - 1;
+
+% --- 步骤 B: 处理首尾边界 ---
+% 第一个区间的 Start：offset(1) - 1
+first_start = offset(1) - 1;
+
+% 最后一个区间的 End：offset(end) + 1
+last_end = offset(end) + 1;
+
+% --- 步骤 C: 拼接所有 Start 和 End ---
+% 所有的 Start = [第一个Start; 中间所有下一段的Start]
+all_starts = [first_start; middle_starts];
+
+% 所有的 End = [中间所有前一段的End; 最后一个End]
+all_ends = [middle_ends; last_end];
+
+% --- 步骤 D: 组合成 intervals 矩阵 ---
+intervals = [all_starts, all_ends];
+disp(intervals)
 
 %% 精细化绘制：带全局统计标题的闪电发展过程
-% 
-intervals = [
- 131         665
-        1234        1487
-        2075        2528
-        2621        2776
-        4683        5148
-        5694        6034
-        6539        6884
-        7368        7836
-        8120        8350
-        9047        9646
-        9741       10286
-        10381      10474
-        10581      10877
-        10994      11255
-       12025       12379
-       12535       13210
-       13328       13718
-       14184       14718
-       14837       15101
-       15876       16369
-       16849       17148
-       17665       17988
-       18308       18750
-       19033       19219
-];
-n = size(intervals, 1);     
+
+n = size(intervals, 1);    
 
 % -------------------------- 2. 统计计算 --------------------------
 % A. 计算所有区间的持续时间 (Duration)

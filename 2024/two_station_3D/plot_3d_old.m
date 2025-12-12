@@ -1,6 +1,6 @@
-%% 新版数据结构
+%% 旧版数据结构
 yld_sit = [0, 0, 0];
-all_match_results = readtable('results\3d_win512_cost_cal_yld_chj_dtoa_3.6e8_5.6e8.csv');
+load('results\all_S_result_4096_final.mat');
 % 筛选条件
 conditions = ([all_match_results.dlta] < 20000) & ...
              ([all_match_results.yld_start_loc] > 3.65e8) & ...
@@ -11,8 +11,7 @@ conditions = ([all_match_results.dlta] < 20000) & ...
              ([all_match_results.y] < 0) & ...
              ([all_match_results.z] > 0) & ...
              ([all_match_results.z] < 10000) & ...
-             ([all_match_results.r_gccs] > 0.1) & ...
-             (abs([all_match_results.R3_value]) < 10000);
+             ([all_match_results.r_gccs] > 0.1);
 filtered_match_indices = find(conditions);
 filtered_match_result = all_match_results(filtered_match_indices, :);
 % 处理颜色数据并归一化（增强对比度）
@@ -76,9 +75,6 @@ set(gca, ...
     'GridAlpha', 0.5, ...  % 适当提高网格透明度（白色背景下需更明显）
     'Box', 'on'); 
 daspect([1 1 1]);  % 保持坐标轴比例一致，避免空间变形
-
-
-
 
 
 
