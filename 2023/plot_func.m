@@ -1,8 +1,8 @@
 %%  2d静态图绘制
 % --- 1. 数据准备  ---
 filename = 'results\20230618125747.5480_400000000_99999999_1024_256_8_gage-20230306.txt';
-
-Start_loc_Base = 400955647; % 基准值  
+fs = 200e6; % 采样率 
+Start_loc_Base = 400955647+ 7.8e4; % 基准值  
 if ~isfile(filename), error('文件不存在'); end
 base_value = Start_loc_Base;
 point_size = 15;
@@ -13,12 +13,12 @@ result1 = readtable(filename);
 % 筛选数据
 logicalIndex =  abs(result1.t123) < 0.001  & ...
                 abs(result1.Rcorrn) > 0.3 & ...
-                result1.Start_loc < Start_loc_Base + 244482/4 & ...
+                result1.Start_loc < Start_loc_Base + 4e4 & ...
                 result1.Start_loc > Start_loc_Base & ...
                 result1.Elevation > 0 & ...
                 result1.Azimuth < 340 & ...
                 result1.Azimuth > 265 ;
-            
+
 filteredTable1 = result1(logicalIndex, :);
 Start_loc = filteredTable1.Start_loc;
 colorValues = (Start_loc - min(Start_loc)) / (max(Start_loc) - min(Start_loc)); % 归一化到 [0, 1]
@@ -29,7 +29,7 @@ figure('Color', [1 1 1]); % figure背景设置为白色
 
 % 使用 scatter 绘图，并应用尺寸和透明度优化
 scatter(filteredTable1.Azimuth, filteredTable1.Elevation, ...
-        5, ... % 尺寸
+        15, ... % 尺寸
         colorValues, ...
         'filled', ...
         'MarkerFaceAlpha', 0.8); % 浅色背景下可适当提高透明度
@@ -78,7 +78,7 @@ set(gca, 'GridLineStyle', '--', 'GridAlpha', 0.3, 'Box', 'on'); % 浅色背景�
 
 %% 2d动态图绘制
 Fs = 200e6; % 采样率 
-target_viz_duration = 40; % (秒) 播放总时长
+target_viz_duration = 20; % (秒) 播放总时长
 min_viz_pause = 5e-9; % (秒) 最小暂停时间
 
 % 2. 计算真实时间和颜色
@@ -165,8 +165,8 @@ disp(['实际回放耗时: ', num2str(viz_elapsed_time), ' 秒 (理论目标: ',
 
 %%  2D 仰角-时间 演化图绘制
 filename = 'results\20230618125747.5480_400000000_99999999_1024_256_8_gage-20230306.txt';
-
-Start_loc_Base = 400955647+19.8e4; % 基准值  
+fs = 200e6; % 采样率 
+Start_loc_Base = 400955647+ 19.8e4; % 基准值  
 if ~isfile(filename), error('文件不存在'); end
 base_value = Start_loc_Base;
 point_size = 15;
@@ -180,12 +180,13 @@ logicalIndex =  abs(result1.t123) < 0.001  & ...
                 result1.Start_loc < Start_loc_Base + 4e4 & ...
                 result1.Start_loc > Start_loc_Base & ...
                 result1.Elevation > 0 & ...
+                result1.Elevation < 65 & ...
                 result1.Azimuth < 340 & ...
                 result1.Azimuth > 265 ;
             
 filteredTable1 = result1(logicalIndex, :);
 
-time_ms = (filteredTable1.Start_loc - 400955647) / fs * 1000; 
+time_ms = (filteredTable1.Start_loc - 400955647) / fs * 1e6; 
  
 colorValues = (filteredTable1.Start_loc - min(filteredTable1.Start_loc)) / (max(filteredTable1.Start_loc) - min(filteredTable1.Start_loc));
 
@@ -194,14 +195,14 @@ figure('Color', [1 1 1], 'Position', [100, 100, 800, 500]);
 
 % 使用 scatter 绘图: X=时间, Y=仰角
 scatter(time_ms, filteredTable1.Elevation, ...
-        15, ...           % 点的大小
+        20, ...           % 点的大小
         colorValues, ...  % 颜色映射
         'filled', ...
         'MarkerFaceAlpha', 0.8);
 
 % --- 3. 标签和标题优化 ---
 title('闪电辐射源垂直发展图 (Elevation vs. Time)', 'FontSize', 14, 'FontWeight', 'bold', 'Color', 'k');
-xlabel('相对时间 (Time / ms)', 'FontSize', 12, 'Color', 'k'); % X轴变为时间
+xlabel('相对时间 (Time / us)', 'FontSize', 12, 'Color', 'k'); % X轴变为时间
 ylabel('仰角 (Elevation / °)', 'FontSize', 12, 'Color', 'k');
 
 % --- 4. 坐标轴和范围设置 ---
@@ -209,6 +210,7 @@ ylabel('仰角 (Elevation / °)', 'FontSize', 12, 'Color', 'k');
 time_min = min(time_ms);
 time_max = max(time_ms);
 xlim([time_min, time_max]);
+xticks(time_min:5: time_max)
 
 % Y轴范围 (仰角)
 el_min = min(filteredTable1.Elevation);

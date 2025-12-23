@@ -247,9 +247,9 @@ yticks([512, 1024, 2048, 4096]);
 xlim([min(time_ms), max(time_ms)]);
 % --- 辅助函数 ---
 function w_len = simulate_adaptive_logic(count)
-    if count < 5, w_len = 512;
-    elseif count < 15, w_len =  1024;
-    elseif count < 25, w_len = 2048;
-    else, w_len = 4096;
+    if count < 5, w_len = 4096;
+    elseif count < 15, w_len =  2048;
+    elseif count < 25, w_len = 1024;
+    else, w_len = 512;
     end
 end
