@@ -1,14 +1,13 @@
-signal_length = 8e6;
-r_loction = 401e6;
+% === 全局参数设置 ===
+total_signal_length = 2e8; % 总信号长度
+r_loction_base = 3e8;      % 初始的绝对位置基准
 
-ch1 = read_signal('..\\20230718175104.9180CH1.dat',signal_length,r_loction);
-ch2 = read_signal('..\\20230718175104.9180CH2.dat',signal_length,r_loction);
-ch3 = read_signal('..\\20230718175104.9180CH3.dat',signal_length,r_loction);
+% --- 分段参数 ---
+block_size = 1e7;          % 每次处理 1千万点 (约占用几百MB内存)
+overlap = 5000;            % 重叠区域 (必须 > bigwindows_length)
+step_size = block_size - overlap; % 每次循环前进的步长
 
-filtered_signal1 = filter_bp(ch1, 20e6 ,80e6 ,5);
-filtered_signal2 = filter_bp(ch2, 20e6 ,80e6 ,5);
-filtered_signal3 = filter_bp(ch3, 20e6 ,80e6 ,5);
-
+% --- 算法参数 ---
 N = 3;
 d12 = 24.96;
 d13 = 34.93;
@@ -17,209 +16,221 @@ c = 0.299552816;
 fs = 200e6;
 upsampling_factor = 50;
 window_length = 1024;
-bigwindows_length = window_length+100;
+bigwindows_length = window_length + 100;
 window = window_length * upsampling_factor;
 msw_length = 50;
-
 angle12 = -110.85;
 angle13 = -65.24;
 angle23 = -19.65;
 
-% 打开一个文本文件用于写入运行结果
-fileID = fopen('result4_401-409e6_w1024_256_R0.8.txt', 'w');
+% 打开结果文件 (只打开一次)
+result_filename = '20230718175104_result_3e8_5e8_window_1024_256_corr_msw_mean.txt';
+fileID = fopen(result_filename, 'w');
 fprintf(fileID, '%-13s%-15s%-15s%-15s%-15s%-15s%-15s%-15s%-15s%-15s%-15s\n', ...
     'Start_loc','peak','t12', 't13', 't23', 'cos_alpha_opt', 'cos_beta_opt','Azimuth', 'Elevation', 'Rcorr', 't123');
-% 计算信号的绝对值均值和标准差
-mean_abs_signal1 = mean(abs(filtered_signal1));
-std_signal1 = std(filtered_signal1);
 
-% 设置动态阈值
-threshold = 0.05*mean_abs_signal1;
+% === 分段处理循环 ===
+current_start_idx = 0; % 当前读取的起始点 (0-based)
 
-% 平滑信号以减少噪声
-smoothed_signal1 = movmean(filtered_signal1, 10);
-smoothed_signal2 = movmean(filtered_signal2, 10);
-smoothed_signal3 = movmean(filtered_signal3, 10);
-% 寻找峰值
-[peaks, locs] = findpeaks(smoothed_signal1, 'MinPeakHeight', threshold, 'MinPeakDistance', window_length/4);
-
-% 遍历所有峰值
-num_peaks = numel(peaks);
-for pi = 1:num_peaks
-    idx = locs(pi);
-
-    % 确保峰值不超出信号范围
-    if idx - (bigwindows_length / 2 - 1) <= 0 || idx + (bigwindows_length / 2) > length(smoothed_signal1)
-        continue;
+while current_start_idx < total_signal_length
+    
+    % 1. 计算当前段的读取长度
+    % 如果是最后一段，读取长度可能会小于 block_size
+    current_read_len = min(block_size, total_signal_length - current_start_idx);
+    
+    if current_read_len < bigwindows_length
+        break; % 如果剩余数据不够一个窗口，停止
     end
+    
+    fprintf('正在处理分段: 起始点 %.0f, 长度 %.0f\n', current_start_idx, current_read_len);
 
-    % 截取窗口信号
-    [signal1, signal2, signal3] = deal(...
-        smoothed_signal1(idx-(bigwindows_length/2-1):idx+(bigwindows_length/2)), ...
-        smoothed_signal2(idx-(bigwindows_length/2-1):idx+(bigwindows_length/2)), ...
-        smoothed_signal3(idx-(bigwindows_length/2-1):idx+(bigwindows_length/2)));
-    % 去直流分量并应用窗函数
-    [ch1_new, ch2_new, ch3_new] = deal(...
-        real(windowsignal(detrend(signal1))), ...
-        real(windowsignal(detrend(signal2))), ...
-        real(windowsignal(detrend(signal3))));
+    % 2. 读取信号 (注意：这里需要你的 read_signal 支持偏移量)
+    % 假设 read_signal 现在的用法是: read_signal(文件名, 读取长度, 起始偏移量)
+    % 如果你的 read_signal 不支持第三个参数，你需要修改它使用 fseek 定位
+    
+    % 这里的 r_loction 参数仅仅传给读取函数用于定位文件指针
+    % 我们假设数据文件按顺序存储
+    seek_offset = current_start_idx; 
+    
+    % [重要] 请确保你的 read_signal 函数内部使用了 fseek(fid, seek_offset * bytes_per_sample, 'bof')
+    ch1 = read_signal('20230718175104.9180CH1.dat', current_read_len, seek_offset);
+    ch2 = read_signal('20230718175104.9180CH2.dat', current_read_len, seek_offset);
+    ch3 = read_signal('20230718175104.9180CH3.dat', current_read_len, seek_offset);
 
-    % 上采样
-    [ch1_up, ch2_up, ch3_up] = deal(...
-        upsampling(ch1_new, upsampling_factor)', ...
-        upsampling(ch2_new, upsampling_factor)', ...
-        upsampling(ch3_new, upsampling_factor)');
-    ch1_upsp = ch1_up(:,2);
-    ch2_upsp = ch2_up(:,2);
-    ch3_upsp = ch3_up(:,2);
+    % 3. 滤波 (对当前分段进行滤波)
+    % 注意：分段滤波在边缘会有瞬态效应，但由于我们有 overlap，下次循环会覆盖边缘
+    filtered_signal1 = filter_bp(ch1, 20e6 ,80e6 ,5);
+    filtered_signal2 = filter_bp(ch2, 20e6 ,80e6 ,5);
+    filtered_signal3 = filter_bp(ch3, 20e6 ,80e6 ,5);
 
-    %取窗口做互相关
-    ch1_new = ch1_upsp(bigwindows_length*upsampling_factor/2-(window/2-1):bigwindows_length*upsampling_factor/2+(window/2));
-    ch2_new = ch2_upsp(bigwindows_length*upsampling_factor/2-(window/2-1):bigwindows_length*upsampling_factor/2+(window/2));
-    ch3_new = ch3_upsp(bigwindows_length*upsampling_factor/2-(window/2-1):bigwindows_length*upsampling_factor/2+(window/2));
-    %互相关
-    [r12_gcc,lags12_gcc] = xcorr(ch1_new,ch2_new,'normalized');
-    [r13_gcc,lags13_gcc] = xcorr(ch1_new,ch3_new,'normalized');
-    [r23_gcc,lags23_gcc] = xcorr(ch2_new,ch3_new,'normalized');
-    R12_gcc = max(r12_gcc);
-    R13_gcc = max(r13_gcc);
-    R23_gcc = max(r23_gcc);
-    t12_gcc = cal_tau(r12_gcc,lags12_gcc');
-    t13_gcc = cal_tau(r13_gcc,lags13_gcc');
-    t23_gcc = cal_tau(r23_gcc,lags23_gcc');
-    ismsw = 0;
-    if R12_gcc > 0.8 && R13_gcc > 0.8
-        %根据互相关曲线的最大值进行数据平移的结果
-        shifted_ch1 = ch1_upsp(bigwindows_length*upsampling_factor/2-(window/2-1):bigwindows_length*upsampling_factor/2+(window/2));
-        shifted_ch2 = shift_signal(ch2_upsp,t12_gcc);
-        shifted_ch2 = shifted_ch2(bigwindows_length*upsampling_factor/2-(window/2-1):bigwindows_length*upsampling_factor/2+(window/2));
-        shifted_ch3 = shift_signal(ch3_upsp,t13_gcc);
-        shifted_ch3 = shifted_ch3(bigwindows_length*upsampling_factor/2-(window/2-1):bigwindows_length*upsampling_factor/2+(window/2));
+    % 4. 计算统计量 (基于当前分段)
+    mean_abs_signal1 = mean(abs(filtered_signal1));
+    % std_signal1 = std(filtered_signal1); % 未使用，注释掉节省计算
+    threshold = 0.05 * mean_abs_signal1;
 
-        threshold1 = mean(shifted_ch1);
-        threshold2 = mean(shifted_ch2);
-        threshold3 = mean(shifted_ch3);
-        peaks1= find_peaks(shifted_ch1,threshold1);
-        peaks2= find_peaks(shifted_ch2,threshold2);
-        peaks3= find_peaks(shifted_ch3,threshold3);
+    % 5. 平滑
+    smoothed_signal1 = movmean(filtered_signal1, 10);
+    smoothed_signal2 = movmean(filtered_signal2, 10);
+    smoothed_signal3 = movmean(filtered_signal3, 10);
 
-        matched_peaks_x = match_peaks(peaks1,peaks2,peaks3);
-        R12s = []; %用于存储R12s值的空向量
-        R13s = []; %用于存储R13s值的空向量
-        R23s = []; %用于存储R23s值的空向量
-        t12s = [];
-        t13s = [];
-        t23s = [];
-        if size(matched_peaks_x,1) ~= 0
-            for i = 1 : size(matched_peaks_x, 1)
-                %微尺度
-                ch1_msw = msw_signal(shifted_ch1 , matched_peaks_x(i,1) ,msw_length,window);
-                ch2_msw = msw_signal(shifted_ch2 , matched_peaks_x(i,2) ,msw_length,window);
-                ch3_msw = msw_signal(shifted_ch3 , matched_peaks_x(i,3) ,msw_length,window);
-                if numel(ch1_msw)~= msw_length*2 || numel(ch2_msw)~= msw_length*2 || numel(ch3_msw)~= msw_length*2
-                    continue;
+    % 6. 寻找峰值 (局部坐标)
+    [peaks, locs] = findpeaks(smoothed_signal1, 'MinPeakHeight', threshold, 'MinPeakDistance', window_length/4);
+
+    num_peaks = numel(peaks);
+    for pi = 1:num_peaks
+        idx = locs(pi); % 这是一个局部索引 (1 到 current_read_len)
+        
+        % --- 边界检查与重叠去重 ---
+        % 1. 窗口越界检查：确保峰值周围有足够的数据截取窗口
+        if idx - (bigwindows_length / 2 - 1) <= 0 || idx + (bigwindows_length / 2) > length(smoothed_signal1)
+            continue;
+        end
+        
+        % 2. [关键] 重叠区域去重处理
+        % 我们只处理当前段 "独有" 的部分，或者是第一段。
+        % 如果峰值落在 overlap 区域（即当前段的末尾），我们跳过它，
+        % 因为它会在下一段的开头作为非边缘信号被再次处理。
+        % 这样可以避免同一个峰值被处理两次，也可以避免处理位于段边缘滤波效果不好的峰值。
+        
+        % 有效区结束点：如果是最后一段，则处理到最后；否则保留 overlap 区域给下一段
+        valid_end_idx = current_read_len; 
+        if (current_start_idx + current_read_len) < total_signal_length
+            valid_end_idx = current_read_len - overlap; 
+        end
+        
+        % 如果是第一段之后的数据，为了防止重复，也要忽略开头的一小段(由上一段覆盖)
+        % 但通常 filter_bp 在开头会有暂态，保留 overlap 给下一段开头是比较好的策略。
+        % 简单策略：只处理 idx <= valid_end_idx
+        if idx > valid_end_idx
+            continue; 
+        end
+        
+        % ---------------------------------------------------------
+        % 下面是原本的核心处理逻辑 (几乎不需要改动，除了全局坐标计算)
+        % ---------------------------------------------------------
+        
+        % 截取窗口信号
+        win_start = idx-(bigwindows_length/2-1);
+        win_end = idx+(bigwindows_length/2);
+        
+        [signal1, signal2, signal3] = deal(...
+            smoothed_signal1(win_start:win_end), ...
+            smoothed_signal2(win_start:win_end), ...
+            smoothed_signal3(win_start:win_end));
+            
+        % ... (此处省略中间未变动的去直流、上采样、互相关逻辑，保持原样) ...
+        [ch1_new, ch2_new, ch3_new] = deal(real(windowsignal(detrend(signal1))), real(windowsignal(detrend(signal2))), real(windowsignal(detrend(signal3))));
+        [ch1_up, ch2_up, ch3_up] = deal(upsampling(ch1_new, upsampling_factor)', upsampling(ch2_new, upsampling_factor)', upsampling(ch3_new, upsampling_factor)');
+        ch1_upsp = ch1_up(:,2); ch2_upsp = ch2_up(:,2); ch3_upsp = ch3_up(:,2);
+        
+        % 截取中心部分做互相关
+        center_idx_up = bigwindows_length*upsampling_factor/2;
+        win_half_up = window/2;
+        slice_idx = center_idx_up-(win_half_up-1) : center_idx_up+win_half_up;
+        
+        ch1_new_corr = ch1_upsp(slice_idx);
+        ch2_new_corr = ch2_upsp(slice_idx);
+        ch3_new_corr = ch3_upsp(slice_idx);
+        
+        [r12_gcc,lags12_gcc] = xcorr(ch1_new_corr,ch2_new_corr,'normalized');
+        [r13_gcc,lags13_gcc] = xcorr(ch1_new_corr,ch3_new_corr,'normalized');
+        [r23_gcc,lags23_gcc] = xcorr(ch2_new_corr,ch3_new_corr,'normalized');
+        
+        R12_gcc = max(r12_gcc); R13_gcc = max(r13_gcc); R23_gcc = max(r23_gcc);
+        t12_gcc = cal_tau(r12_gcc,lags12_gcc');
+        t13_gcc = cal_tau(r13_gcc,lags13_gcc');
+        t23_gcc = cal_tau(r23_gcc,lags23_gcc');
+        
+        ismsw = 0;
+        
+        % 逻辑分支：只有相关性高才计算 DOA
+        if R12_gcc > 0.8 && R13_gcc > 0.8
+            shifted_ch1 = ch1_new_corr;
+            shifted_ch2 = shift_signal(ch2_upsp, t12_gcc); shifted_ch2 = shifted_ch2(slice_idx);
+            shifted_ch3 = shift_signal(ch3_upsp, t13_gcc); shifted_ch3 = shifted_ch3(slice_idx);
+            
+            peaks1 = find_peaks(shifted_ch1, mean(shifted_ch1));
+            peaks2 = find_peaks(shifted_ch2, mean(shifted_ch2));
+            peaks3 = find_peaks(shifted_ch3, mean(shifted_ch3));
+            matched_peaks_x = match_peaks(peaks1, peaks2, peaks3);
+            
+            t12s = []; t13s = []; t23s = [];
+            
+            if ~isempty(matched_peaks_x)
+                for i = 1 : size(matched_peaks_x, 1)
+                     %微尺度 (注意：这里需确保 msw_signal 函数内部实现没问题)
+                    ch1_msw = msw_signal(shifted_ch1 , matched_peaks_x(i,1) ,msw_length,window);
+                    ch2_msw = msw_signal(shifted_ch2 , matched_peaks_x(i,2) ,msw_length,window);
+                    ch3_msw = msw_signal(shifted_ch3 , matched_peaks_x(i,3) ,msw_length,window);
+                    
+                    if numel(ch1_msw)~= msw_length*2 || numel(ch2_msw)~= msw_length*2 || numel(ch3_msw)~= msw_length*2
+                        continue;
+                    end
+                    
+                    [R12_msw,lags12_msw] = xcorr(ch1_msw,ch2_msw,'normalized');
+                    [R13_msw,lags13_msw] = xcorr(ch1_msw,ch3_msw,'normalized');
+                    [R23_msw,lags23_msw] = xcorr(ch2_msw,ch3_msw,'normalized');
+                    
+                    if max(R12_msw) > 0.8 && max(R13_msw) > 0.8 && max(R23_msw) > 0.8
+                         t12s = [t12s cal_tau(R12_msw,lags12_msw')];
+                         t13s = [t13s cal_tau(R13_msw,lags13_msw')];
+                         t23s = [t23s cal_tau(R23_msw,lags23_msw')];
+                    end
                 end
-                %对微尺度进行互相关
-                [R12_msw,lags12_msw] = xcorr(ch1_msw,ch2_msw,'normalized');
-                [R13_msw,lags13_msw] = xcorr(ch1_msw,ch3_msw,'normalized');
-                [R23_msw,lags23_msw] = xcorr(ch2_msw,ch3_msw,'normalized');
-                if max(R12_msw) > 0.8 && max(R13_msw) > 0.8 && max(R23_msw) > 0.8
-                    t12_msw = cal_tau(R12_msw,lags12_msw'); 
-                    t13_msw = cal_tau(R13_msw,lags13_msw');
-                    t23_msw = cal_tau(R23_msw,lags23_msw');
-                    R12s = [R12s R12_msw];
-                    R13s = [R13s R13_msw];
-                    R23s = [R23s R23_msw];
-                    t12s = [t12s t12_msw];
-                    t13s = [t13s t13_msw];
-                    t23s = [t23s t23_msw];
+                
+                if ~isempty(t12s) && ~isempty(t13s) && ~isempty(t23s)
+                    t12 = (t12_gcc + mean(t12s))*5/upsampling_factor;
+                    t13 = (t13_gcc + mean(t13s))*5/upsampling_factor;
+                    t23 = (t23_gcc + mean(t23s))*5/upsampling_factor;
+                    
+                    % --- DOA 计算 (封装成函数或保持原样) ---
+                    [Az_deg, El_deg, cos_alpha_opt, cos_beta_opt, valid] = calculate_doa(t12, t13, d12, d13, angle12, angle13, c);
+                    
+                    if valid
+                        t123 = t12 + t23 - t13;
+                        Rcorr = (R12_gcc + R13_gcc + R23_gcc) / 3;
+                        
+                        % [关键] 全局坐标计算
+                        % 全局位置 = 基准 + 当前段起始偏移 + 段内索引
+                        global_loc = r_loction_base + current_start_idx + idx - window/upsampling_factor/2; 
+                        
+                        fprintf(fileID, '%-13d%-15d%-15.6f%-15.6f%-15.6f%-15.6f%-15.6f%-15.6f%-15.6f%-15.6f%-15.6f\n', ...
+                            global_loc, window/upsampling_factor/2, t12, t13, t23, cos_alpha_opt, cos_beta_opt, Az_deg, El_deg, Rcorr, t123);
+                        ismsw = ismsw + 1;
+                    end
                 end
             end
-            if size(t12s,1)~=0 && size(t13s,1)~=0 && size(t23s,1)~=0
-                t12 = (t12_gcc + mean(t12s))*0.1;
-                t13 = (t13_gcc + mean(t13s))*0.1;
-                t23 = (t23_gcc + mean(t23s))*0.1;
-
-                cos_beta_0 =((c*t13*d12*sind(angle12))-(c*t12*sind(angle13)*d13))/(d13*d12*sind(angle12-angle13)) ;
-                cos_alpha_0 = ((c*t12)/d12-cos_beta_0*cosd(angle12))/sind(angle12);
-                if abs(cos_beta_0)>1 || abs(cos_alpha_0)>1
-                    continue;
-                end
-
-                x0 = [cos_alpha_0,cos_beta_0];
-                % 调用lsqnonlin函数进行优化
-                options = optimoptions('lsqnonlin', 'MaxIter', 1000, 'TolFun', 1e-6);
-                x = lsqnonlin(@objective, x0, [-1 -1],[1 1], options);
-                % 输出最优的cos(α)和cos(β)值
-                cos_alpha_opt = x(1);
-                cos_beta_opt = x(2);
-                if abs(cos_alpha_opt)>1 || abs(cos_beta_opt)>1
-                    continue;
-                end
-                Az = atan2( cos_alpha_opt,cos_beta_opt);
-                if abs(cos_beta_opt/cos(Az)) > 1
-                    continue;
-                end
-                El = acos( cos_beta_opt/cos(Az) );
-                % 将弧度转换为角度
-                Az_deg = rad2deg(Az);
-                El_deg = rad2deg(El);
-                if Az_deg < 0
-                    Az_deg = Az_deg + 360;
-                end
-
+        end
+        
+        % 如果 MSW 没有结果，退回 GCC 结果
+        if ismsw == 0
+            t12 = t12_gcc *5/upsampling_factor;
+            t13 = t13_gcc *5/upsampling_factor;
+            t23 = t23_gcc *5/upsampling_factor;
+            
+            [Az_deg, El_deg, cos_alpha_opt, cos_beta_opt, valid] = calculate_doa(t12, t13, d12, d13, angle12, angle13, c);
+            
+            if valid
                 t123 = t12 + t23 - t13;
                 Rcorr = (R12_gcc + R13_gcc + R23_gcc) / 3;
-
-                % 写入计算后的数据
+                
+                % [关键] 全局坐标计算
+                global_loc = r_loction_base + current_start_idx + idx - window/100;
+                
                 fprintf(fileID, '%-13d%-15d%-15.6f%-15.6f%-15.6f%-15.6f%-15.6f%-15.6f%-15.6f%-15.6f%-15.6f\n', ...
-                    r_loction+idx-window/100,window/100, t12, t13, t23, cos_alpha_opt, cos_beta_opt, Az_deg, El_deg, Rcorr,t123);
-                ismsw = ismsw + 1;
+                    global_loc, window/100, t12, t13, t23, cos_alpha_opt, cos_beta_opt, Az_deg, El_deg, Rcorr, t123);
             end
         end
-    end
-    if ismsw == 0
-        t12 = t12_gcc *0.1;
-        t13 = t13_gcc *0.1;
-        t23 = t23_gcc *0.1;
-        cos_beta_0 =((c*t13*d12*sind(angle12))-(c*t12*sind(angle13)*d13))/(d13*d12*sind(angle12-angle13)) ;
-        cos_alpha_0 = ((c*t12)/d12-cos_beta_0*cosd(angle12))/sind(angle12);
-        if abs(cos_beta_0)>1 || abs(cos_alpha_0)>1
-            continue;
-        end
-        x0 = [cos_alpha_0,cos_beta_0];
-        % 调用lsqnonlin函数进行优化
-        options = optimoptions('lsqnonlin', 'MaxIter', 1000, 'TolFun', 1e-6);
-        x = lsqnonlin(@objective, x0, [-1 -1],[1 1], options);
-        % 输出最优的cos(α)和cos(β)值
-        cos_alpha_opt = x(1);
-        cos_beta_opt = x(2);
-        if abs(cos_alpha_opt)>1 || abs(cos_beta_opt)>1
-            continue;
-        end
-        Az = atan2( cos_alpha_opt,cos_beta_opt);
-        if abs(cos_beta_opt/cos(Az)) > 1
-            continue;
-        end
-        El = acos( cos_beta_opt/cos(Az) );
-        % 将弧度转换为角度
-        Az_deg = rad2deg(Az);
-        El_deg = rad2deg(El);
-        if Az_deg < 0
-            Az_deg = Az_deg + 360;
-        end
+        
+    end % end of peaks loop
+    
+    % 更新起始点，准备读取下一段
+    current_start_idx = current_start_idx + step_size;
+    
+end % end of while loop
 
-        t123 = t12 + t23 - t13;
-        Rcorr = (R12_gcc + R13_gcc + R23_gcc) / 3;
-
-        % 写入计算后的数据
-        fprintf(fileID, '%-13d%-15d%-15.6f%-15.6f%-15.6f%-15.6f%-15.6f%-15.6f%-15.6f%-15.6f%-15.6f\n', ...
-            r_loction+idx-window/100,window/100, t12, t13, t23, cos_alpha_opt, cos_beta_opt, Az_deg, El_deg, Rcorr,t123);
-    end
-end
-% 关闭文件
 fclose(fileID);
-
+fprintf('处理完成。\n');
 
 
 function delta_t = delta_t(tij,tij_obs)
@@ -227,17 +238,6 @@ function delta_t = delta_t(tij,tij_obs)
 end
 
 
-
-% 定义计算τij的理想值τ_ij^obs的函数
-function tau_ij_obs = calculate_tau_obs(cos_alpha, cos_beta)
-    angle12 = -150;
-    angle13 = -90;
-    angle23 = -30;
-    % 使用式(3)计算τij的理想值τ_ij^obs
-    tau_ij_obs(1) = (cos_alpha * sind(angle12) + cos_beta * cosd(angle12)) * 20 / 0.299792458;
-    tau_ij_obs(2) = (cos_alpha * sind(angle13) + cos_beta * cosd(angle13)) * 20 / 0.299792458;
-    tau_ij_obs(3) = (cos_alpha * sind(angle23) + cos_beta * cosd(angle23)) * 20 / 0.299792458;
-end
 
 
 function tau = cal_tau(R, lag)
@@ -364,33 +364,69 @@ function max_index = maxindex(vector)
 end
 
 
-function mswed_signal = msw_signal(signal , peak_x ,length)
+function mswed_signal = msw_signal(signal , peak_x ,length,win)
       % 找到峰值的 x 值在信号中的索引
     left_idx = max(peak_x - length+1, 1);  % 确定左边界的索引
-    right_idx = min(peak_x + length, 10240);  % 确定右边界的索引
+    right_idx = min(peak_x + length, win);  % 确定右边界的索引
     mswed_signal = signal(left_idx:right_idx);  % 提取以中心 x 值为中心的左右40个采样点
 
 end
 
-% 定义目标函数
-function F = objective(x)
-    % 提取待优化的变量
-    cos_alpha = x(1);
-    cos_beta = x(2);
 
-    % 计算τij的理想值τ_ij^obs
-    tau_ij_obs = calculate_tau_obs(cos_alpha, cos_beta);
-    t12 = evalin('base', 't12');
-    t13 = evalin('base', 't13');
-    t23 = evalin('base', 't23');
-    % 计算Δt12, Δt13, Δt23
-    delta_t12 = delta_t(t12,tau_ij_obs(1));
-    delta_t13 = delta_t(t13,tau_ij_obs(2));
-    delta_t23 = delta_t(t23,tau_ij_obs(3));
+% 定义目标函数 (正确版本)
+function F = objective(x, t12_meas, t13_meas, t23_meas, type)
+% 提取待优化的变量
+cos_alpha = x(1);
+cos_beta = x(2);
 
-    % 计算目标函数，即式(4)
-    F = (delta_t12^2 + delta_t13^2 + delta_t23^2) / 75;
+% 计算τij的理论值 τ_model (我将 obs 改为 model，语义更清晰)
+tau_model = calculate_tau_obs(cos_alpha, cos_beta, type);
+
+% t12, t13, t23 是测量的时延 (measurement)
+% tau_model(1), tau_model(2), tau_model(3) 是根据当前 x 计算出的理论时延
+
+% 计算残差向量
+residual12 = t12_meas - tau_model(1);
+residual13 = t13_meas - tau_model(2);
+residual23 = t23_meas - tau_model(3);
+
+% 返回残差向量 F
+% lsqnonlin 会自动最小化 sum(F.^2)
+F = [residual12; residual13; residual23];
 end
+
+
+% 定义计算τij的理想值τ_ij^obs的函数
+function tau_ij_obs = calculate_tau_obs(cos_alpha, cos_beta, type)
+% 初始化输出变量
+tau_ij_obs = zeros(1, 3);
+
+% 根据 type 参数选择不同的参数集
+if strcmp(type, 'chj') % 从化局
+    angle12 = -2.8381;
+    angle13 = 50.3964;
+    angle23 = 120.6568;
+    d12 = 41.6496;
+    d13 = 36.9015;
+    d23 = 35.4481;
+elseif strcmp(type, 'yld') % 引雷场
+    angle12 = -110.8477;
+    angle13 = -65.2405;
+    angle23 = -19.6541;
+    d12 = 24.9586;
+    d13 = 34.9335;
+    d23 = 24.9675;
+else
+    error('未知的类型：%s', type);
+end
+
+% 使用式(3)计算τij的理想值τ_ij^obs
+tau_ij_obs(1) = (cos_alpha * sind(angle12) + cos_beta * cosd(angle12)) * d12 / 0.299792458;
+tau_ij_obs(2) = (cos_alpha * sind(angle13) + cos_beta * cosd(angle13)) * d13 / 0.299792458;
+
+tau_ij_obs(3) = (cos_alpha * sind(angle23) + cos_beta * cosd(angle23)) * d23 / 0.299792458;
+end
+
 
 
 function shifted_signal = shift_signal(signal, shift_amount)
@@ -497,4 +533,19 @@ function delay = cal_delay(R_xy)
 % 计算估计的时间延迟
 delay = max_idx / 200e3;
 
+end
+
+
+
+function signal = read_signal(signal_path, r_length,r_loction)
+fid  = fopen(signal_path,'r');%读取数据的位置
+
+%使用fseek函数将文件指针移动到指定位置，以便读取数据。
+%这里指定移动位置为r_location，表示移动到指定位置开始读取数据。
+fseek(fid,r_loction*2,'bof');
+%使用fread函数从文件中读取数据，读取的数据长度为r_length，数据以int16格式读取。
+%将读取到的数据分别保存到变量ch_1、ch_2和ch_3中。
+signal = fread(fid,r_length,'int16');
+%关闭所有文件
+fclose(fid);
 end

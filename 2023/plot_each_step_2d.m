@@ -2,8 +2,7 @@
 % clc; clear; close all;
 
 % -------------------------- 1. 数据读取与预处理 --------------------------
-filename = 'results\20240822165932_loop_result_yld_3.65e8_5e8_window_1024_256_去零飘_30_80_hann.txt';
-Start_loc_Base = 3.66e8; % 基准值  
+Start_loc_Base = 400955647; % 基准值  
 if ~isfile(filename), error('文件不存在'); end
 base_value = Start_loc_Base;
 point_size = 15;
@@ -12,11 +11,13 @@ stepSize = 1;
 result1 = readtable(filename);
 
 % 筛选数据
-logicalIndex =  abs(result1.t123) < 0.5  & ...
-                abs(result1.Rcorr) > 0.5 & ...
-                result1.Start_loc < Start_loc_Base +3e6 & ...
+logicalIndex =  abs(result1.t123) < 0.001  & ...
+                abs(result1.Rcorrn) > 0.3 & ...
+                result1.Start_loc < Start_loc_Base + 244482 & ...
                 result1.Start_loc > Start_loc_Base & ...
-                result1.Elevation < 80;
+                result1.Elevation > 0 & ...
+                result1.Azimuth < 340 & ...
+                result1.Azimuth > 265 ;
             
 filteredTable1 = result1(logicalIndex, :);
 
@@ -27,7 +28,7 @@ offset = valid_start_locs - Start_loc_Base;
 % 计算相邻点之间的差值
 diff_start_loc = diff(offset);
 
-gap_threshold = 1500; 
+gap_threshold = 1024; 
 
 % -------------------------- 3. 计算区间 (Intervals Logic) --------------------------
 if isempty(offset)
