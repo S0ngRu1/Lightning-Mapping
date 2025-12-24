@@ -28,7 +28,7 @@ fixed_sig_len = 800;
 
 % 待评估的上采样倍数
 test_upsamples = [1, 5, 10, 30, 50]; 
-corr_interp_compare = 5; % 对照组
+corr_interp_compare = 8; % 对照组
 
 % 1. 策略A：原信号上采样 
 res_sig_up = zeros(length(test_upsamples), length(SNR_dB_range));
