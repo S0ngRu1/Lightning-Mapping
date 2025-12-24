@@ -6,7 +6,7 @@ fs = 200e6; % 采样率
 Start_loc_Base = 3e8; % 基准值  
 if ~isfile(filename), error('文件不存在'); end
 base_value = Start_loc_Base;
-point_size = 15;
+point_size = 1;
 stepSize = 1;
 % 读取数据
 result1 = readtable(filename);
@@ -28,7 +28,7 @@ figure('Color', [1 1 1]); % figure背景设置为白色
 
 % 使用 scatter 绘图，并应用尺寸和透明度优化
 scatter(filteredTable1.Azimuth, filteredTable1.Elevation, ...
-        2, ... % 尺寸
+        point_size, ... % 尺寸
         colorValues, ...
         'filled', ...
         'MarkerFaceAlpha', 0.8); % 浅色背景下可适当提高透明度
@@ -242,21 +242,20 @@ fprintf('绘图完成！显示了 %d 个辐射源点。\n', height(filteredTable
 
 
 %%
-filename = 'results\20230718175104_result_yld_3e8_6e8_window_1024_256_阈值4倍标准差_去零飘_30_80_hann.txt';
+filename = 'results\20230718175104_result_yld_3e8_6e8_window_2048_512_阈值4倍标准差_去零飘_20_80_hann.txt';
 % "20230718175104_result_yld_3e8_6e8_window_1024_256_阈值4倍标准差_去零飘_30_80_hann.txt"
 fs = 200e6; % 采样率 
-Start_loc_Base = 3e8; % 基准值  
+Start_loc_Base = 5e8; % 基准值  
 if ~isfile(filename), error('文件不存在'); end
 base_value = Start_loc_Base;
-point_size = 15;
-stepSize = 1;
+point_size = 1.5;
 % 读取数据
 result1 = readtable(filename);
 
 % 筛选数据
 logicalIndex =  abs(result1.t123) < 1 & ...
-                abs(result1.Rcorr) > 0.5 & ...
-                result1.Start_loc < Start_loc_Base + 3e8 & ...
+                abs(result1.Rcorr) > 0.2 & ...
+                result1.Start_loc < Start_loc_Base +8e7 & ...
                 result1.Start_loc > Start_loc_Base & ...
                 result1.Elevation > 0 ;
 
@@ -270,7 +269,7 @@ figure('Color', [1 1 1]); % figure背景设置为白色
 
 % 使用 scatter 绘图，并应用尺寸和透明度优化
 scatter(filteredTable1.Azimuth, filteredTable1.Elevation, ...
-        2, ... % 尺寸
+        point_size, ... % 尺寸
         colorValues, ...
         'filled', ...
         'MarkerFaceAlpha', 0.8); % 浅色背景下可适当提高透明度
@@ -316,3 +315,9 @@ grid on;
 set(gca, 'GridLineStyle', '--', 'GridAlpha', 0.3, 'Box', 'on'); % 浅色背景下降低网格透明度
 
 
+
+
+% % 信号绘制
+% ch1 = read_signal('20230718175104.9180CH1.dat', 3e8, 3e8);
+% 
+% plot(ch1)
