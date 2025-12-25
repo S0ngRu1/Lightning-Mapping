@@ -3,7 +3,7 @@ clear; clc; close all;
 %% === 1. 参数设置 ===
 % 文件路径
 file_std = '..\2023\results\standard_2023_result.txt'; % 传统方法 (左列)
-file_new = '..\2023\results\20230718175104_result_yld_3e8_6e8_window_512_128_阈值4倍标准差_去零飘_20_80_hann.txt'; % 本文方法 (右列)
+file_new = '..\2023\results\20230718175104_result_yld_3e8_6e8_window_1024_256_阈值4倍标准差_去零飘_20_80_hann_with_error.txt';
 
 % 原始波形文件 (用于绘制 a 和 e 子图)
 % 如果您没有这些文件，可以将 has_waveform 置为 false
@@ -17,7 +17,7 @@ T_us_max = 400000;          % 绘图显示的最大时间范围 (微秒), 可按
 %% === 2. 数据读取与预处理 ===
 % 读取两个结果文件
 data_std = read_and_filter(file_std, Start_loc_Base, 0.001, 0.3);
-data_new = read_and_filter(file_new, Start_loc_Base, 0.5, 0.6);
+data_new = read_and_filter(file_new, Start_loc_Base, 1, 0.4);
 
 % 读取原始波形 (如果有)
 if has_waveform
@@ -62,25 +62,25 @@ end
 % --- 第二行：Azimuth vs Time (b) & (f) ---
 % (b) Std
 nexttile;
-plot_time_scatter(data_std, 'Azimuth', pt_size, alpha_val, T_us_max);
+plot_time_scatter(data_std, 'Azimuth', 10, alpha_val, T_us_max);
 title('(b) Azimuth vs Time ');
 ylabel('Azimuth (°)');
 
 % (f) New
 nexttile;
-plot_time_scatter(data_new, 'Azimuth', pt_size, alpha_val, T_us_max);
+plot_time_scatter(data_new, 'Azimuth', 10, alpha_val, T_us_max);
 title('(f) Azimuth vs Time ');
 
 % --- 第三行：Elevation vs Time (c) & (g) ---
 % (c) Std
 nexttile;
-plot_time_scatter(data_std, 'Elevation', pt_size, alpha_val, T_us_max);
+plot_time_scatter(data_std, 'Elevation', 10, alpha_val, T_us_max);
 title('(c) Elevation vs Time ');
 ylabel('Elevation (°)');
 
 % (g) New
 nexttile;
-plot_time_scatter(data_new, 'Elevation', pt_size, alpha_val, T_us_max);
+plot_time_scatter(data_new, 'Elevation', 10, alpha_val, T_us_max);
 title('(g) Elevation vs Time ');
 
 % --- 第四行：Azimuth vs Elevation (d) & (h) ---
@@ -89,12 +89,14 @@ nexttile;
 plot_az_el(data_std, pt_size, alpha_val);
 title('(d) El vs Az ');
 ylabel('Elevation (°)'); xlabel('Azimuth (°)');
+xlim([125,325])
 
 % (h) New - AZ-EL Plot
 nexttile;
 plot_az_el(data_new, pt_size, alpha_val);
 title('(h) El vs Az ');
 xlabel('Azimuth (°)');
+xlim([125,325])
 
 % --- 全局设置 ---
 % 统一添加 Colorbar (放在最右侧)

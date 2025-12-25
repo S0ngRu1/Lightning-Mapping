@@ -42,3 +42,4 @@ Lightning_Detection_Location/
 venv/
 *.ini
 *.tdms_index
+*.chd

@@ -221,13 +221,15 @@ while current_read_offset < signal_length
         % 方位角误差 (弧度)
         sigma_az_rad = (sigma_tau_sec * sqrt(t13_sec^2 + t12_sec^2)) / sum_tau_sq;
         
-        % 仰角误差 (弧度)
-        denom_el_sq = (d_avg / c_SI)^2 - sum_tau_sq;
-        if denom_el_sq < 1e-20
-            % 几何奇异点保护
-            sigma_el_rad = deg2rad(180); 
+        max_possible_delay_sq = (d_avg / c_SI)^2;
+        denom_sq = max_possible_delay_sq - sum_tau_sq;
+        
+        if denom_sq < 1e-20
+            % 这种情况发生在仰角接近0度（地平线）时，误差趋向无穷大
+            sigma_el_rad = deg2rad(20); % 截断
         else
-            sigma_el_rad = (c_SI * sigma_tau_sec) / (sqrt(sum_tau_sq) * sqrt(denom_el_sq));
+            % 化简后的稳定公式
+            sigma_el_rad = sigma_tau_sec / sqrt(denom_sq);
         end
         
         % 转为角度
