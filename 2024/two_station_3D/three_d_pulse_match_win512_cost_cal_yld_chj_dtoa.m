@@ -47,8 +47,8 @@ baseline_ant_indices = [
     2, 3  % 基线23
     ];
 % dtoa优化时的搜索范围，只会在初始点的上下左右10范围内进行优化，需要调整
-search_radius_xy = 100;
-search_radius_z  = 100;
+search_radius_xy = 500;
+search_radius_z  = 500;
 % --- 所有基线的天线全局坐标 (6条站内 + 1条站间) ---
 all_baseline_definitions = zeros(7, 6);
 all_baseline_definitions(1, :) = [yld_ant_global_coords(1,:), yld_ant_global_coords(2,:)];
@@ -63,8 +63,8 @@ all_baseline_definitions(7, :) = [yld_sit, chj_sit];
 all_residuals_history = [];
 % --- DTOA测量不确定度  ---  站间基线的不确定度需要尝试，如果设置成5000几乎与初始点一致
 sigmas_ns = [
-    2; 2; 2; % YLD 站内基线 DTOA 不确定度 (ns)
-    2; 2; 2; % CHJ 站内基线 DTOA 不确定度 (ns)
+    5; 5; 5; % YLD 站内基线 DTOA 不确定度 (ns)
+    5; 5; 5; % CHJ 站内基线 DTOA 不确定度 (ns)
     500         % 站间基线 DTOA 不确定度 (ns)
     ];
 
