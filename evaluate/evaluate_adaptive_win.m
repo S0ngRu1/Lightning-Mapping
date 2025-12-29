@@ -15,8 +15,8 @@ has_waveform = isfile(raw_file_ch1);
 
 % --- 通用参数 ---
 fs = 200e6;              % 采样率
-Start_loc_Base = 3.9e8;  % 基准采样点位置
-T_us_max = 500e3;        % 最大显示时间 (us)
+Start_loc_Base = 3.9e8+76000000;  % 基准采样点位置
+T_us_max = 30e3;        % 最大显示时间 (us)
 Downsample_Factor = 50;  % 波形降采样倍数
 
 %% === 2. 数据读取与预处理 ===
@@ -27,11 +27,11 @@ Downsample_Factor = 50;  % 波形降采样倍数
 data_1 = read_and_filter(file_col1, Start_loc_Base, 0.5, 0.7, T_us_max);
 
 % Col 2: 4096窗口 (t123=1.0, Rcorr=0.2)
-data_2 = read_and_filter(file_col2, Start_loc_Base, 1.0, 0.2, T_us_max);
+data_2 = read_and_filter(file_col2, Start_loc_Base, 1.0, 0.3, T_us_max);
 
 % Col 3: Adaptive (t123=1.0, Rcorr=0.3默认) 
 % *注：函数内部会检测 Win_Len 列，若存在则使用动态阈值，Rcorr=0.3 仅作为备用
-data_3 = read_and_filter(file_col3, Start_loc_Base, 1.0, 0.3, T_us_max);
+data_3 = read_and_filter(file_col3, Start_loc_Base, 1.0, 0.1, T_us_max);
 
 % --- 读取原始波形 ---
 if has_waveform
