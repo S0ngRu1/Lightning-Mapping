@@ -1,8 +1,8 @@
 %%  2d静态图绘制
 % --- 1. 数据准备  ---
 % filename = 'results\20240822165932_result_yld_3.6e8_5.6e8_window_1024_256_阈值4倍标准差_去零飘_30_80_hann.txt';
-filename = 'results\20240822165932_result_yld_3.6e8_5.6e8_window_1024_256_阈值4倍标准差_去零飘_30_80_hann.txt';
-Start_loc_Base = 3.9e8+3e5; % 基准值
+filename = 'results\20240822165932_result_yld_3.65e8_5e8_window_4096_1024_阈值4倍标准差_去零飘_30_80_hann.txt';
+Start_loc_Base = 3.9e8; % 基准值
 if ~isfile(filename), error('文件不存在'); end
 base_value = Start_loc_Base;
 point_size = 15;
@@ -11,10 +11,11 @@ stepSize = 1;
 result1 = readtable(filename);
 
 % 筛选数据
-logicalIndex =  abs(result1.t123) < 1  & ...
-                abs(result1.Rcorr) > 0.4 & ...
-                result1.Start_loc < Start_loc_Base + 3e6-6e5 & ...
-                result1.Start_loc > Start_loc_Base ;
+logicalIndex =  abs(result1.t123) < 0.5  & ...
+                abs(result1.Rcorr) > 0.35 & ...
+                result1.Start_loc < Start_loc_Base + 1e8 & ...
+                result1.Elevation < 85 & ...
+                result1.Start_loc > Start_loc_Base ;    
             
 filteredTable1 = result1(logicalIndex, :);
 
@@ -381,3 +382,10 @@ hold off;
 
 disp('回放完成。');
 disp(['实际回放耗时: ', num2str(viz_elapsed_time), ' 秒 (目标: ', num2str(target_viz_duration), ' 秒)']);
+
+
+
+% % 信号绘制
+ch1 = read_signal('..\2024 822 85933.651462CH1.dat', 1e8, 3.9e8);
+
+plot(ch1)

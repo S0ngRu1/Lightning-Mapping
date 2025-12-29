@@ -1,7 +1,7 @@
 %% 1. 加载数据
 % 假设你已经手动筛选出了某一段连续通道的数据，保存为 subset_data.csv
 % 或者从总表中通过索引提取
-data = readtable('..\2024\two_station_3D\results\3d_win512_cost_cal_yld_chj_dtoa_3.6e8_5.6e8_with_initial_results.csv');
+data = readtable('..\2024\two_station_3D\results\3d_win512_cost_cal_yld_chj_dtoa_3.6e8_5.6e8_with_initial_results_eval_dtoa.csv');
 
 target_start_loc = 4.68e8;  % 起始采样点位置 (需要根据实际数据修改)
 target_end_loc   = 4.712e8;  % 结束采样点位置 (需要根据实际数据修改)
@@ -17,7 +17,7 @@ X_dtoa = segment.x_dtoa; Y_dtoa = segment.y_dtoa; Z_dtoa = segment.z_dtoa;
 
 
 %% 3. 计算并对比平滑度 (Scattering)
-poly_order = 4; % 论文设定为 5 阶
+poly_order = 3; % 论文设定为 5 阶
 
 % --- 三角测量 (Triangulation) ---
 [std_x_tri, res_x_tri] = evaluate_smoothness(t, X_tri, poly_order);
