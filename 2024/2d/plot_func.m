@@ -386,6 +386,6 @@ disp(['实际回放耗时: ', num2str(viz_elapsed_time), ' 秒 (目标: ', num2s
 
 
 % % 信号绘制
-ch1 = read_signal('..\2024 822 85933.651462CH1.dat', 4e7, 3.655e8);
+ch1 = read_signal('..\2024 822 85933.651462CH1.dat', 1e8, 3.9e8);
 
 plot(ch1)
