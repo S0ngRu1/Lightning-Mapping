@@ -1,5 +1,5 @@
 function window_len = get_adaptive_window_length_4tier(pulse_count,single_length)
-    thresholds = [180, 265, 483] * single_length/2e4;
+    thresholds = [60, 120, 250] * single_length/1e4;
     T1 = thresholds(1);
     T2 = thresholds(2);
     T3 = thresholds(3);
