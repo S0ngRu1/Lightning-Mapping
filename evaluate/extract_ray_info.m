@@ -10,7 +10,7 @@ Focal_Length_mm = 5;     % 焦距: 5 mm
 Cam_Center_El = 21;      
 % 方位角 (Azimuth) 仍需您根据实际拍摄方向确认
 % 例如：如果相机朝正南拍，填180；朝正东拍，填90
-Cam_Center_Az = 357;     
+Cam_Center_Az = 358.78;     
 
 % --- 读取图像 ---
 % 请修改为您实际的图片路径

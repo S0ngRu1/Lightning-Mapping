@@ -1,8 +1,8 @@
 %%  2d静态图绘制
 % --- 1. 数据准备  ---
-% filename = 'results\20240822165932_result_yld_3.6e8_5.6e8_window_1024_256_阈值4倍标准差_去零飘_30_80_hann.txt';
-filename = 'results\20240822165932_result_yld_3.65e8_5e8_window_4096_1024_阈值4倍标准差_去零飘_30_80_hann.txt';
-Start_loc_Base = 3.9e8; % 基准值
+filename = 'results\20240822165932_result_yld_3.6e8_5.6e8_window_1024_256_阈值4倍标准差_去零飘_30_80_hann.txt';
+% filename = 'results\20240822165932_result_yld_3.65e8_5e8_window_4096_1024_阈值4倍标准差_去零飘_30_80_hann.txt';
+Start_loc_Base = 3.708e8; % 基准值
 if ~isfile(filename), error('文件不存在'); end
 base_value = Start_loc_Base;
 point_size = 15;
@@ -13,8 +13,8 @@ result1 = readtable(filename);
 % 筛选数据
 logicalIndex =  abs(result1.t123) < 0.5  & ...
                 abs(result1.Rcorr) > 0.35 & ...
-                result1.Start_loc < Start_loc_Base + 1e8 & ...
-                result1.Elevation < 85 & ...
+                result1.Start_loc < Start_loc_Base + 1e6 & ...
+                result1.Elevation < 18 & ...
                 result1.Start_loc > Start_loc_Base ;    
             
 filteredTable1 = result1(logicalIndex, :);
