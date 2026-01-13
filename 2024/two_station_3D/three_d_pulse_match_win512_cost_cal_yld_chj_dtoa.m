@@ -9,317 +9,303 @@ yld_sit = [0, 0, 0];
 chj_sit = [2003.7972, -7844.7836, -27];
 % yld相对于chj的位置
 p = chj_sit-yld_sit;
-dist = 8.0967e3; %单位：米
+dist = 8.0967e3; % 单位：米
 c = 0.299792458;
-W = 5e8; % 时间误差
+W = 5e8; % 时间误差容限 (ns)
 match_signal_length = 6000;
-% 两个站点的距离除以光速
-rough_dtoa_samples = 6000;
-step = 1e6;
-signal_length=step;
+
+signal_length = 1e6; % 读取长度
 start_signal_loc = 3.6e8;
 mapping_start_signal_loc = 3.6e8;
 end_signal_loc = 5.6e8;
+step = 1e6;
 
 % 所有信号的开始位置
 all_start_signal_loc = start_signal_loc:step:end_signal_loc;
-all_match_results = []; % 存储DTOA优化后的匹配信息
+all_match_results = []; % 存储优化后的匹配信息
+
 % YLD站内天线局部坐标
 yld_ant_local_coords = [
-    0,   0,   0;  % 天线1
-    -23.3246,  -8.8824,   0;  % 天线2
-    -31.7222,  14.6305,   0   % 天线3
+    0,   0,   0;        % 天线1
+    -23.3246,  -8.8824,   0; % 天线2
+    -31.7222,  14.6305,   0  % 天线3
     ];
 % CHJ站内天线局部坐标
 chj_ant_local_coords = [
-    0,   0,   0;  % 天线1
-    -2.0622, 41.5985,   0;  % 天线2
-    28.4316, 23.5237,   0   % 天线3
+    0,   0,   0;        % 天线1
+    -2.0622, 41.5985,   0;   % 天线2
+    28.4316, 23.5237,   0    % 天线3
     ];
 
 % 将局部天线坐标转换为全局坐标
 yld_ant_global_coords = yld_ant_local_coords + yld_sit;
 chj_ant_global_coords = chj_ant_local_coords + chj_sit;
 
-baseline_ant_indices = [
-    1, 2; % 基线12
-    1, 3; % 基线13
-    2, 3  % 基线23
-    ];
-% dtoa优化时的搜索范围，只会在初始点的上下左右10范围内进行优化，需要调整
-search_radius_xy = 500;
-search_radius_z  = 500;
+% dtoa优化时的搜索范围
+search_radius_xy = 1000; % 稍微放宽一点范围，防止卡在边界
+search_radius_z  = 1000;
+
 % --- 所有基线的天线全局坐标 (6条站内 + 1条站间) ---
 all_baseline_definitions = zeros(7, 6);
+% YLD 站内
 all_baseline_definitions(1, :) = [yld_ant_global_coords(1,:), yld_ant_global_coords(2,:)];
 all_baseline_definitions(2, :) = [yld_ant_global_coords(1,:), yld_ant_global_coords(3,:)];
 all_baseline_definitions(3, :) = [yld_ant_global_coords(2,:), yld_ant_global_coords(3,:)];
+% CHJ 站内
 all_baseline_definitions(4, :) = [chj_ant_global_coords(1,:), chj_ant_global_coords(2,:)];
 all_baseline_definitions(5, :) = [chj_ant_global_coords(1,:), chj_ant_global_coords(3,:)];
 all_baseline_definitions(6, :) = [chj_ant_global_coords(2,:), chj_ant_global_coords(3,:)];
 % 站间基线 (YLD参考天线 - CHJ参考天线)
 all_baseline_definitions(7, :) = [yld_sit, chj_sit];
-% 记录所有优化后的残差 = 理论DTOA - 测量DTOA
+
+% 记录所有优化后的残差
 all_residuals_history = [];
-% --- DTOA测量不确定度  ---  站间基线的不确定度需要尝试，如果设置成5000几乎与初始点一致
+
+% --- 【关键修改点 1】DTOA测量不确定度 (Sigma) ---
+% 将站间的不确定度设为极大值 (1e9)，让优化器忽略错误的 dlta_T
+% 从而变成纯角度交会优化
 sigmas_ns = [
-    5; 5; 5; % YLD 站内基线 DTOA 不确定度 (ns)
-    5; 5; 5; % CHJ 站内基线 DTOA 不确定度 (ns)
-    500         % 站间基线 DTOA 不确定度 (ns)
+    1; 1; 1;      % YLD 站内 (信任度高)
+    1; 1; 1;      % CHJ 站内 (信任度高)
+    1e9           % 站间 (信任度极低 -> 忽略此约束)
     ];
-
-
 
 % 信号和算法参数
 fs = 200e6;
 ts_ns = 1 / fs * 1e9;
+snippet_len = 512;     % 脉冲片段长度
 
+% 读取噪声计算阈值 (请确保路径正确)
 noise_analysis_length = 1e5;
 threshold_std_multiplier = 4;
+% 注意：这里路径用了相对路径，请确保文件存在
 noise_chj = read_signal('..\\2024 822 85933.651462CH1.dat', noise_analysis_length, noise_analysis_length);
 filtered_noise_chj = filter_bp(noise_chj, 30e6, 80e6, 5);
 threshold_chj = mean(filtered_noise_chj) + threshold_std_multiplier * std(filtered_noise_chj);
+
 noise_yld = read_signal('..\\20240822165932.6610CH1.dat', noise_analysis_length, noise_analysis_length);
 filtered_noise_yld = filter_bp(noise_yld, 30e6, 80e6, 5);
 threshold_yld = mean(filtered_noise_yld) + threshold_std_multiplier * std(filtered_noise_yld);
 
-snippet_len = 512;     % 脉冲片段长度
 % 代价函数权重
-weights.w1 = 0.8; % 波形相似度权重
-weights.w2 = 0.1; % FWHM 权重 脉冲宽度
-weights.w3 = 0.1; % 上升时间权重
-cost_threshold = 5; % 只有总代价小于此阈值的匹配才被接受, 需要调整
+weights.w1 = 0.8; % 波形相似度
+weights.w2 = 0.1; % FWHM
+weights.w3 = 0.1; % 上升时间
+cost_threshold = 5; 
 
-% DTOA时间搜索窗
-time_window_samples = 6000;
-
+%% --- 主循环 ---
 for j = 1:numel(all_start_signal_loc)-1
     start_read_loc_yld = all_start_signal_loc(j);
-    start_read_loc_chj = start_read_loc_yld;
     end_read_loc_yld = all_start_signal_loc(j+1);
+    
     if  start_read_loc_yld < mapping_start_signal_loc || end_read_loc_yld > end_signal_loc
         continue
     end
-    % 记录处理的位置
+    
     fprintf('正在处理的信号位置：%d -- %d \n', start_read_loc_yld, end_read_loc_yld);
-    yld_ch1 =read_signal('..\\20240822165932.6610CH1.dat',signal_length,start_read_loc_yld);
-    yld_ch2 =read_signal('..\\20240822165932.6610CH2.dat',signal_length,start_read_loc_yld);
-    yld_ch3 =read_signal('..\\20240822165932.6610CH3.dat',signal_length,start_read_loc_yld);
+    
+    % 读取 YLD 数据
+    yld_ch1 = read_signal('..\\20240822165932.6610CH1.dat',signal_length,start_read_loc_yld);
+    yld_ch2 = read_signal('..\\20240822165932.6610CH2.dat',signal_length,start_read_loc_yld);
+    yld_ch3 = read_signal('..\\20240822165932.6610CH3.dat',signal_length,start_read_loc_yld);
+    
     filtered_yld_signal1 = filter_bp(yld_ch1,30e6,80e6,5);
     filtered_yld_signal2 = filter_bp(yld_ch2,30e6,80e6,5);
     filtered_yld_signal3 = filter_bp(yld_ch3,30e6,80e6,5);
-    %% --- 1. 独立脉冲编目  ---
-    % 创建脉冲目录
+    
+    %% --- 1. 独立脉冲编目 ---
     yld_catalog = create_pulse_catalog(filtered_yld_signal1, filtered_yld_signal2, filtered_yld_signal3, fs, threshold_yld, snippet_len);
-    % 检查目录是否为空
+    
     if isempty(yld_catalog)
-        fprintf('yld站的脉冲目录为空，无法继续。');
+        fprintf('yld站的脉冲目录为空，无法继续。\n');
         continue
     end
+    
     num_yld_pulses = numel(yld_catalog);
     h = waitbar(0, 'Processing...');
-    for i =1 :num_yld_pulses
+    
+    for i = 1:num_yld_pulses
         waitbar(i/num_yld_pulses, h, sprintf('位置：%d -- %d ；进度： %.2f%%', start_read_loc_yld, end_read_loc_yld, i/num_yld_pulses*100));
+        
         current_yld_pulse = yld_catalog(i);
-        current_yld_pulse.loc = start_read_loc_yld - start_signal_loc + current_yld_pulse.loc;
-        current_chj_pulse_loc = floor(current_yld_pulse.loc *5/5.00390073);
-        chj_ch1 =read_signal('..\\2024 822 85933.651462CH1.dat',match_signal_length*2,start_signal_loc+ 34236596 + current_chj_pulse_loc - match_signal_length);
-        chj_ch2 =read_signal('..\\2024 822 85933.651462CH2.dat',match_signal_length*2,start_signal_loc+ 34236596 + current_chj_pulse_loc - match_signal_length);
-        chj_ch3 =read_signal('..\\2024 822 85933.651462CH3.dat',match_signal_length*2,start_signal_loc+ 34236596 + current_chj_pulse_loc - match_signal_length + 215/5);
+        % 计算 YLD 脉冲在当前片段内的相对位置
+        % current_yld_pulse.loc 是相对于 start_read_loc_yld 的
+        
+        % 估算对应的 CHJ 位置 (仅用于读取文件窗口，不用于定位)
+        % 注意：这里 loc 是相对值，需要谨慎处理
+        current_yld_rel_loc = current_yld_pulse.loc; 
+        current_chj_pulse_loc_est = floor(current_yld_rel_loc * 5 / 5.00390073);
+        
+        % 读取 CHJ 数据 (带偏移)
+        chj_read_start_index = start_signal_loc + 34236596 + (start_read_loc_yld - start_signal_loc) + current_chj_pulse_loc_est - match_signal_length;
+        
+        chj_ch1 = read_signal('..\\2024 822 85933.651462CH1.dat', match_signal_length*2, chj_read_start_index);
+        chj_ch2 = read_signal('..\\2024 822 85933.651462CH2.dat', match_signal_length*2, chj_read_start_index);
+        chj_ch3 = read_signal('..\\2024 822 85933.651462CH3.dat', match_signal_length*2, chj_read_start_index + 215/5); % 注意这里还有个微小偏移
+        
         filtered_chj_signal1 = filter_bp(chj_ch1,30e6,80e6,5);
         filtered_chj_signal2 = filter_bp(chj_ch2,30e6,80e6,5);
         filtered_chj_signal3 = filter_bp(chj_ch3,30e6,80e6,5);
-        %% Step2 根据引雷点的信号窗口得到匹配到的从化局的信号
+        
+        %% Step 2: 匹配 CHJ 信号
         chj_catalog = create_pulse_catalog(filtered_chj_signal1, filtered_chj_signal2, filtered_chj_signal3, fs, threshold_chj, snippet_len);
         [matched_chj_pulse, match_cost] = find_best_match(current_yld_pulse, chj_catalog, weights);
-        % --- 2.3 如果找到一个好的匹配，则进行精处理 ---
-        if ~isempty(matched_chj_pulse) && match_cost < cost_threshold
-            matched_chj_pulse.loc = matched_chj_pulse.loc + current_chj_pulse_loc - match_signal_length;
-        else
+        
+        if isempty(matched_chj_pulse) || match_cost >= cost_threshold
             continue
         end
-        % a. 获取YLD和CHJ的2D测向结果
-        [yld_t12, yld_t13,yld_t23,yld_az, yld_el, yld_Rcorr, yld_t123] = get_2d_from_pulse(current_yld_pulse, 'yld');
+        
+        % 获取2D测向结果
+        [yld_t12, yld_t13, yld_t23, yld_az, yld_el, yld_Rcorr, yld_t123] = get_2d_from_pulse(current_yld_pulse, 'yld');
         [chj_t12, chj_t13, chj_t23, chj_az, chj_el, chj_Rcorr, chj_t123] = get_2d_from_pulse(matched_chj_pulse, 'chj');
-        chj_ch1 = matched_chj_pulse.snippet;
-        yld_ch1 = current_yld_pulse.snippet;
-
-        if length(chj_ch1)~= length(yld_ch1)
+        
+        % 再次校验互相关
+        chj_snippet = matched_chj_pulse.snippet;
+        yld_snippet = current_yld_pulse.snippet;
+        if length(chj_snippet) ~= length(yld_snippet)
             continue
         end
-
-        [r_gcc, lags_gcc] = xcorr(chj_ch1, yld_ch1, 'normalized');
+        [r_gcc, ~] = xcorr(chj_snippet, yld_snippet, 'normalized');
         max_Rgcc = max(r_gcc);
-        if yld_Rcorr < 0.6 || abs(yld_t123) > 1 || yld_el  > 80 || yld_el < 10 || chj_Rcorr < 0.3 || abs(chj_t123) > 1 || max_Rgcc < 0.1
+        
+        % 质量控制
+        if yld_Rcorr < 0.6 || abs(yld_t123) > 1 || yld_el > 80 || yld_el < 10 || ...
+           chj_Rcorr < 0.3 || abs(chj_t123) > 1 || max_Rgcc < 0.1
             continue
         end
-
-        [R1_x, R1_y, R1_z] = sph2cart(deg2rad(90-yld_az), deg2rad(yld_el),1);
-        [R2_x, R2_y, R2_z] = sph2cart(deg2rad(90-chj_az), deg2rad(chj_el),1);
+        
+        %% Step 3: 几何三角测量 (Initial Guess)
+        [R1_x, R1_y, R1_z] = sph2cart(deg2rad(90-yld_az), deg2rad(yld_el), 1);
+        [R2_x, R2_y, R2_z] = sph2cart(deg2rad(90-chj_az), deg2rad(chj_el), 1);
         A1 = [R1_x, R1_y, R1_z];
         A2 = [R2_x, R2_y, R2_z];
+        
         C = cross(A1, A2);
         if norm(C) < eps
-            continue;  % 避免除以零
+            continue; 
         end
-        c_unit = C  / norm(C);  % 单位向量
-        M = [A1(1), -A2(1), c_unit(1);
-            A1(2), -A2(2), c_unit(2);
-            A1(3), -A2(3), c_unit(3)];
-        % 使用克莱姆法则求R1,R2,R3的标量
+        
+        % 克莱姆法则求解
+        c_unit = C / norm(C);
+        M = [A1(1), -A2(1), c_unit(1); A1(2), -A2(2), c_unit(2); A1(3), -A2(3), c_unit(3)];
         detM = det(M);
         detR1 = det([p', M(:,2), M(:,3)]);
         detR2 = det([M(:,1), p', M(:,3)]);
         detR3 = det([M(:,1), M(:,2), p']);
-        R1_value = detR1 / detM;
-        R2_value = detR2 / detM;
-        R3_value = detR3 / detM;
-        R1 = R1_value * A1;
-        R2 = R2_value * A2;
-        R3 = R3_value/norm(C)* C;
-        if R1_value <= R2_value
-            % 使用第一个公式
-            sub_S = R1 + (R1_value / R2_value)*(R1_value / (R1_value + R2_value)) * R3;
+        
+        if abs(detM) < 1e-6; continue; end % 防止奇异矩阵
+        
+        R1_val = detR1 / detM;
+        R2_val = detR2 / detM;
+        R3_val = detR3 / detM;
+        
+        R1_vec = R1_val * A1;
+        R2_vec = R2_val * A2;
+        R3_vec = R3_val/norm(C) * C;
+        
+        if R1_val <= R2_val
+            sub_S = R1_vec + (R1_val / R2_val)*(R1_val / (R1_val + R2_val)) * R3_vec;
         else
-            % 使用第二个公式
-            sub_S = R2 - (R2_value / R1_value)* (R2_value / (R1_value + R2_value))  * R3 + p;
+            sub_S = R2_vec - (R2_val / R1_val)* (R2_val / (R1_val + R2_val)) * R3_vec + p;
         end
+        
         if sub_S(3) < 0
             sub_S = -sub_S;
         end
-        if ~isempty(sub_S)
-            t_chj = sqrt(sum((sub_S - chj_sit).^2))/c;
-            t_yld = sqrt(sum((sub_S - yld_sit).^2))/c;
-            dlta_t = t_yld-t_chj;
-            dlta_T = (current_yld_pulse.loc-matched_chj_pulse.loc/5*5.00390073)*5;
-            dlta = abs(dlta_t-dlta_T);
-            if dlta <= W
-                %% Step 5: 差分到达时间 (DTOA) 技术
-                % --- 收集所有测量的DTOA值 (单位: ns) ---
-
-                all_measured_dtoas_ns = zeros(7,1);
-                all_measured_dtoas_ns(1:3) = [yld_t12,yld_t13,yld_t23];  % YLD站内 (ns)
-                all_measured_dtoas_ns(4:6) = [chj_t12,chj_t13,chj_t23];    % CHJ站内 (ns)
-                % 站间DTOA (ns)
-                all_measured_dtoas_ns(7) = dlta_T;
-                % --- DTOA 优化 ---
-                S_initial = sub_S;   % 使用三角测量结果作为初值
-                objective_fun = @(S_vec) dtoa_objective_function_ns(S_vec, ...
-                    all_baseline_definitions, ...
-                    all_measured_dtoas_ns, ...
-                    sigmas_ns, ...
-                    c);
-
-
-                dynamic_lb = S_initial - [search_radius_xy, search_radius_xy, search_radius_z];
-                dynamic_ub = S_initial + [search_radius_xy, search_radius_xy, search_radius_z];
-                options = optimoptions('lsqnonlin', 'TolFun', 1e-6, 'MaxIter', 100);
-                S_optimized = S_initial; % 默认值
-                optimization_successful = false;
-                try
-                    [S_optimized_temp, resnorm, ~, exitflag, ~] = lsqnonlin(objective_fun, S_initial, dynamic_lb, dynamic_ub, options);
-                    if exitflag > 0 % 检查优化是否成功收敛
-                        S_optimized = S_optimized_temp;
-                        optimization_successful = true;
-                    else
-                        fprintf('优化未收敛 (exitflag=%d) for YLD event %d (sample loc %d)\n', exitflag, i, current_yld_start_abs_samples);
-                    end
-                catch ME_optim
-                    fprintf('DTOA优化错误 for YLD event %d (sample loc %d): %s\n', i, yld_start_loc(i), ME_optim.message);
+        
+        if isempty(sub_S); continue; end
+        
+        %% Step 4: DTOA 数据准备
+        % -----------------------------------------------------------------
+        % 注意：这里的 dlta_T 仍然是基于采样点对齐的相对值，
+        % 它不包含真实的几何传播延时（~26us）。
+        % 但因为我们把 sigma(7) 设为了 1e9，优化器会忽略这个错误的值。
+        % -----------------------------------------------------------------
+        dlta_T_raw_samples = current_yld_pulse.loc - matched_chj_pulse.loc/5*5.00390073;
+        dlta_T = dlta_T_raw_samples * 5; % 粗略计算
+        
+        t_chj_calc = sqrt(sum((sub_S - chj_sit).^2))/c;
+        t_yld_calc = sqrt(sum((sub_S - yld_sit).^2))/c;
+        dlta_t_geo = t_yld_calc - t_chj_calc;
+        
+        % 这里的校验只起宽泛的过滤作用
+        dlta_check = abs(dlta_t_geo - dlta_T); 
+        
+        if dlta_check <= W
+            %% Step 5: 联合优化 (Modified to Angle-Only Optimization)
+            
+            % 收集测量值
+            all_measured_dtoas_ns = zeros(7,1);
+            all_measured_dtoas_ns(1:3) = [yld_t12, yld_t13, yld_t23]; 
+            all_measured_dtoas_ns(4:6) = [chj_t12, chj_t13, chj_t23];   
+            all_measured_dtoas_ns(7)   = dlta_T; % 这个值是错的，但没关系，会被权重屏蔽
+            
+            S_initial = sub_S;
+            
+            objective_fun = @(S_vec) dtoa_objective_function_ns(S_vec, ...
+                all_baseline_definitions, ...
+                all_measured_dtoas_ns, ...
+                sigmas_ns, ... % <--- 使用了修改后的权重 (1e9)
+                c);
+            
+            dynamic_lb = S_initial - [search_radius_xy, search_radius_xy, search_radius_z];
+            dynamic_ub = S_initial + [search_radius_xy, search_radius_xy, search_radius_z];
+            
+            % 增加最大迭代次数，保证收敛
+            options = optimoptions('lsqnonlin', 'TolFun', 1e-8, 'TolX', 1e-8, 'MaxIter', 200, 'Display', 'off');
+            
+            S_optimized = S_initial;
+            optimization_successful = false;
+            
+            try
+                [S_optimized_temp, resnorm, ~, exitflag, ~] = lsqnonlin(objective_fun, S_initial, dynamic_lb, dynamic_ub, options);
+                
+                if exitflag > 0
+                    S_optimized = S_optimized_temp;
+                    optimization_successful = true;
                 end
-
-                if optimization_successful
-                    % 用最终的优化解 S_optimized 再次调用目标函数，获取最终的理论DTOA
-                    final_theoretical_dtoas_ns = dtoa_objective_function_ns(S_optimized, ...
-                        all_baseline_definitions, ...
-                        all_measured_dtoas_ns, ...
-                        sigmas_ns, ...
-                        c);
-                    % 残差 = 理论DTOA - 测量DTOA
-                    final_residuals_ns = final_theoretical_dtoas_ns;
-                    chi_square_red = sum(final_residuals_ns.^2) / (length(final_residuals_ns) - 3);
-                    all_residuals_history = [all_residuals_history; final_residuals_ns(:)'];
-
-                end
-
-                % --- 使用优化后的S重新进行时间校验 ---
-                % 理论传播时间 (ns)
-                t_chj_optimized_ns = norm(S_optimized - chj_sit) / c;
-                t_yld_optimized_ns = norm(S_optimized - yld_sit) / c;
-                % 理论站间DTOA (ns),
-                theoretical_inter_dtoa_optimized_ns = t_yld_optimized_ns - t_chj_optimized_ns;
-
-                % 最终校验差 (ns)
-                final_dlta_check_ns = abs(theoretical_inter_dtoa_optimized_ns - dlta_T);
-
-                if final_dlta_check_ns <= W && optimization_successful
-                    if S_optimized(3) < 0
-                        S_optimized = -S_optimized;
-                    end
-                    %                     我们还可以记录损失
-                    match_info_dtoa = struct(...
-                        'yld_start_loc', start_signal_loc + current_yld_pulse.loc - snippet_len/2 + 1, ...
-                        'chj_loc', matched_chj_pulse.loc + start_signal_loc + 34226222 - snippet_len/2 +1, ...
-                        'chj_azimuth', chj_az, ...
-                        'chj_elevation', chj_el, ...
-                        'r_gccs', max_Rgcc, ...
-                        'dlta', dlta, ...
-                        'R3_value', R3_value, ...
-                        'chi_square_red', chi_square_red,  ...
-                        'cost', match_cost,  ...
-                        'dlta_T',dlta_T, ...
-                        'x_tri', S_initial(1), ...  % 【新增】明确保存三角测量 X
-                        'y_tri', S_initial(2), ...  % 【新增】明确保存三角测量 Y
-                        'z_tri', S_initial(3), ...  % 【新增】明确保存三角测量 Z
-                        'x_dtoa', S_optimized(1), ... % 【修改】明确命名为 DTOA X
-                        'y_dtoa', S_optimized(2), ... % 【修改】明确命名为 DTOA Y
-                        'z_dtoa', S_optimized(3) ...  % 【修改】明确命名为 DTOA Z
-                        );
-                    all_match_results = [all_match_results; match_info_dtoa];
-                else
-                    % 如果DTOA优化失败或校验不通过，保存三角测量结果
-                    if dlta <= W
-                        if S_initial(3) < 0
-                            S_initial = -S_initial;
-                        end
-                        match_info_dtoa = struct(...
-                            'yld_start_loc', start_signal_loc + current_yld_pulse.loc - snippet_len/2 + 1, ...
-                            'chj_loc', matched_chj_pulse.loc + start_signal_loc + 34226222 - snippet_len/2 +1, ...
-                            'chj_azimuth', chj_az, ...
-                            'chj_elevation', chj_el, ...
-                            'r_gccs', max_Rgcc, ...
-                            'dlta', dlta, ...
-                            'R3_value', R3_value, ...
-                            'chi_square_red', 1.5 , ...
-                            'cost', match_cost,  ...
-                            'dlta_T',dlta_T, ...
-                            'x_tri', S_initial(1), ...  % 【新增】明确保存三角测量 X
-                            'y_tri', S_initial(2), ...  % 【新增】明确保存三角测量 Y
-                            'z_tri', S_initial(3), ...  % 【新增】明确保存三角测量 Z
-                            'x_dtoa', S_initial(1), ... % 【修改】明确命名为 DTOA X
-                            'y_dtoa', S_initial(2), ... % 【修改】明确命名为 DTOA Y
-                            'z_dtoa', S_initial(3) ...  % 【修改】明确命名为 DTOA Z
-                            );
-                        all_match_results = [all_match_results; match_info_dtoa];
-                    end
-                end
+            catch ME
+                % 简单的错误捕获
+            end
+            
+            if optimization_successful
+                if S_optimized(3) < 0; S_optimized = -S_optimized; end
+                
+                % 记录结果
+                match_info_dtoa = struct(...
+                    'yld_start_loc', start_read_loc_yld + current_yld_pulse.loc, ...
+                    'chj_azimuth', chj_az, ...
+                    'chj_elevation', chj_el, ...
+                    'yld_azimuth', yld_az, ... % 增加记录YLD角度方便分析
+                    'yld_elevation', yld_el, ...
+                    'cost', match_cost,  ...
+                    'x_tri', S_initial(1), ...
+                    'y_tri', S_initial(2), ...
+                    'z_tri', S_initial(3), ...
+                    'x_opt', S_optimized(1), ... % 优化后坐标
+                    'y_opt', S_optimized(2), ...
+                    'z_opt', S_optimized(3) ...
+                    );
+                
+                all_match_results = [all_match_results; match_info_dtoa];
             end
         end
     end
     close(h);
 end
 
-
-
-
-all_match_table = struct2table(all_match_results);
-
-% 步骤2：用 writetable 保存为 CSV（支持 'Delimiter' 参数）
-writetable(all_match_table, ...
-           'results\3d_win512_cost_cal_yld_chj_dtoa_3.6e8_5.6e8_with_initial_results.csv', ...  % 文件名
-           'Encoding', 'UTF-8', ...                    % 编码（确保中文正常）
-           'Delimiter', ',', ...                       % 指定逗号分隔（CSV标准）
-           'WriteVariableNames', true);                % 保存列名（结构体字段名）
+% 保存结果
+if ~isempty(all_match_results)
+    all_match_table = struct2table(all_match_results);
+    writetable(all_match_table, ...
+           'results/3d_optimized_angle_only.csv', ... 
+           'Encoding', 'UTF-8', ...
+           'Delimiter', ',', ...
+           'WriteVariableNames', true);
+    fprintf('处理完成，结果已保存。\n');
+else
+    fprintf('未找到匹配的脉冲。\n');
+end
 
 
 % --- DTOA 目标函数 ---

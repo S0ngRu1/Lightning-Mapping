@@ -1,10 +1,10 @@
 %% 新版数据结构
 yld_sit = [0, 0, 0];
-all_match_results = readtable('results\3d_win512_cost_cal_yld_chj_dtoa_3.6e8_5.6e8_with_initial_results.csv');
+all_match_results = readtable('results\3d_win512_cost_cal_yld_chj_dtoa_3.6e8_5.6e8_with_initial_results_eval_dtoa.csv');
 % 筛选条件
 conditions = ([all_match_results.dlta] < 20000) & ...
-             ([all_match_results.yld_start_loc] > 3.6e8) & ...
-             ([all_match_results.yld_start_loc] < 5e8) & ...
+             ([all_match_results.yld_start_loc] > 4.2e8) & ...
+             ([all_match_results.yld_start_loc] < 5.6e8) & ...
              ([all_match_results.x_dtoa] > -10000) & ...
              ([all_match_results.x_dtoa] < 6000) & ...
              ([all_match_results.y_dtoa] > -10000) & ...
@@ -27,7 +27,7 @@ else
     time_colors = time_colors .^ 0.8;  % 同样增强索引着色的对比度
 end
 
-marker_size = 2;  % 适当增大点大小，让颜色更显眼
+marker_size = 5;  % 适当增大点大小，让颜色更显眼
 x = [filtered_match_result.x_dtoa];
 y = [filtered_match_result.y_dtoa]; 
 z = [filtered_match_result.z_dtoa]; 
@@ -162,81 +162,81 @@ daspect([1 1 1]);  % 保持坐标轴比例一致，避免空间变形
 
 
 
-% 
-% 
-% 
-% % --- 4.2 二维投影图 (按时间着色) ---
-% figure; 
-% % XY 平面投影 (俯视图: 东-北)
-% scatter(x, y, marker_size, time_colors, 'filled');
-% xlabel('X (东)');
-% ylabel('Y (北)');
-% title('XY 平面投影 (东-北)');
-% grid on;
-% axis equal; 
-% colorbar;
-% colormap(gca, 'jet');
-% 
-% % XZ 平面投影 (侧视图: 东-上)
-% figure; 
-% 
-% scatter(x, z, marker_size, time_colors, 'filled'); 
-% xlabel('X (东)');
-% ylabel('Z (上)');
-% title('XZ 平面投影 (东-上)');
-% grid on;
-% axis equal;
-% colorbar;
-% colormap(gca, 'jet');
-% 
-% % YZ 平面投影 (前/后视图: 北-上)
-% figure; 
-% 
-% scatter(y, z, marker_size, time_colors, 'filled'); 
-% xlabel('Y (北)');
-% ylabel('Z (上)');
-% title('YZ 平面投影 (北-上)');
-% grid on;
-% axis equal;
-% colorbar;
-% colormap(gca, 'jet');
-% 
-% % --- 4.3极坐标系下 ---
-% theta = atan2(y, x); 
-% rho = sqrt(x.^2 + y.^2); 
-% 
-% figure;
-% polarscatter(theta, rho, marker_size, time_colors, 'filled');
-% title('极坐标系下');
-% colorbar;
-% colormap(gca, 'jet');
-% 
-% 
-% % --- 4.4 方位角 - 仰角 ---
-% num_points = size(filtered_match_result, 1);
-% azimuths = zeros(num_points, 1);
-% elevations = zeros(num_points, 1);
-% 
-%     for i = 1:num_points
-%     % 当前定位结果点 (确保是行向量)
-%     current_S = [filtered_match_result(i,:).x filtered_match_result(i,:).y filtered_match_result(i,:).z];
-%     % 计算从零点位置指向当前定位结果点的向量
-%     direction_vector = current_S(:) - yld_sit(:);
-%     % 调用 cart2sph_standard 函数计算方位角和仰角
-%     [azimuths(i), elevations(i)] = cart2sph_standard(direction_vector);
-%     end
-%     figure;
-%     scatter(azimuths, elevations, marker_size, time_colors, 'filled');
-%     xlabel('方位角 (度)');
-% ylabel('仰角 (度)');
-%     title(['从站点 ', num2str(yld_sit), ' 看闪电的方位角 vs 仰角']);
-%     grid on;
-%     xlim([0, 360]);
-%     xticks(0:40:360);
-%     ylim([0, 90]);
-%     yticks(0:10:90);
-%     colorbar;
-%     colormap(gca, 'jet');
+
+
+
+% --- 4.2 二维投影图 (按时间着色) ---
+figure; 
+% XY 平面投影 (俯视图: 东-北)
+scatter(x, y, marker_size, time_colors, 'filled');
+xlabel('X (东)');
+ylabel('Y (北)');
+title('XY 平面投影 (东-北)');
+grid on;
+axis equal; 
+colorbar;
+colormap(gca, 'jet');
+
+% XZ 平面投影 (侧视图: 东-上)
+figure; 
+
+scatter(x, z, marker_size, time_colors, 'filled'); 
+xlabel('X (东)');
+ylabel('Z (上)');
+title('XZ 平面投影 (东-上)');
+grid on;
+axis equal;
+colorbar;
+colormap(gca, 'jet');
+
+% YZ 平面投影 (前/后视图: 北-上)
+figure; 
+
+scatter(y, z, marker_size, time_colors, 'filled'); 
+xlabel('Y (北)');
+ylabel('Z (上)');
+title('YZ 平面投影 (北-上)');
+grid on;
+axis equal;
+colorbar;
+colormap(gca, 'jet');
+
+% --- 4.3极坐标系下 ---
+theta = atan2(y, x); 
+rho = sqrt(x.^2 + y.^2); 
+
+figure;
+polarscatter(theta, rho, marker_size, time_colors, 'filled');
+title('极坐标系下');
+colorbar;
+colormap(gca, 'jet');
+
+
+% --- 4.4 方位角 - 仰角 ---
+num_points = size(filtered_match_result, 1);
+azimuths = zeros(num_points, 1);
+elevations = zeros(num_points, 1);
+
+    for i = 1:num_points
+    % 当前定位结果点 (确保是行向量)
+    current_S = [filtered_match_result(i,:).x filtered_match_result(i,:).y filtered_match_result(i,:).z];
+    % 计算从零点位置指向当前定位结果点的向量
+    direction_vector = current_S(:) - yld_sit(:);
+    % 调用 cart2sph_standard 函数计算方位角和仰角
+    [azimuths(i), elevations(i)] = cart2sph_standard(direction_vector);
+    end
+    figure;
+    scatter(azimuths, elevations, marker_size, time_colors, 'filled');
+    xlabel('方位角 (度)');
+ylabel('仰角 (度)');
+    title(['从站点 ', num2str(yld_sit), ' 看闪电的方位角 vs 仰角']);
+    grid on;
+    xlim([0, 360]);
+    xticks(0:40:360);
+    ylim([0, 90]);
+    yticks(0:10:90);
+    colorbar;
+    colormap(gca, 'jet');
 
 
 
@@ -329,8 +329,8 @@ yld_sit = [0, 0, 0];
 all_match_results = readtable('results\3d_win512_cost_cal_yld_chj_dtoa_3.6e8_5.6e8_with_initial_results_eval_dtoa.csv');
 % 筛选条件
 conditions = ([all_match_results.dlta] < 20000) & ...
-             ([all_match_results.yld_start_loc] > 3.6e8) & ...
-             ([all_match_results.yld_start_loc] < 5e8) & ...
+             ([all_match_results.yld_start_loc] > 4.2e8) & ...
+             ([all_match_results.yld_start_loc] < 5.6e8) & ...
              ([all_match_results.x_tri] > -10000) & ...
              ([all_match_results.x_tri] < 6000) & ...
              ([all_match_results.y_tri] > -10000) & ...
@@ -353,7 +353,6 @@ else
     time_colors = time_colors .^ 0.8;  % 同样增强索引着色的对比度
 end
 
-marker_size = 2;  % 适当增大点大小，让颜色更显眼
 x = [filtered_match_result.x_tri];
 y = [filtered_match_result.y_tri]; 
 z = [filtered_match_result.z_tri]; 
