@@ -6,18 +6,17 @@ clc;
 DATA_FILE = 'results\3d_win512_cost_cal_yld_chj_dtoa_3.6e8_5.6e8_with_initial_results.csv';
 
 % --- 筛选参数 ---
-START_LOC = 3.696e8;      % 起始位置 (采样点)
-END_LOC   = 3.716e8;      % 结束位置 (采样点)
-UNIFIED_EPSILON = 50;     % 统一的 EPSILON (聚类半径)
+START_LOC = 469280000;      % 起始位置 (采样点)
+END_LOC   = 469888000;      % 结束位置 (采样点)
+UNIFIED_EPSILON = 40;     % 统一的 EPSILON (聚类半径)
 
 % --- 计算参数 ---
 SAMPLING_RATE = 200e6;    % 200 MS/s
-BIN_WIDTH_MS  = 0.5;      % 时间切片长度 (ms)
+BIN_WIDTH_MS  = 0.2;      % 时间切片长度 (ms)
 MIN_CLUSTER_POINTS = 4;   % DBSCAN 最小聚类点数
 MIN_DT_STEPS = 1;         % 计算差分时至少跨越几个点
 
-% --- 【新增】速度阈值参数 ---
-MAX_VELOCITY_THRESHOLD = 5e6; % 只保留小于 5e6 m/s 的速度
+MAX_VELOCITY_THRESHOLD = 10e6; 
 
 %% ==================== 2. 数据加载与基础筛选 ====================
 fprintf('正在加载数据...\n');
@@ -35,8 +34,7 @@ conditions = ([all_match_results.dlta] < 20000) & ...
 time_condition = ([all_match_results.yld_start_loc] >= START_LOC) & ...
                  ([all_match_results.yld_start_loc] <= END_LOC);
 
-% 3. 【新增】空间区域剔除筛选
-% 需剔除区域：x(-210,674) 且 y(-6082,4667) 且 z(230,1200)
+% 3. 空间区域剔除筛选
 % 逻辑：找出在这个盒子里的点，取反（~）即为保留的点
 in_exclusion_zone = ([all_match_results.x_dtoa] > -210) & ([all_match_results.x_dtoa] < 674) & ...
                     ([all_match_results.y_dtoa] > -6082) & ([all_match_results.y_dtoa] < 4667) & ...

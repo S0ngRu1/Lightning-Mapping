@@ -359,7 +359,7 @@ z = [filtered_match_result.z_tri];
 
 % --- 三维散点图 (鲜艳颜色风格 + 白色背景) ---
 figure('Color', [1 1 1]); % 核心修改：设置白色背景
-
+marker_size = 5;  % 适当增大点大小，让颜色更显眼
 % 绘制三维散点图，提高点的不透明度让颜色更饱和
 scatter3(x, y, z, marker_size, time_colors, 'filled', 'MarkerFaceAlpha', 0.8);
 
@@ -393,7 +393,7 @@ h = colorbar;
 ylabel(h, '归一化发展时间', 'FontSize', 11, 'Color', 'k');
 set(h, 'Color', 'w', 'XColor', 'k', 'YColor', 'k');  % 颜色条背景白、文字/刻度黑
 caxis([0, 1]);  % 固定颜色范围以最大化对比度
-
+marker_size = 5;  % 适当增大点大小，让颜色更显眼
 % 网格和坐标轴比例（灰色网格避免干扰，适配白色背景）
 grid on;
 set(gca, ...
