@@ -17,7 +17,7 @@ X_dtoa = segment.x_dtoa; Y_dtoa = segment.y_dtoa; Z_dtoa = segment.z_dtoa;
 
 
 %% 3. 计算并对比平滑度 (Scattering)
-poly_order = 3; % 论文设定为 5 阶
+poly_order = 5; % 论文设定为 5 阶
 
 % --- 三角测量 (Triangulation) ---
 [std_x_tri, res_x_tri] = evaluate_smoothness(t, X_tri, poly_order);
