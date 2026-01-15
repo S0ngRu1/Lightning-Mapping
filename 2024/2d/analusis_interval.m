@@ -2,7 +2,7 @@
 clear; clc; close all;
 
 % 将您的数据保存到名为 'data.txt' 的文件中
-filename = 'result_yld_3.8e8_4e8_window_512_128_去零飘_滤波_加窗_阈值15_30_80.txt';
+filename = 'results\result_yld_3.8e8_4e8_window_512_128_去零飘_滤波_加窗_阈值15_30_80.txt';
 
 % 使用 readtable 读取数据，它会自动处理表头和空格分隔符
 try
