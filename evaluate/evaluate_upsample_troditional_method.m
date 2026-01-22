@@ -21,7 +21,7 @@ Downsample_Factor = 100; % 波形降采样倍数
 %% === 2. 数据读取与预处理 ===
 % 统一筛选参数
 t123_th = 1.0;
-rcorr_th = 0.1;
+rcorr_th = 0.5;
 
 % read_and_filter(文件名, 基准点, 闭合差阈值, Rcorr阈值, 最大时间)
 
