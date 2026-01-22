@@ -1,5 +1,4 @@
 clear; clc; close all;
-
 %% === 1. 全局参数与文件设置 ===
 fs = 200e6;
 Start_loc_Base = 469200000;
@@ -45,7 +44,7 @@ Global_Overview_El = [min_el-2, max_el+2];
 %% === 3. 绘图 (4行 x 2列) ===
 % 设置画布大小 (A4 比例拉长)
 fig_width = 20;   % 宽 (cm)
-fig_height = 24;  % 高 (cm)
+fig_height = 26;  % 高 (cm) - 稍微调高一点，因为现在每个图都有横坐标，需要更多空间
 f = figure('Units', 'centimeters', 'Position', [5, 2, fig_width, fig_height], 'Color', 'w');
 
 % 字体设置
@@ -68,12 +67,17 @@ plot_overview(ax1_1, data_trad, Zoom_Az_Lim, Zoom_El_Lim, Global_Overview_Az, Gl
 title(col_titles{1}, 'FontName', font_name, 'FontSize', label_size+2, 'FontWeight', 'bold');
 apply_jgr_style(ax1_1, font_name, font_size, '(a1)');
 ylabel('Elevation (°)', 'FontName', font_name, 'FontSize', label_size);
+% 【修改】添加横坐标
+xlabel('Azimuth (°)', 'FontName', font_name, 'FontSize', label_size); 
 
 % --- Col 2: Proposed ---
 ax1_2 = nexttile;
 plot_overview(ax1_2, data_prop, Zoom_Az_Lim, Zoom_El_Lim, Global_Overview_Az, Global_Overview_El);
 title(col_titles{2}, 'FontName', font_name, 'FontSize', label_size+2, 'FontWeight', 'bold');
 apply_jgr_style(ax1_2, font_name, font_size, '(a2)');
+% 【修改】添加横坐标
+xlabel('Azimuth (°)', 'FontName', font_name, 'FontSize', label_size);
+
 % 右侧添加 Colorbar
 cb = colorbar;
 cb.Layout.Tile = 'east';
@@ -89,14 +93,12 @@ ax2_1 = nexttile;
 plot_zoom(ax2_1, data_trad, Zoom_Az_Lim, Zoom_El_Lim);
 apply_jgr_style(ax2_1, font_name, font_size, '(b1)');
 ylabel('Elevation (°)', 'FontName', font_name, 'FontSize', label_size);
-% 【修改】添加横坐标标题
 xlabel('Azimuth (°)', 'FontName', font_name, 'FontSize', label_size);
 
 % --- Col 2: Proposed ---
 ax2_2 = nexttile;
 plot_zoom(ax2_2, data_prop, Zoom_Az_Lim, Zoom_El_Lim);
 apply_jgr_style(ax2_2, font_name, font_size, '(b2)');
-% 【修改】添加横坐标标题
 xlabel('Azimuth (°)', 'FontName', font_name, 'FontSize', label_size);
 
 % =========================================================================
@@ -107,13 +109,15 @@ ax3_1 = nexttile;
 plot_error_time(ax3_1, data_trad, 'Err_Az', Global_Time_Lim, Th_Trad_Err);
 apply_jgr_style(ax3_1, font_name, font_size, '(c1)');
 ylabel('Azimuth Error (°)', 'FontName', font_name, 'FontSize', label_size);
-xticklabels([]); % 中间行不显示X轴刻度
+% 【修改】添加横坐标，移除 xticklabels([])
+xlabel('Time (\mus)', 'FontName', font_name, 'FontSize', label_size);
 
 % --- Col 2: Proposed ---
 ax3_2 = nexttile;
 plot_error_time(ax3_2, data_prop, 'Err_Az', Global_Time_Lim, Th_Prop_Err); % 注意阈值不同
 apply_jgr_style(ax3_2, font_name, font_size, '(c2)');
-xticklabels([]);
+% 【修改】添加横坐标，移除 xticklabels([])
+xlabel('Time (\mus)', 'FontName', font_name, 'FontSize', label_size);
 
 % =========================================================================
 % 第 4 行：仰角误差 (Elevation Error vs Time)
