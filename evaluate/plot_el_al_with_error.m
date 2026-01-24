@@ -17,7 +17,7 @@ Th_Trad_Err = 0.7; % 传统方法的误差阈值
 % ==========================================
 % 数据集 2: 本文方法 (Adaptive Window)
 % ==========================================
-file_prop = '..\2024\2d\results\result_yld_3.65e8_5.6e8_window_ADAPTIVE_1e4_factor3_with_error.txt';
+file_prop = '..\2024\2d\results\result_yld_ADAPTIVE_upsample_469000000_472000000.txt';
 Th_Prop_Err = 0.5; % 本文方法的误差阈值 
 
 %% === 2. 数据读取与处理 ===
@@ -114,7 +114,7 @@ xlabel('Time (\mus)', 'FontName', font_name, 'FontSize', label_size);
 
 % --- Col 2: Proposed ---
 ax3_2 = nexttile;
-plot_error_time(ax3_2, data_prop, 'Err_Az', Global_Time_Lim, Th_Prop_Err); % 注意阈值不同
+plot_error_time(ax3_2, data_prop, 'Err_Az', Global_Time_Lim, Th_Trad_Err); % 注意阈值不同
 apply_jgr_style(ax3_2, font_name, font_size, '(c2)');
 % 【修改】添加横坐标，移除 xticklabels([])
 xlabel('Time (\mus)', 'FontName', font_name, 'FontSize', label_size);
@@ -131,7 +131,7 @@ xlabel('Time (\mus)', 'FontName', font_name, 'FontSize', label_size);
 
 % --- Col 2: Proposed ---
 ax4_2 = nexttile;
-plot_error_time(ax4_2, data_prop, 'Err_El', Global_Time_Lim, Th_Prop_Err);
+plot_error_time(ax4_2, data_prop, 'Err_El', Global_Time_Lim, Th_Trad_Err);
 apply_jgr_style(ax4_2, font_name, font_size, '(d2)');
 xlabel('Time (\mus)', 'FontName', font_name, 'FontSize', label_size);
 
@@ -149,7 +149,7 @@ function data = process_data(fname, base_loc, fs, err_th, rcorr_def)
     
     % 基础地理筛选
     valid_geo = T.Start_loc > base_loc & T.Start_loc < (base_loc + 1800000) & ...
-                T.Elevation < 85 & T.Azimuth < 250 & abs(T.t123) < 10.0;
+                T.Elevation < 85 & T.Azimuth < 250 & abs(T.t123) < 1.0;
             
     % 坏点区域剔除
     bad_region = false(height(T), 1);
@@ -159,12 +159,12 @@ function data = process_data(fname, base_loc, fs, err_th, rcorr_def)
     
     % Rcorr 筛选
     mask_rcorr = false(height(T), 1);
-    if ismember('Win_len', T.Properties.VariableNames)
-        idx_512 = (T.Win_len == 512);   mask_rcorr(idx_512) = T.Rcorr(idx_512) > 0.3;
-        idx_1024 = (T.Win_len == 1024); mask_rcorr(idx_1024) = T.Rcorr(idx_1024) > 0.25; 
-        idx_2048 = (T.Win_len == 2048); mask_rcorr(idx_2048) = T.Rcorr(idx_2048) > 0.1;
-        idx_4096 = (T.Win_len == 4096); mask_rcorr(idx_4096) = T.Rcorr(idx_4096) > 0.1;
-        other = ~ismember(T.Win_len, [512, 1024, 2048, 4096]);
+    if ismember('Win_Len', T.Properties.VariableNames)
+        idx_512 = (T.Win_Len == 512);   mask_rcorr(idx_512) = T.Rcorr(idx_512) > 0.1;
+        idx_1024 = (T.Win_Len == 1024); mask_rcorr(idx_1024) = T.Rcorr(idx_1024) > 0.1; 
+        idx_2048 = (T.Win_Len == 2048); mask_rcorr(idx_2048) = T.Rcorr(idx_2048) > 0.1;
+        idx_4096 = (T.Win_Len == 4096); mask_rcorr(idx_4096) = T.Rcorr(idx_4096) > 0.1;
+        other = ~ismember(T.Win_Len, [512, 1024, 2048, 4096]);
         mask_rcorr(other) = T.Rcorr(other) > rcorr_def;
     else
         mask_rcorr = T.Rcorr > rcorr_def;

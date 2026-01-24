@@ -6,18 +6,22 @@ file_col1 = '..\2024\2d\results\20240822165932_result_yld_3.65e8_5e8_window_512_
 file_col2 = '..\2024\2d\results\20240822165932_result_yld_3.65e8_5e8_window_4096_1024_阈值4倍标准差_去零飘_30_80_hann.txt';
 file_col3 = '..\2024\2d\results\result_yld_3.65e8_5.6e8_window_ADAPTIVE_1e4_factor3.txt';
 
+% 原始波形文件
+raw_file_ch1 = '..\2024\20240822165932.6610CH1.dat'; 
+has_waveform = isfile(raw_file_ch1); 
+
 % --- 通用参数 ---
 fs = 200e6;              % 采样率
 Start_loc_Base = 3.93e8;  % 基准采样点位置
-T_us_max = 35000;        % 最大显示时间 (us)
+T_us_max = 30000;        % 最大显示时间 (us)
 
 % --- 【关键】局部放大区域设置 ---
 Zoom_Az_Lim = [140, 148];  % 方位角放大范围
-Zoom_El_Lim = [30, 42];    % 仰角放大范围
+Zoom_El_Lim = [33, 40];    % 仰角放大范围
 
 % --- 全局视图范围 ---
 Global_Az_Lim = [125, 170];
-Global_El_Lim = [5, 45];
+Global_El_Lim = [30, 40];
 
 %% === 2. 数据读取与预处理 ===
 % Col 1: 512窗口
@@ -27,16 +31,31 @@ data_2 = read_and_filter(file_col2, Start_loc_Base, 1, 0.1, T_us_max);
 % Col 3: Adaptive
 data_3 = read_and_filter(file_col3, Start_loc_Base, 1.0, 0.1, T_us_max);
 
-%% === 3. 绘图 (5行 x 3列 虚拟网格) ===
-% 设置画布大小
-f = figure('Units', 'pixels', 'Color', 'w', 'Position', [50, 50, 1200, 700]);
+% --- 读取原始波形 ---
+if has_waveform
+    read_len = ceil(T_us_max * 1e-6 * fs); 
+    raw_sig = read_signal(raw_file_ch1, read_len, Start_loc_Base);
+    t_full = (0:length(raw_sig)-1) / fs * 1e6; 
+    
+    % 降采样 (仅用于绘图，减少卡顿)
+    Downsample_Factor = 50; 
+    raw_sig = raw_sig(1:Downsample_Factor:end);
+    t_raw = t_full(1:Downsample_Factor:end); 
+    % 简单滤波以获得更清晰的波形
+    raw_sig = filter_bp(raw_sig, 30e6, 80e6, 5);
+else
+    raw_sig = []; t_raw = [];
+end
 
-% --- 【兼容性修改】使用 5x3 网格来实现 3:2 的高度比例 ---
-t = tiledlayout(5, 3, 'TileSpacing', 'compact', 'Padding', 'compact');
-% 注意：删除了 t.RowHeight 属性设置，以兼容 R2021a 以下版本
+%% === 3. 绘图 (6行 x 3列 虚拟网格) ===
+% 设置画布大小 (增加高度以容纳三行图)
+f = figure('Units', 'pixels', 'Color', 'w', 'Position', [50, 50, 1200, 900]);
+
+% --- 使用 6x3 网格来实现高度分配 (1:3:2) ---
+t = tiledlayout(6, 3, 'TileSpacing', 'compact', 'Padding', 'compact');
 
 % 绘图参数
-pt_size_overview = 2;   % 全景图点大小     
+pt_size_overview = 5;   % 全景图点大小     
 pt_size_zoom = 10;      % 放大图点大小
 alpha_val = 0.8;    
 
@@ -44,51 +63,78 @@ alpha_val = 0.8;
 col_titles = {'(win:512)', '(win:4096)', '(Adaptive win)'};
 
 % =========================================================================
-% 第 1 行：整体对比 (Overview) [占用前 3 行网格]
+% 第 1 行：信号波形图 (Waveform) [占用 1 行网格]
 % =========================================================================
+for i = 1:3
+    % ax_sig = nexttile(索引)
+    ax_sig = nexttile(i, [1, 1]); 
+    
+    if ~isempty(raw_sig)
+        plot(t_raw, raw_sig, 'LineWidth', 0.5, 'Color', [0 0.4470 0.7410]); % 蓝色波形
+        xlim([0, T_us_max]);
+        grid on;
+        set(gca, 'FontSize', 9);
+        
+        % 仅第一列显示 Y 轴标签
+        if i == 1
+            ylabel('Amp (a.u.)');
+        else
+            yticklabels([]);
+        end
+        
+        % 【修改】添加横坐标刻度和标题
+        xlabel('Time (\mus)', 'FontSize', 10); 
+    end
+    
+    % 标题移动到最上方
+    title(col_titles{i}, 'FontSize', 12, 'FontWeight', 'bold');
+    % 添加编号 (a1, a2, a3)
+    text(ax_sig, 0.02, 0.90, sprintf('(a%d) Waveform', i), 'Units', 'normalized', 'FontWeight', 'bold');
+end
 
-% --- 1.1 Col 1 Overview ---
-% nexttile(索引, [跨行数, 跨列数])
-ax1 = nexttile(1, [3, 1]); 
+% =========================================================================
+% 第 2 行：整体对比 (Overview) [占用 3 行网格]
+% =========================================================================
+% 起始索引 = 4
+
+% --- 2.1 Col 1 Overview ---
+ax1 = nexttile(4, [3, 1]); 
 plot_overview(ax1, data_1, Zoom_Az_Lim, Zoom_El_Lim, Global_Az_Lim, Global_El_Lim, pt_size_overview, alpha_val);
-title(['Overview ' col_titles{1}], 'FontSize', 11, 'FontWeight', 'bold');
 ylabel('Elevation (°)'); 
-text(ax1, 0.02, 0.95, '(a1)', 'Units', 'normalized', 'FontWeight', 'bold');
+text(ax1, 0.02, 0.95, '(b1) Overview', 'Units', 'normalized', 'FontWeight', 'bold');
 
-% --- 1.2 Col 2 Overview ---
-ax2 = nexttile(2, [3, 1]);
+% --- 2.2 Col 2 Overview ---
+ax2 = nexttile(5, [3, 1]);
 plot_overview(ax2, data_2, Zoom_Az_Lim, Zoom_El_Lim, Global_Az_Lim, Global_El_Lim, pt_size_overview, alpha_val);
-title(['Overview ' col_titles{2}], 'FontSize', 11, 'FontWeight', 'bold');
-text(ax2, 0.02, 0.95, '(a2)', 'Units', 'normalized', 'FontWeight', 'bold');
+text(ax2, 0.02, 0.95, '(b2) Overview', 'Units', 'normalized', 'FontWeight', 'bold');
 
-% --- 1.3 Col 3 Overview ---
-ax3 = nexttile(3, [3, 1]);
+% --- 2.3 Col 3 Overview ---
+ax3 = nexttile(6, [3, 1]);
 plot_overview(ax3, data_3, Zoom_Az_Lim, Zoom_El_Lim, Global_Az_Lim, Global_El_Lim, pt_size_overview, alpha_val);
-title(['Overview ' col_titles{3}], 'FontSize', 11, 'FontWeight', 'bold');
-text(ax3, 0.02, 0.95, '(a3)', 'Units', 'normalized', 'FontWeight', 'bold');
+text(ax3, 0.02, 0.95, '(b3) Overview', 'Units', 'normalized', 'FontWeight', 'bold');
 
 % =========================================================================
-% 第 2 行：局部放大对比 (Zoomed) [占用后 2 行网格]
+% 第 3 行：局部放大对比 (Zoomed) [占用 2 行网格]
 % =========================================================================
-% 计算起始索引：前3行共 3*3=9 个格子，所以第4行从索引 10 开始
+% 起始索引 = 13 (前3行共 1x3 + 3x3 = 12格占用)
 
-% --- 2.1 Col 1 Zoom ---
-ax4 = nexttile(10, [2, 1]);
+% --- 3.1 Col 1 Zoom ---
+ax4 = nexttile(13, [2, 1]);
 plot_zoom(ax4, data_1, Zoom_Az_Lim, Zoom_El_Lim, pt_size_zoom, alpha_val);
 ylabel('Elevation (°)'); xlabel('Azimuth (°)');
-text(ax4, 0.02, 0.95, '(b1) Zoomed', 'Units', 'normalized', 'FontWeight', 'bold', 'Color', 'r');
+text(ax4, 0.02, 0.95, '(c1) Zoomed', 'Units', 'normalized', 'FontWeight', 'bold', 'Color', 'r');
 
-% --- 2.2 Col 2 Zoom ---
-ax5 = nexttile(11, [2, 1]);
+% --- 3.2 Col 2 Zoom ---
+ax5 = nexttile(14, [2, 1]);
 plot_zoom(ax5, data_2, Zoom_Az_Lim, Zoom_El_Lim, pt_size_zoom, alpha_val);
 xlabel('Azimuth (°)');
-text(ax5, 0.02, 0.95, '(b2) Zoomed', 'Units', 'normalized', 'FontWeight', 'bold', 'Color', 'r');
+text(ax5, 0.02, 0.95, '(c2) Zoomed', 'Units', 'normalized', 'FontWeight', 'bold', 'Color', 'r');
 
-% --- 2.3 Col 3 Zoom ---
-ax6 = nexttile(12, [2, 1]);
+% --- 3.3 Col 3 Zoom ---
+ax6 = nexttile(15, [2, 1]);
 plot_zoom(ax6, data_3, Zoom_Az_Lim, Zoom_El_Lim, pt_size_zoom, alpha_val);
 xlabel('Azimuth (°)');
-text(ax6, 0.02, 0.95, '(b3) Zoomed', 'Units', 'normalized', 'FontWeight', 'bold', 'Color', 'r');
+text(ax6, 0.02, 0.95, '(c3) Zoomed', 'Units', 'normalized', 'FontWeight', 'bold', 'Color', 'r');
 
 % =========================================================================
 % 全局设置
@@ -135,7 +181,7 @@ function plot_zoom(ax, data, zoom_az, zoom_el, sz, alp)
     
     % 绘制红色矩形框
     rectangle('Position', [zoom_az(1), zoom_el(1), diff(zoom_az), diff(zoom_el)], ...
-              'EdgeColor', 'r', 'LineWidth', 1, 'LineStyle', '-');
+              'EdgeColor', 'black', 'LineWidth', 1, 'LineStyle', '-');
           
     % 设置网格线样式
     set(ax, 'GridLineStyle', ':', 'GridAlpha', 0.5);
@@ -203,4 +249,23 @@ function filteredT = read_and_filter(fname, base_loc, t123, rcorr_default, T_us_
     
     filteredT = T(idx, :);
     filteredT.Time_us = (filteredT.Start_loc - base_loc) / 200e6 * 1e6;
+end
+
+% --- 文件读取辅助函数 ---
+function signal = read_signal(signal_path, r_length, r_location)
+    fid = fopen(signal_path, 'r');
+    if fid == -1, error('无法打开文件'); end
+    status = fseek(fid, r_location * 2, 'bof');
+    if status == -1, fclose(fid); error('fseek 失败'); end
+    signal = fread(fid, r_length, 'int16');
+    fclose(fid);
+end
+
+% --- 滤波器辅助函数 ---
+function filtered_signal = filter_bp(signal,f1,f2,order)
+    Fs = 200e6;
+    fn = Fs/2;
+    Wn = [f1 f2]/fn;
+    [b,a] = butter(order,Wn); 
+    filtered_signal = filtfilt(b,a,signal);
 end
