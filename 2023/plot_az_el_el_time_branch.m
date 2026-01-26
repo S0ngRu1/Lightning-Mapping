@@ -8,15 +8,15 @@ sampling_interval_ns = 5;
 ns_to_us = 1e-3; 
 
 % --- 局部放大区域控制 ---
-Zoom_Start_us = 990;    
-Zoom_End_us   = 1190;   
+Zoom_Start_us = 845;    
+Zoom_End_us   = 956;   
 
 % --- 分支分类阈值 ---
 Azimuth_Split_Threshold = 300; 
 
 % --- 【关键】背景色块的时间分辨率 ---
 % 越小越精细，越大越平滑。建议设为 1~5 us，取决于先导步进的频率
-Time_Bin_Size = 1.3; 
+Time_Bin_Size = 2.5; 
 
 %% ================== 2. 数据加载与预处理 ==================
 if ~isfile(filename), error('文件不存在: %s', filename); end
@@ -33,9 +33,14 @@ logicalIndex =  abs(result1.t123) < 1  & ...
                 result1.Start_loc > filter_loc_min & ...
                 result1.Elevation < 80 & ...
                 result1.Elevation > 0 & ...
-                result1.Azimuth > 255 & ...
+                result1.Azimuth > 281 & ...
                 result1.Azimuth < 330;
+bad_region1 = (result1.Azimuth > 305) & (result1.Azimuth < 315) & ...
+             (result1.Elevation > 47) & (result1.Elevation < 48);
 
+bad_region2 = (result1.Azimuth > 298) & (result1.Azimuth < 302) & ...
+             (result1.Elevation > 42) & (result1.Elevation < 43);
+logicalIndex = logicalIndex & (~bad_region1) & (~bad_region2);
 filteredTable = result1(logicalIndex, :);
 vhf_time = (filteredTable.Start_loc - r_loction_yld) * time_conversion_factor;
 vhf_el   = filteredTable.Elevation;

@@ -105,7 +105,7 @@ end
 
 % 限制 X 轴范围
 xlim(ax2, [Zoom_Start_us, Zoom_End_us]);
-xticks(ax2, Zoom_Start_us:20:Zoom_End_us); % 刻度步长可根据 Zoom 范围调整
+xticks(ax2, Zoom_Start_us:5:Zoom_End_us); % 刻度步长可根据 Zoom 范围调整
 
 % 样式
 ylabel(ax2, 'Elevation (°)', 'FontName', font_name, 'FontSize', font_size);
