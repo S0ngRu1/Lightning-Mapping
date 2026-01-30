@@ -9,19 +9,18 @@ N = 3;
 c = 0.299792458; % 光速 (m/ns)
 fs = 200e6;
 step = 1e4;      % 【建议】步长设大一点（如1e5或1e6），减少文件IO次数
-upsampling_factor = 50;
-
+upsampling_factor = 50; % 上采样倍数
 % 信号范围
-start_signal_loc = 3.65e8;
-end_signal_loc = 5.6e8;
-all_start_signal_loc = start_signal_loc:step:end_signal_loc;
+start_signal_loc = 3.93e8;
+end_signal_loc = 472000000;
+all_start_signal_loc = start_signal_loc:step/4*3:end_signal_loc;
 
 % 引雷点几何参数
 d12 = 24.9586; d13 = 34.9335; d23 = 24.9675;
 angle12 = -110.8477; angle13 = -65.2405; angle23 = -19.6541;
 
 % 结果文件名
-output_filename = 'result_yld_ADAPTIVE_optimized.txt';
+output_filename = 'results/result_yld_ADAPTIVE_upsample_393000000_472000000.txt';
 
 %% === 2. 预计算与初始化 ===
 % 预计算阈值 (只读一次噪声段)
@@ -34,7 +33,7 @@ clear noise filtered_noise;
 % 打开文件写入表头
 fileID = fopen(output_filename, 'w');
 fprintf(fileID, '%-13s%-15s%-15s%-15s%-15s%-15s%-15s%-15s%-15s%-15s%-15s%-15s%-15s\n', ...
-    'Start_loc','Win_len','t12', 't13', 't23', 'cos_alpha_opt', 'cos_beta_opt','Azimuth', 'Elevation', 'Rcorr', 't123', 'Err_Az', 'Err_El');
+    'Start_loc','Win_Len','t12', 't13', 't23', 'cos_alpha_opt', 'cos_beta_opt','Azimuth', 'Elevation', 'Rcorr', 't123', 'Err_Az', 'Err_El');
 
 % 启动并行池 (如果尚未启动)
 if isempty(gcp('nocreate'))
