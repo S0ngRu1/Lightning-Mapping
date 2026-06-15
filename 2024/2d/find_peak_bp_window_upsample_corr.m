@@ -6,8 +6,8 @@ fs = 200e6;
 fp_start = 30e6; % 通带起始 (Hz)
 fp_end = 80e6;   % 通带结束 (Hz)
 upsampling_factor = 50;
-min_peak_distance = 128;
-processing_window_len = 512;
+min_peak_distance = 1024;
+processing_window_len = 4096;
 window_type = 'hann'; 
 
 % === 几何与文件参数 ===
@@ -27,7 +27,7 @@ step_size = block_size - overlap; % 每次前进的步长
 
 % === 结果文件初始化 ===
 % 文件名增加标识
-file_name = 'results\20240822165932_result_yld_3.65e8_5e8_window_512_128_阈值4倍标准差_去零飘_'+string(fp_start/1e6)+'_'+string(fp_end/1e6)+'_'+ window_type +"_with_error" +'.txt';
+file_name = 'results\20240822165932_result_yld_3.65e8_5e8_window_4096_1024_阈值3倍标准差_去零飘_'+string(fp_start/1e6)+'_'+string(fp_end/1e6)+'_'+ window_type +"_with_error" +'.txt';
 fileID = fopen(file_name, 'w');
 
 % 【修改点1】表头增加 Err_Az 和 Err_El

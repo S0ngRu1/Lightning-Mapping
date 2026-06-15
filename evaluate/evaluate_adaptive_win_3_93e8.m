@@ -48,111 +48,91 @@ else
 end
 
 %% === 3. 绘图 (6行 x 3列 虚拟网格) ===
-% 设置画布大小 (增加高度以容纳三行图)
+%% === 3. 绘图 (6行 x 3列 虚拟网格) ===
+% 设置画布大小
 f = figure('Units', 'pixels', 'Color', 'w', 'Position', [50, 50, 1200, 900]);
-
-% --- 使用 6x3 网格来实现高度分配 (1:3:2) ---
 t = tiledlayout(6, 3, 'TileSpacing', 'compact', 'Padding', 'compact');
 
 % 绘图参数
-pt_size_overview = 5;   % 全景图点大小     
-pt_size_zoom = 10;      % 放大图点大小
+pt_size_overview = 5;      
+pt_size_zoom = 10;      
 alpha_val = 0.8;    
-
-% 定义列标题
 col_titles = {'(win:512)', '(win:4096)', '(Adaptive win)'};
 
+% 初始化子图计数器 (1对应'a', 2对应'b'...)
+plot_count = 1;
+
 % =========================================================================
-% 第 1 行：信号波形图 (Waveform) [占用 1 行网格]
+% 第 1 行：信号波形图 (Waveform) - 对应 (a), (b), (c)
 % =========================================================================
 for i = 1:3
-    % ax_sig = nexttile(索引)
     ax_sig = nexttile(i, [1, 1]); 
     
     if ~isempty(raw_sig)
-        plot(t_raw, raw_sig, 'LineWidth', 0.5, 'Color', [0 0.4470 0.7410]); % 蓝色波形
+        plot(t_raw, raw_sig, 'LineWidth', 0.5, 'Color', [0 0.4470 0.7410]);
         xlim([0, T_us_max]);
         grid on;
         set(gca, 'FontSize', 9);
         
-        % 仅第一列显示 Y 轴标签
         if i == 1
             ylabel('Amp (a.u.)');
         else
             yticklabels([]);
         end
-        
-        % 【修改】添加横坐标刻度和标题
         xlabel('Time (\mus)', 'FontSize', 10); 
     end
     
-    % 标题移动到最上方
     title(col_titles{i}, 'FontSize', 12, 'FontWeight', 'bold');
-    % 添加编号 (a1, a2, a3)
-    text(ax_sig, 0.02, 0.90, sprintf('(a%d) Waveform', i), 'Units', 'normalized', 'FontWeight', 'bold');
+    % 生成字母标签 (a, b, c)
+    text(ax_sig, 0.02, 0.85, sprintf('(%s)', char(96 + plot_count)), ...
+        'Units', 'normalized', 'FontWeight', 'bold', 'FontSize', 11);
+    plot_count = plot_count + 1;
 end
 
 % =========================================================================
-% 第 2 行：整体对比 (Overview) [占用 3 行网格]
+% 第 2 行：整体对比 (Overview) - 对应 (d), (e), (f)
 % =========================================================================
-% 起始索引 = 4
-
-% --- 2.1 Col 1 Overview ---
-ax1 = nexttile(4, [3, 1]); 
-plot_overview(ax1, data_1, Zoom_Az_Lim, Zoom_El_Lim, Global_Az_Lim, Global_El_Lim, pt_size_overview, alpha_val);
+% --- Col 1 Overview ---
+ax_d = nexttile(4, [3, 1]); 
+plot_overview(ax_d, data_1, Zoom_Az_Lim, Zoom_El_Lim, Global_Az_Lim, Global_El_Lim, pt_size_overview, alpha_val);
 ylabel('Elevation (°)'); 
-text(ax1, 0.02, 0.95, '(b1) Overview', 'Units', 'normalized', 'FontWeight', 'bold');
+text(ax_d, 0.02, 0.95, sprintf('(%s)', char(96 + plot_count)), 'Units', 'normalized', 'FontWeight', 'bold');
+plot_count = plot_count + 1;
 
-% --- 2.2 Col 2 Overview ---
-ax2 = nexttile(5, [3, 1]);
-plot_overview(ax2, data_2, Zoom_Az_Lim, Zoom_El_Lim, Global_Az_Lim, Global_El_Lim, pt_size_overview, alpha_val);
-text(ax2, 0.02, 0.95, '(b2) Overview', 'Units', 'normalized', 'FontWeight', 'bold');
+% --- Col 2 Overview ---
+ax_e = nexttile(5, [3, 1]);
+plot_overview(ax_e, data_2, Zoom_Az_Lim, Zoom_El_Lim, Global_Az_Lim, Global_El_Lim, pt_size_overview, alpha_val);
+text(ax_e, 0.02, 0.95, sprintf('(%s)', char(96 + plot_count)), 'Units', 'normalized', 'FontWeight', 'bold');
+plot_count = plot_count + 1;
 
-% --- 2.3 Col 3 Overview ---
-ax3 = nexttile(6, [3, 1]);
-plot_overview(ax3, data_3, Zoom_Az_Lim, Zoom_El_Lim, Global_Az_Lim, Global_El_Lim, pt_size_overview, alpha_val);
-text(ax3, 0.02, 0.95, '(b3) Overview', 'Units', 'normalized', 'FontWeight', 'bold');
+% --- Col 3 Overview ---
+ax_f = nexttile(6, [3, 1]);
+plot_overview(ax_f, data_3, Zoom_Az_Lim, Zoom_El_Lim, Global_Az_Lim, Global_El_Lim, pt_size_overview, alpha_val);
+text(ax_f, 0.02, 0.95, sprintf('(%s)', char(96 + plot_count)), 'Units', 'normalized', 'FontWeight', 'bold');
+plot_count = plot_count + 1;
 
 % =========================================================================
-% 第 3 行：局部放大对比 (Zoomed) [占用 2 行网格]
+% 第 3 行：局部放大对比 (Zoomed) - 对应 (g), (h), (i)
 % =========================================================================
-% 起始索引 = 13 (前3行共 1x3 + 3x3 = 12格占用)
-
-% --- 3.1 Col 1 Zoom ---
-ax4 = nexttile(13, [2, 1]);
-plot_zoom(ax4, data_1, Zoom_Az_Lim, Zoom_El_Lim, pt_size_zoom, alpha_val);
+% --- Col 1 Zoom ---
+ax_g = nexttile(13, [2, 1]);
+plot_zoom(ax_g, data_1, Zoom_Az_Lim, Zoom_El_Lim, pt_size_zoom, alpha_val);
 ylabel('Elevation (°)'); xlabel('Azimuth (°)');
-text(ax4, 0.02, 0.95, '(c1) Zoomed', 'Units', 'normalized', 'FontWeight', 'bold', 'Color', 'r');
+text(ax_g, 0.02, 0.92, sprintf('(%s)', char(96 + plot_count)), 'Units', 'normalized', 'FontWeight', 'bold', 'Color', 'k');
+plot_count = plot_count + 1;
 
-% --- 3.2 Col 2 Zoom ---
-ax5 = nexttile(14, [2, 1]);
-plot_zoom(ax5, data_2, Zoom_Az_Lim, Zoom_El_Lim, pt_size_zoom, alpha_val);
+% --- Col 2 Zoom ---
+ax_h = nexttile(14, [2, 1]);
+plot_zoom(ax_h, data_2, Zoom_Az_Lim, Zoom_El_Lim, pt_size_zoom, alpha_val);
 xlabel('Azimuth (°)');
-text(ax5, 0.02, 0.95, '(c2) Zoomed', 'Units', 'normalized', 'FontWeight', 'bold', 'Color', 'r');
+text(ax_h, 0.02, 0.92, sprintf('(%s)', char(96 + plot_count)), 'Units', 'normalized', 'FontWeight', 'bold', 'Color', 'k');
+plot_count = plot_count + 1;
 
-% --- 3.3 Col 3 Zoom ---
-ax6 = nexttile(15, [2, 1]);
-plot_zoom(ax6, data_3, Zoom_Az_Lim, Zoom_El_Lim, pt_size_zoom, alpha_val);
+% --- Col 3 Zoom ---
+ax_i = nexttile(15, [2, 1]);
+plot_zoom(ax_i, data_3, Zoom_Az_Lim, Zoom_El_Lim, pt_size_zoom, alpha_val);
 xlabel('Azimuth (°)');
-text(ax6, 0.02, 0.95, '(c3) Zoomed', 'Units', 'normalized', 'FontWeight', 'bold', 'Color', 'r');
-
-% =========================================================================
-% 全局设置
-% =========================================================================
-% 统一 Colorbar
-cb = colorbar;
-cb.Layout.Tile = 'east';
-ylabel(cb, 'Time (\mus)', 'FontSize', 11);
-colormap(jet);
-caxis([0, T_us_max]); 
-
-% 统一坐标轴风格
-all_axes = findall(f, 'type', 'axes');
-set(all_axes, 'FontSize', 10, 'LineWidth', 1.0, 'Box', 'on', ...
-    'XColor', [0.15 0.15 0.15], 'YColor', [0.15 0.15 0.15], 'TickDir', 'in');
-
-fprintf('绘图完成。\n点数统计:\n Win512: %d\n Win4096: %d\n Adaptive: %d\n', ...
-    height(data_1), height(data_2), height(data_3));
+text(ax_i, 0.02, 0.92, sprintf('(%s)', char(96 + plot_count)), 'Units', 'normalized', 'FontWeight', 'bold', 'Color', 'k');
 
 %% === 4. 辅助绘图函数 ===
 

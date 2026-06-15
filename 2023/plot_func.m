@@ -1,20 +1,17 @@
 %%  2d静态图绘制
 % --- 1. 数据准备  ---
-filename = 'results\standard_2023_result.txt';
+filename = '20240822165932_loop_result_yld_3.65e8_5e8_window_1024_256_去零飘_30_80_hann.txt';
 % "20230718175104_result_yld_3e8_6e8_window_1024_256_阈值4倍标准差_去零飘_30_80_hann.txt"
-fs = 200e6; % 采样率 
-Start_loc_Base =  3e8+9e7+9000000; % 基准值  
+Start_loc_Base =  3e8; % 基准值  
 if ~isfile(filename), error('文件不存在'); end
-base_value = Start_loc_Base;
-point_size = 5;
-stepSize = 1;
+point_size = 2;
 % 读取数据
 result1 = readtable(filename);
 
 % 筛选数据
-logicalIndex =  abs(result1.t123) < 0.001  & ...
-                abs(result1.Rcorr) > 0.3 & ...
-                result1.Start_loc < Start_loc_Base + 3e6 & ...
+logicalIndex =  abs(result1.t123) < 1  & ...
+                abs(result1.Rcorr) > 0.6 & ...
+                result1.Start_loc < Start_loc_Base + 3e8 & ...
                 result1.Start_loc > Start_loc_Base & ...
                 result1.Elevation > 0 ;
 
@@ -322,3 +319,77 @@ set(gca, 'GridLineStyle', '--', 'GridAlpha', 0.3, 'Box', 'on'); % 浅色背景�
 % ch1 = read_signal('20230718175104.9180CH1.dat', 3e8, 3e8);
 % 
 % plot(ch1)
+
+
+%%  2d静态图绘制
+% --- 1. 数据准备  ---
+filename = '20190604164852.7960_299999999_199999999_1024_256_8_gage-20230216pm(1).txt';
+% "20230718175104_result_yld_3e8_6e8_window_1024_256_阈值4倍标准差_去零飘_30_80_hann.txt"
+Start_loc_Base =  3e8; % 基准值  
+if ~isfile(filename), error('文件不存在'); end
+point_size = 2;
+% 读取数据
+result1 = readtable(filename);
+
+% 筛选数据
+logicalIndex =  abs(result1.t123) < 0.001  & ...
+                abs(result1.Rcorr) > 0.2 & ...
+                result1.Start_loc < Start_loc_Base + 2e8 & ...
+                result1.Start_loc > Start_loc_Base & ...
+                result1.Elevation > 0 ;
+
+filteredTable1 = result1(logicalIndex, :);
+Start_loc = filteredTable1.Start_loc;
+colorValues = (Start_loc - min(Start_loc)) / (max(Start_loc) - min(Start_loc)); % 归一化到 [0, 1]
+
+% --- 2. 绘图  ---
+% 设置figure的浅色背景
+figure('Color', [1 1 1]); % figure背景设置为白色
+
+% 使用 scatter 绘图，并应用尺寸和透明度优化
+scatter(filteredTable1.Azimuth, filteredTable1.Elevation, ...
+        point_size, ... % 尺寸
+        colorValues, ...
+        'filled', ...
+        'MarkerFaceAlpha', 0.8); % 浅色背景下可适当提高透明度
+
+% --- 3. 标签和标题优化 ---
+% 设置标题和轴标签的颜色为深色
+title('闪电VHF辐射源二维定位图', 'FontSize', 16, 'FontWeight', 'bold', 'Color', 'k');
+xlabel('方位角 (Azimuth / °)', 'FontSize', 12, 'Color', 'k');
+ylabel('仰角 (Elevation / °)', 'FontSize', 12, 'Color', 'k');
+
+% --- 4. 坐标轴和范围设置 ---
+xlabel('方位角');
+ylabel('仰角');
+az_min = min(filteredTable1.Azimuth);
+az_max = max(filteredTable1.Azimuth);
+el_min = min(filteredTable1.Elevation);
+el_max = max(filteredTable1.Elevation);
+xlim([az_min, az_max]);  % 固定x轴范围（动态绘图不变化）
+xticks('auto');          % 让Matlab在固定范围内自动生成规整刻度
+ylim([el_min, el_max]);  % 固定y轴范围
+yticks('auto');  
+
+% 设置坐标轴的颜色和刻度字体颜色为深色
+set(gca, ...
+    'FontSize', 11, ...
+    'LineWidth', 1.2, ...
+    'Color', [1 1 1], ... % Axes背景色和figure背景色保持一致（白色）
+    'XColor', [0.2 0.2 0.2], ... % X轴颜色（深灰色）
+    'YColor', [0.2 0.2 0.2]);    % Y轴颜色（深灰色）
+
+% --- 5. 颜色映射和颜色条优化 ---
+colormap('jet'); % 保持专业的颜色映射
+h = colorbar;
+
+% 颜色条标签和刻度颜色为深色
+ylabel(h, '归一化发展时间', 'FontSize', 11, 'Color', 'k');
+set(h, 'Color', [0.2 0.2 0.2]); % 颜色条的刻度字体颜色（深灰色）
+
+caxis([0, 1]); % 保持颜色范围
+
+% --- 6. 网格和整体风格 ---
+grid on;
+set(gca, 'GridLineStyle', '--', 'GridAlpha', 0.3, 'Box', 'on'); % 浅色背景下降低网格透明度
+

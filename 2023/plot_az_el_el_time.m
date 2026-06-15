@@ -44,7 +44,7 @@ figure('Units', 'centimeters', 'Position', [5, 5, 20, 9], 'Color', 'w');
 % 【关键布局修改】：1行3列
 t = tiledlayout(1, 3, 'TileSpacing', 'tight', 'Padding', 'compact');
 
-font_name = 'Arial';
+font_name = 'Microsoft YaHei';
 font_size = 10;
 point_size = 7;
 

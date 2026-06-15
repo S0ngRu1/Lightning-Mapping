@@ -1,17 +1,18 @@
 %%  2d静态图绘制
 % --- 1. 数据准备  ---
-filename = 'results\20240822165932_result_yld_3.6e8_5.6e8_window_1024_256_阈值4倍标准差_去零飘_30_80_hann.txt';
+filename = 'results\20240822165932_result_yld_3.65e8_5e8_window_512_128_阈值4倍标准差_去零飘_30_80_hann_with_error.txt';
 % filename = 'results\20240822165932_result_yld_3.65e8_5e8_window_4096_1024_阈值4倍标准差_去零飘_30_80_hann.txt';
-Start_loc_Base = 3.696e8; % 基准值
+Start_loc_Base = 3.93e8; % 基准值
 if ~isfile(filename), error('文件不存在'); end
 % 读取数据
 result1 = readtable(filename);
 
 % 筛选数据
 logicalIndex =  abs(result1.t123) < 0.5  & ...
-                abs(result1.Rcorr) > 0.5 & ...
-                result1.Start_loc < Start_loc_Base + 3e6 & ...
+                abs(result1.Rcorr) > 0.7 & ...
+                result1.Start_loc < Start_loc_Base + 7e6 & ...
                 result1.Elevation < 80 & ...
+                result1.Azimuth < 160 & ...
                 result1.Start_loc > Start_loc_Base ;    
             
 filteredTable1 = result1(logicalIndex, :);
@@ -26,7 +27,7 @@ figure('Color', [1 1 1]); % figure背景设置为白色
 
 % 使用 scatter 绘图，并应用尺寸和透明度优化
 scatter(filteredTable1.Azimuth, filteredTable1.Elevation, ...
-        5, ... % 尺寸
+        8, ... % 尺寸
         colorValues, ...
         'filled', ...
         'MarkerFaceAlpha', 0.8); % 浅色背景下可适当提高透明度
@@ -44,9 +45,9 @@ az_min = min(filteredTable1.Azimuth);
 az_max = max(filteredTable1.Azimuth);
 el_min = min(filteredTable1.Elevation);
 el_max = max(filteredTable1.Elevation);
-xlim([az_min, az_max]);  % 固定x轴范围（动态绘图不变化）
+xlim([125, 170]);  % 固定x轴范围（动态绘图不变化）
 xticks('auto');          % 让Matlab在固定范围内自动生成规整刻度
-ylim([el_min, el_max]);  % 固定y轴范围
+ylim([5, 45]);  % 固定y轴范围
 yticks('auto');  
 
 % 设置坐标轴的颜色和刻度字体颜色为深色

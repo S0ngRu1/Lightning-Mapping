@@ -87,7 +87,7 @@ cb_left = 0.92;
 % 计算图框的长宽比 (Width/Height)
 box_aspect_ratio = ax_width * fig_width / (ax_height * fig_height); 
 
-font_name = 'Arial';
+font_name = 'Microsoft YaHei';
 font_size = 10;
 label_size = 11;
 pt_size = 5; 
@@ -140,7 +140,7 @@ title('(b) Post-RS Positive Leader', 'FontName', font_name, 'FontSize', label_si
 % --- Colorbar ---
 cb = colorbar;
 cb.Position = [cb_left, ax_bottom, 0.02, ax_height];
-cb.Label.String = 'Relative Time (\mus)';
+cb.Label.String = 'Time (\mus)';
 cb.Label.FontName = font_name;
 cb.Label.FontSize = label_size;
 colormap('jet'); 

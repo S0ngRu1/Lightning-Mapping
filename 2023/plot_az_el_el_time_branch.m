@@ -66,7 +66,7 @@ b2_az   = z_az(mask_b2);
 figure('Units', 'centimeters', 'Position', [5, 5, 24, 10], 'Color', 'w');
 t = tiledlayout(1, 3, 'TileSpacing', 'tight', 'Padding', 'compact');
 
-font_name = 'Arial';
+font_name = 'Microsoft YaHei';
 font_size = 10;
 sz_fg = 25;      
 

@@ -43,3 +43,11 @@ venv/
 *.ini
 *.tdms_index
 *.chd
+.claude/
+final/
+Papers/
+毕业论文/
+__pycache__/
+*.pyc
+results/
+result/
